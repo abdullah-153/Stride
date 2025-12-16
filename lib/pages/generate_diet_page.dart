@@ -65,6 +65,7 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
           _height = profile.height.round();
           _currentWeight = profile.weight.round();
           _targetWeight = profile.weight.round(); // Default to current
+          _gender = profile.gender; // Fetch gender
         });
       }
     });
@@ -82,7 +83,7 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white, // Updated to black/white
+      backgroundColor: isDarkMode ? Colors.black : Colors.white, // Pure black/white
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
@@ -92,18 +93,6 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
         scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                (isDarkMode ? Colors.black : Colors.white).withOpacity(0.8),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
       ),
       body: Stack(
         children: [
@@ -142,35 +131,55 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
                  _buildAnimatedSection(3, AuthGlassCard(
                    child: Column(
                      children: [
-                       PremiumSelector<String>(
-                         label: 'Gender',
-                         items: const ['Male', 'Female'],
-                         selectedValue: _gender,
-                         onSelected: (v) => setState(() => _gender = v),
-                         itemLabelBuilder: (v) => v,
-                         isDarkMode: isDarkMode,
+                       // 1. Read-Only Personal Data Summary (Premium Look)
+                       Container(
+                         padding: const EdgeInsets.all(16),
+                         decoration: BoxDecoration(
+                           color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                           borderRadius: BorderRadius.circular(20),
+                           border: Border.all(color: isDarkMode ? Colors.white10 : Colors.black12),
+                         ),
+                         child: Column(
+                           children: [
+                             Row(
+                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                               children: [
+                                 _buildBiometricItem(Icons.person, _gender, "Gender", isDarkMode),
+                                 _buildVerticalDivider(isDarkMode),
+                                 _buildBiometricItem(Icons.cake, "$_age", "Age", isDarkMode),
+                               ],
+                             ),
+                             const SizedBox(height: 16),
+                             Divider(color: isDarkMode ? Colors.white10 : Colors.black12, height: 1),
+                             const SizedBox(height: 16),
+                             Row(
+                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                               children: [
+                                 _buildBiometricItem(Icons.height, "$_height cm", "Height", isDarkMode),
+                                 _buildVerticalDivider(isDarkMode),
+                                 _buildBiometricItem(Icons.monitor_weight, "$_currentWeight kg", "Current", isDarkMode),
+                               ],
+                             ),
+                             const SizedBox(height: 12),
+                             // Info Note
+                             Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                               children: [
+                                 Icon(Icons.lock_outline_rounded, size: 12, color: isDarkMode ? Colors.white38 : Colors.black38),
+                                 const SizedBox(width: 4),
+                                 Text(
+                                   "Synced from your profile", 
+                                   style: TextStyle(fontSize: 10, color: isDarkMode ? Colors.white38 : Colors.black38),
+                                 ),
+                               ],
+                             ),
+                           ],
+                         ),
                        ),
-                       const SizedBox(height: 20),
-                       PremiumSlider(
-                         label: 'Age',
-                         value: _age.toDouble(),
-                         min: 18,
-                         max: 100,
-                         onChanged: (v) => setState(() => _age = v.toInt()),
-                         unit: ' yrs',
-                         isDarkMode: isDarkMode,
-                       ),
-                       const SizedBox(height: 20),
-                       PremiumSlider(
-                         label: 'Current Weight',
-                         value: _currentWeight.toDouble(),
-                         min: 40,
-                         max: 150,
-                         onChanged: (v) => setState(() => _currentWeight = v.toInt()),
-                         unit: ' kg',
-                         isDarkMode: isDarkMode,
-                       ),
-                       const SizedBox(height: 20),
+                       
+                       const SizedBox(height: 24),
+                       
+                       // 2. Editable Target Weight
                        PremiumSlider(
                          label: 'Target Weight',
                          value: _targetWeight.toDouble(),
@@ -180,17 +189,10 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
                          unit: ' kg',
                          isDarkMode: isDarkMode,
                        ),
-                       const SizedBox(height: 20),
-                       PremiumSlider(
-                         label: 'Height',
-                         value: _height.toDouble(),
-                         min: 140,
-                         max: 220,
-                         onChanged: (v) => setState(() => _height = v.toInt()),
-                         unit: ' cm',
-                         isDarkMode: isDarkMode,
-                       ),
-                       const SizedBox(height: 20),
+                       
+                       const SizedBox(height: 24),
+
+                       // 3. Meals Per Day
                        PremiumSelector<int>(
                          label: 'Meals Per Day',
                          items: const [3, 4, 5, 6],
@@ -199,7 +201,10 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
                          itemLabelBuilder: (v) => "$v Meals",
                          isDarkMode: isDarkMode,
                        ),
-                       const SizedBox(height: 20),
+                       
+                       const SizedBox(height: 24),
+                       
+                       // 4. Activity Level
                        PremiumSelector<String>(
                          label: 'Activity Level',
                          items: const ['Sedentary', 'Light', 'Moderate', 'Active', 'Very Active'],
@@ -321,21 +326,14 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
 
   Widget _buildSectionTitle(String title, bool isDarkMode) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: ShaderMask(
-        shaderCallback: (bounds) => LinearGradient(
-          colors: isDarkMode 
-            ? [Colors.white, Colors.white70] 
-            : [Colors.black87, Colors.black54],
-        ).createShader(bounds),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // Mask handles color
-            letterSpacing: 0.5,
-          ),
+      padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? Colors.white : Colors.black87,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -496,6 +494,41 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalDivider(bool isDarkMode) {
+    return Container(
+      height: 30,
+      width: 1,
+      color: isDarkMode ? Colors.white10 : Colors.black12,
+    );
+  }
+
+  Widget _buildBiometricItem(IconData icon, String value, String label, bool isDarkMode) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.blueAccent, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white54 : Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }

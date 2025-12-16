@@ -11,24 +11,10 @@ class GamificationService {
   final GamificationFirestoreService _firestoreService = GamificationFirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Callback for level up events
+  Function(int newLevel, int xpGained)? onLevelUp;
+
   String? get _currentUserId => _auth.currentUser?.uid;
-
-  void Function(int newLevel, int xpGained)? onLevelUp;
-
-  static const int XP_PER_LEVEL = 100;
-
-  int getXpForNextLevel(int currentLevel) => XP_PER_LEVEL;
-
-  Stream<GamificationData> get gamificationStream {
-    if (_currentUserId == null) {
-      return Stream.value(GamificationData(
-        stats: UserStats.initial(),
-        achievements: _getDefaultAchievements(),
-      ));
-    }
-
-    return _firestoreService.streamGamificationData(_currentUserId!);
-  }
 
   Future<GamificationData> getCurrentData() async {
     if (_currentUserId == null) {
@@ -39,7 +25,9 @@ class GamificationService {
     }
 
     try {
-      return await _firestoreService.getGamificationData(_currentUserId!);
+      return await _firestoreService.getGamificationData(_currentUserId!).then((data) {
+        return _mergeWithDefaults(data);
+      });
     } catch (e) {
       print('Error getting gamification data: $e');
       return GamificationData(
@@ -47,6 +35,52 @@ class GamificationService {
         achievements: _getDefaultAchievements(),
       );
     }
+  }
+
+  int getXpForNextLevel(int currentLevel) {
+    // Determine XP needed for next level based on current level
+    // Simple formula: Level * 100 or something similar
+    return currentLevel * 100; 
+  }
+
+  Stream<GamificationData> get gamificationStream {
+    if (_currentUserId == null) {
+      return Stream.value(GamificationData(
+        stats: UserStats.initial(),
+        achievements: _getDefaultAchievements(),
+      ));
+    }
+
+    return _firestoreService.streamGamificationData(_currentUserId!).map((data) {
+      return _mergeWithDefaults(data);
+    });
+  }
+
+  GamificationData _mergeWithDefaults(GamificationData data) {
+    final defaultAchievements = _getDefaultAchievements();
+    final updatedAchievements = <Achievement>[];
+
+    for (var defaultAch in defaultAchievements) {
+      // Find matching achievement in data
+      final existing = data.achievements.firstWhere(
+        (a) => a.id == defaultAch.id,
+        orElse: () => defaultAch, // Return default (locked) if not found
+      );
+
+      // If existing is found, it might have isUnlocked=true.
+      // Use existing's state, but default's metadata (title, etc) in case DB is missing it.
+      // Or just prefer existing if it has data. 
+      // Safest: Use default structure, override 'isUnlocked' and 'unlockedAt' from existing.
+      updatedAchievements.add(defaultAch.copyWith(
+        isUnlocked: existing.isUnlocked,
+        unlockedAt: existing.unlockedAt,
+      ));
+    }
+
+    return GamificationData(
+      stats: data.stats,
+      achievements: updatedAchievements,
+    );
   }
 
   Future<bool> addXp(int amount) async {

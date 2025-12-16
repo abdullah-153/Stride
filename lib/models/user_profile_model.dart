@@ -11,7 +11,8 @@ class UserProfile {
   final double height; // in cm
   final int age;
   final DateTime? dateOfBirth;
-  final String? profileImagePath;
+  final String? profileImagePath; // Fixed: returned to nullable
+  final String gender; // Added gender
   
   // Goals
   final int weeklyWorkoutGoal;
@@ -36,6 +37,7 @@ class UserProfile {
     required this.weight,
     required this.height,
     required this.age,
+    this.gender = 'Male', // Default
     this.dateOfBirth,
     this.profileImagePath,
     this.weeklyWorkoutGoal = 5,
@@ -59,6 +61,7 @@ class UserProfile {
     double? weight,
     double? height,
     int? age,
+    String? gender,
     DateTime? dateOfBirth,
     String? profileImagePath,
     int? weeklyWorkoutGoal,
@@ -77,6 +80,7 @@ class UserProfile {
       weight: weight ?? this.weight,
       height: height ?? this.height,
       age: age ?? this.age,
+      gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       profileImagePath: profileImagePath ?? this.profileImagePath,
       weeklyWorkoutGoal: weeklyWorkoutGoal ?? this.weeklyWorkoutGoal,
@@ -100,6 +104,7 @@ class UserProfile {
       'weight': weight,
       'height': height,
       'age': age,
+      'gender': gender,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'profileImagePath': profileImagePath,
       'weeklyWorkoutGoal': weeklyWorkoutGoal,
@@ -121,6 +126,7 @@ class UserProfile {
       weight: (json['weight'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
       age: json['age'] as int,
+      gender: json['gender'] as String? ?? 'Male',
       dateOfBirth: json['dateOfBirth'] != null
           ? (json['dateOfBirth'] is Timestamp
               ? (json['dateOfBirth'] as Timestamp).toDate()
@@ -156,6 +162,7 @@ class UserProfile {
       weight: 70.0,
       height: 170.0,
       age: 25,
+      gender: 'Male',
       weeklyWorkoutGoal: 5,
       dailyCalorieGoal: 2000,
       totalWorkoutsCompleted: 0,

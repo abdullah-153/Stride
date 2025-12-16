@@ -26,11 +26,16 @@ class USDAApiService {
         final parsedFoods = foods
             .map((food) => _parseFood(food as Map<String, dynamic>))
             .where((food) {
-              // Filter out entries with no nutrition data
-              return food['calories'] > 0 || 
-                     food['protein'] > 0 || 
-                     food['carbs'] > 0 || 
-                     food['fats'] > 0;
+               // Strict filter: Must have a name AND at least some nutritional value
+               final hasName = (food['name'] as String?)?.isNotEmpty ?? false;
+               final calories = (food['calories'] as num?) ?? -1; 
+               final protein = (food['protein'] as num?) ?? -1;
+               final carbs = (food['carbs'] as num?) ?? -1;
+               final fats = (food['fats'] as num?) ?? -1;
+               
+               // User asked to stricten criteria to ensure results have macros
+               final hasMacros = calories >= 0 && (calories > 0 || protein > 0 || carbs > 0 || fats > 0);
+               return hasName && hasMacros;
             })
             .toList();
 

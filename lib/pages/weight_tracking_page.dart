@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../components/common/global_back_button.dart';
 import '../utils/size_config.dart';
 import '../models/weight_entry_model.dart';
 import '../models/user_profile_model.dart';
 import '../providers/user_profile_provider.dart';
 import '../providers/theme_provider.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../utils/body_update_sheet.dart';
+import '../services/firestore/weight_history_service.dart';
 
 class WeightTrackingPage extends ConsumerStatefulWidget {
   const WeightTrackingPage({super.key});
@@ -16,16 +19,8 @@ class WeightTrackingPage extends ConsumerStatefulWidget {
 }
 
 class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
-  // Mock data - TODO: Replace with actual service
-  final List<WeightEntry> _weightHistory = [
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 30)), weight: 75.0),
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 25)), weight: 74.5),
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 20)), weight: 74.0),
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 15)), weight: 73.5),
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 10)), weight: 73.0),
-    WeightEntry(date: DateTime.now().subtract(const Duration(days: 5)), weight: 72.5),
-    WeightEntry(date: DateTime.now(), weight: 72.0),
-  ];
+  final WeightHistoryService _weightHistoryService = WeightHistoryService();
+  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   void _showUpdateBodyStats() async {
     final currentWeight = ref.read(userWeightProvider);
@@ -52,12 +47,7 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
       if (newWeight != currentWeight) {
         await notifier.updateWeight(newWeight);
         // Add to history
-        setState(() {
-          _weightHistory.add(WeightEntry(
-            date: DateTime.now(),
-            weight: newWeight,
-          ));
-        });
+        await _weightHistoryService.addWeightEntry(_currentUserId, newWeight);
       }
       if (newHeight != currentHeight) await notifier.updateHeight(newHeight);
       if (newAge != currentAge) await notifier.updateAge(newAge);
@@ -75,7 +65,8 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
     final currentWeight = ref.watch(userWeightProvider);
     final currentHeight = ref.watch(userHeightProvider);
     final currentAge = ref.watch(userAgeProvider);
-    final goalWeight = 68.0; // TODO: Get from profile
+    final userProfile = ref.watch(userProfileProvider).value;
+    final goalWeight = userProfile?.weightGoal ?? currentWeight;
 
     final bgColor = isDarkMode ? const Color(0xFF121212) : Colors.white;
     final cardBg = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
@@ -85,28 +76,13 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
         ? Colors.white.withOpacity(0.1)
         : Colors.grey.withOpacity(0.2);
 
-    final currentBMI = WeightEntry(date: DateTime.now(), weight: currentWeight)
-        .calculateBMI(currentHeight);
-    final bmiCategory = WeightEntry(date: DateTime.now(), weight: currentWeight)
-        .getBMICategory(currentBMI);
-
-    final weightDifference = currentWeight - goalWeight;
-    final startWeight = _weightHistory.isNotEmpty ? _weightHistory.first.weight : currentWeight;
-    final totalProgress = startWeight - currentWeight;
-
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: textColor,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
         title: Text(
           'Weight Tracking',
           style: TextStyle(
@@ -115,296 +91,331 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.all(SizeConfig.w(20)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Current Weight Card
-            Container(
-              padding: EdgeInsets.all(SizeConfig.w(24)),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFFF6F00)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(SizeConfig.w(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                    Text(
-                      'Body Stats', // Changed from "Current Weight"
-                      style: TextStyle(
-                        fontSize: SizeConfig.sp(14),
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white70,
-                      ),
+      body: StreamBuilder<List<WeightEntry>>(
+        stream: _weightHistoryService.getWeightHistory(_currentUserId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final history = snapshot.data ?? [];
+          // Ensure we have at least one entry for current state if history is empty
+          final effectiveHistory = List<WeightEntry>.from(history);
+          if (effectiveHistory.isEmpty) {
+             effectiveHistory.add(WeightEntry(date: DateTime.now(), weight: currentWeight));
+          } else {
+             // Ensure the very latest visual matches the provider if slightly different due to sync timing
+             if (effectiveHistory.first.weight != currentWeight && effectiveHistory.first.date.day == DateTime.now().day) {
+                // effectiveHistory[0] = WeightEntry(date: DateTime.now(), weight: currentWeight);
+                // Actually, trust history service, but maybe prepend current?
+                // Let's just trust history.
+             }
+          }
+          
+          // Sort for chart (oldest first)
+          final sortedHistory = List<WeightEntry>.from(effectiveHistory)..sort((a, b) => a.date.compareTo(b.date));
+
+          final startWeight = sortedHistory.isNotEmpty ? sortedHistory.first.weight : currentWeight;
+          final totalProgress = startWeight - currentWeight;
+          final weightDifference = currentWeight - goalWeight;
+          
+          final currentBMI = WeightEntry(date: DateTime.now(), weight: currentWeight)
+              .calculateBMI(currentHeight);
+          final bmiCategory = WeightEntry(date: DateTime.now(), weight: currentWeight)
+              .getBMICategory(currentBMI);
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.all(SizeConfig.w(20)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Current Weight Card
+                Container(
+                  padding: EdgeInsets.all(SizeConfig.w(24)),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF9800), Color(0xFFFF6F00)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                      _buildStatChip(
-                        'Goal: ${goalWeight.toStringAsFixed(1)} kg',
-                        Icons.flag_rounded,
+                    borderRadius: BorderRadius.circular(SizeConfig.w(24)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  SizedBox(height: SizeConfig.h(12)),
-                  
-                  // Weight Display
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        currentWeight.toStringAsFixed(1),
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(42),
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: SizeConfig.w(6)),
-                      Padding(
-                        padding: EdgeInsets.only(bottom: SizeConfig.h(10)),
-                        child: Text(
-                          'kg',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                        Text(
+                          'Body Stats',
                           style: TextStyle(
-                            fontSize: SizeConfig.sp(18),
-                            fontWeight: FontWeight.w600,
+                            fontSize: SizeConfig.sp(14),
+                            fontWeight: FontWeight.w500,
                             color: Colors.white70,
                           ),
                         ),
+                          _buildStatChip(
+                            'Goal: ${goalWeight.toStringAsFixed(1)} kg',
+                            Icons.flag_rounded,
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      // Height & Age Minis
-                      Column(
+                      SizedBox(height: SizeConfig.h(12)),
+                      
+                      // Weight Display
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            "${currentHeight.round()} cm",
-                             style: TextStyle(
-                              fontSize: SizeConfig.sp(16),
-                              fontWeight: FontWeight.w700,
+                            currentWeight.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(42),
+                              fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
                           ),
-                          Text(
-                            "Height",
-                             style: TextStyle(
-                              fontSize: SizeConfig.sp(10),
-                              color: Colors.white60,
+                          SizedBox(width: SizeConfig.w(6)),
+                          Padding(
+                            padding: EdgeInsets.only(bottom: SizeConfig.h(10)),
+                            child: Text(
+                              'kg',
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(18),
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
-                          SizedBox(height: SizeConfig.h(8)),
-                           Text(
-                            "$currentAge years",
-                             style: TextStyle(
-                              fontSize: SizeConfig.sp(16),
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                           Text(
-                            "Age",
-                             style: TextStyle(
-                              fontSize: SizeConfig.sp(10),
-                              color: Colors.white60,
-                            ),
-                          ),
+                          const Spacer(),
+                          // Height & Age Minis
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "${currentHeight.round()} cm",
+                                 style: TextStyle(
+                                   fontSize: SizeConfig.sp(16),
+                                   fontWeight: FontWeight.w700,
+                                   color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                "Height",
+                                 style: TextStyle(
+                                   fontSize: SizeConfig.sp(10),
+                                   color: Colors.white60,
+                                ),
+                              ),
+                              SizedBox(height: SizeConfig.h(8)),
+                               Text(
+                                "$currentAge years",
+                                 style: TextStyle(
+                                   fontSize: SizeConfig.sp(16),
+                                   fontWeight: FontWeight.w700,
+                                   color: Colors.white,
+                                ),
+                              ),
+                               Text(
+                                "Age",
+                                 style: TextStyle(
+                                   fontSize: SizeConfig.sp(10),
+                                   color: Colors.white60,
+                                ),
+                              ),
+                            ],
+                          )
                         ],
-                      )
-                    ],
-                  ),
-                  SizedBox(height: SizeConfig.h(16)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatChip(
-                         '${weightDifference > 0 ? '-' : '+'}${weightDifference.abs().toStringAsFixed(1)} kg',
-                        weightDifference > 0 ? Icons.trending_down : Icons.trending_up,
                       ),
-                        // Edit Button
-                        GestureDetector(
-                          onTap: _showUpdateBodyStats,
-                          child: Container(
-                            padding: EdgeInsets.all(SizeConfig.w(8)),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(Icons.edit, color: Colors.white, size: SizeConfig.sp(16)),
+                      SizedBox(height: SizeConfig.h(16)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildStatChip(
+                             '${weightDifference > 0 ? '-' : '+'}${weightDifference.abs().toStringAsFixed(1)} kg',
+                            weightDifference > 0 ? Icons.trending_down : Icons.trending_up,
                           ),
-                        ),
+                            // Edit Button
+                            GestureDetector(
+                              onTap: _showUpdateBodyStats,
+                              child: Container(
+                                padding: EdgeInsets.all(SizeConfig.w(8)),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.edit, color: Colors.white, size: SizeConfig.sp(16)),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            SizedBox(height: SizeConfig.h(24)),
+                SizedBox(height: SizeConfig.h(24)),
 
-            // BMI Card
-            Container(
-              padding: EdgeInsets.all(SizeConfig.w(20)),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(SizeConfig.w(20)),
-                border: Border.all(color: borderColor),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(SizeConfig.w(16)),
-                    decoration: BoxDecoration(
-                      color: _getBMIColor(currentBMI).withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_rounded,
-                      color: _getBMIColor(currentBMI),
-                      size: SizeConfig.sp(28),
-                    ),
+                // BMI Card
+                Container(
+                  padding: EdgeInsets.all(SizeConfig.w(20)),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(SizeConfig.w(20)),
+                    border: Border.all(color: borderColor),
                   ),
-                  SizedBox(width: SizeConfig.w(16)),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'BMI',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(SizeConfig.w(16)),
+                        decoration: BoxDecoration(
+                          color: _getBMIColor(currentBMI).withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.favorite_rounded,
+                          color: _getBMIColor(currentBMI),
+                          size: SizeConfig.sp(28),
+                        ),
+                      ),
+                      SizedBox(width: SizeConfig.w(16)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'BMI',
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(12),
+                                color: subTextColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: SizeConfig.h(4)),
+                            Text(
+                              currentBMI.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(24),
+                                fontWeight: FontWeight.w800,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: SizeConfig.w(12),
+                          vertical: SizeConfig.h(6),
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getBMIColor(currentBMI).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(SizeConfig.w(12)),
+                        ),
+                        child: Text(
+                          bmiCategory,
                           style: TextStyle(
                             fontSize: SizeConfig.sp(12),
-                            color: subTextColor,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
+                            color: _getBMIColor(currentBMI),
                           ),
                         ),
-                        SizedBox(height: SizeConfig.h(4)),
-                        Text(
-                          currentBMI.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(24),
-                            fontWeight: FontWeight.w800,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: SizeConfig.w(12),
-                      vertical: SizeConfig.h(6),
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getBMIColor(currentBMI).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(SizeConfig.w(12)),
-                    ),
-                    child: Text(
-                      bmiCategory,
-                      style: TextStyle(
-                        fontSize: SizeConfig.sp(12),
-                        fontWeight: FontWeight.w600,
-                        color: _getBMIColor(currentBMI),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            SizedBox(height: SizeConfig.h(24)),
+                SizedBox(height: SizeConfig.h(24)),
 
-            // Progress Stats
-            Container(
-              padding: EdgeInsets.all(SizeConfig.w(20)),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(SizeConfig.w(20)),
-                border: Border.all(color: borderColor),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildProgressStat(
-                    'Start',
-                    '${startWeight.toStringAsFixed(1)} kg',
-                    textColor,
-                    subTextColor,
+                // Progress Stats
+                Container(
+                  padding: EdgeInsets.all(SizeConfig.w(20)),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(SizeConfig.w(20)),
+                    border: Border.all(color: borderColor),
                   ),
-                  Container(width: 1, height: 40, color: borderColor),
-                  _buildProgressStat(
-                    'Progress',
-                    '${totalProgress.toStringAsFixed(1)} kg',
-                    textColor,
-                    subTextColor,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildProgressStat(
+                        'Start',
+                        '${startWeight.toStringAsFixed(1)} kg',
+                        textColor,
+                        subTextColor,
+                      ),
+                      Container(width: 1, height: 40, color: borderColor),
+                      _buildProgressStat(
+                        'Progress',
+                        '${totalProgress.toStringAsFixed(1)} kg',
+                        textColor,
+                        subTextColor,
+                      ),
+                      Container(width: 1, height: 40, color: borderColor),
+                      _buildProgressStat(
+                        'To Goal',
+                        '${weightDifference.abs().toStringAsFixed(1)} kg',
+                        textColor,
+                        subTextColor,
+                      ),
+                    ],
                   ),
-                  Container(width: 1, height: 40, color: borderColor),
-                  _buildProgressStat(
-                    'To Goal',
-                    '${weightDifference.abs().toStringAsFixed(1)} kg',
-                    textColor,
-                    subTextColor,
+                ),
+
+                SizedBox(height: SizeConfig.h(24)),
+
+                // Weight Chart
+                Text(
+                  'PROGRESS CHART',
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(12),
+                    fontWeight: FontWeight.w700,
+                    color: subTextColor,
+                    letterSpacing: 1.2,
                   ),
-                ],
-              ),
-            ),
+                ),
+                SizedBox(height: SizeConfig.h(16)),
+                Container(
+                  height: SizeConfig.h(200),
+                  padding: EdgeInsets.all(SizeConfig.w(16)),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(SizeConfig.w(20)),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: _buildWeightChart(sortedHistory, textColor, subTextColor),
+                ),
 
-            SizedBox(height: SizeConfig.h(24)),
+                SizedBox(height: SizeConfig.h(24)),
 
-            // Weight Chart
-            Text(
-              'PROGRESS CHART',
-              style: TextStyle(
-                fontSize: SizeConfig.sp(12),
-                fontWeight: FontWeight.w700,
-                color: subTextColor,
-                letterSpacing: 1.2,
-              ),
+                // Recent Entries
+                Text(
+                  'RECENT ENTRIES',
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(12),
+                    fontWeight: FontWeight.w700,
+                    color: subTextColor,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                SizedBox(height: SizeConfig.h(16)),
+                ...sortedHistory.reversed.take(5).map((entry) => _buildHistoryItem(
+                  entry,
+                  cardBg,
+                  borderColor,
+                  textColor,
+                  subTextColor,
+                )),
+              ],
             ),
-            SizedBox(height: SizeConfig.h(16)),
-            Container(
-              height: SizeConfig.h(200),
-              padding: EdgeInsets.all(SizeConfig.w(16)),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(SizeConfig.w(20)),
-                border: Border.all(color: borderColor),
-              ),
-              child: _buildWeightChart(textColor, subTextColor),
-            ),
-
-            SizedBox(height: SizeConfig.h(24)),
-
-            // Recent Entries
-            Text(
-              'RECENT ENTRIES',
-              style: TextStyle(
-                fontSize: SizeConfig.sp(12),
-                fontWeight: FontWeight.w700,
-                color: subTextColor,
-                letterSpacing: 1.2,
-              ),
-            ),
-            SizedBox(height: SizeConfig.h(16)),
-            ..._weightHistory.reversed.take(5).map((entry) => _buildHistoryItem(
-              entry,
-              cardBg,
-              borderColor,
-              textColor,
-              subTextColor,
-            )),
-          ],
-        ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showUpdateBodyStats,
@@ -479,8 +490,12 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
     return Colors.red;
   }
 
-  Widget _buildWeightChart(Color textColor, Color subTextColor) {
-    final spots = _weightHistory.asMap().entries.map((entry) {
+  Widget _buildWeightChart(List<WeightEntry> history, Color textColor, Color subTextColor) {
+    if (history.isEmpty) {
+        return Center(child: Text("No data yet", style: TextStyle(color: subTextColor)));
+    }
+    
+    final spots = history.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.weight);
     }).toList();
 
@@ -507,8 +522,8 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
               reservedSize: 30,
               interval: 1,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= _weightHistory.length) return const Text('');
-                final date = _weightHistory[value.toInt()].date;
+                if (value.toInt() >= history.length || value < 0) return const Text('');
+                final date = history[value.toInt()].date;
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
@@ -525,14 +540,17 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 1,
-              reservedSize: 42,
+              interval: 1, // Auto interval? 
+              // reservedSize: 42, // Removed reserved size to let it adjust or keep it? 
+              // Let's rely on Flutter Chart defaults or simplify
               getTitlesWidget: (value, meta) {
-                return Text(
+                 // Optimization: Don't show every single tick
+                 if (value % 5 != 0) return Container();
+                 return Text(
                   value.toStringAsFixed(0),
                   style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 10,
+                  color: subTextColor,
+                  fontSize: 10,
                   ),
                 );
               },
@@ -541,9 +559,9 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
-        maxX: (_weightHistory.length - 1).toDouble(),
-        minY: spots.map((e) => e.y).reduce((a, b) => a < b ? a : b) - 2,
-        maxY: spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 2,
+        maxX: (history.length - 1).toDouble(),
+        minY: history.map((e) => e.weight).reduce((a, b) => a < b ? a : b) - 2,
+        maxY: history.map((e) => e.weight).reduce((a, b) => a > b ? a : b) + 2,
         lineBarsData: [
           LineChartBarData(
             spots: spots,

@@ -13,9 +13,7 @@ import 'user_profile_service.dart';
 class WorkoutService {
   static final WorkoutService _instance = WorkoutService._internal();
   factory WorkoutService() => _instance;
-  WorkoutService._internal() {
-    _initializeWorkoutLibrary();
-  }
+  WorkoutService._internal();
 
   final WorkoutFirestoreService _firestoreService = WorkoutFirestoreService();
   final WorkoutPlanService _planService = WorkoutPlanService();
@@ -24,18 +22,7 @@ class WorkoutService {
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
-  Future<void> _initializeWorkoutLibrary() async {
-    try {
-      final hasLibrary = await _firestoreService.hasWorkoutLibrary();
-      if (!hasLibrary) {
-        final mockWorkouts = _generateMockWorkouts();
-        await _firestoreService.seedWorkoutLibrary(mockWorkouts);
-        print('Workout library seeded successfully');
-      }
-    } catch (e) {
-      print('Error initializing workout library: $e');
-    }
-  }
+  // _initializeWorkoutLibrary removed to prevent seeding dummy data
 
   Future<List<Workout>> getTodayWorkouts() async {
     try {
@@ -107,10 +94,8 @@ class WorkoutService {
         }
       }
 
-      final allWorkouts = await _firestoreService.getWorkoutLibrary();
-      final count = 3 + _random.nextInt(3);
-      allWorkouts.shuffle(_random);
-      return allWorkouts.take(count).toList();
+      // No active plan? Return empty list instead of random dummy data
+      return [];
     } catch (e) {
       print('Error getting today workouts: $e');
       return [];

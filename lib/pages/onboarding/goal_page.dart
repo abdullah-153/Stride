@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/size_config.dart';
 import '../../utils/app_constants.dart';
+import '../../models/user_profile_model.dart';
+import '../../providers/user_profile_provider.dart';
 
-class GoalPage extends StatefulWidget {
+class GoalPage extends ConsumerStatefulWidget {
   final int selectedAge;
   final String selectedGender;
   final double selectedHeight;
@@ -19,13 +23,14 @@ class GoalPage extends StatefulWidget {
   });
 
   @override
-  State<GoalPage> createState() => _GoalPageState();
+  ConsumerState<GoalPage> createState() => _GoalPageState();
 }
 
-class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin {
+class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -55,6 +60,38 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveAndContinue() async {
+    setState(() => _isSaving = true);
+    
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final name = user?.displayName ?? 'User';
+      
+      final newProfile = UserProfile(
+        name: name,
+        age: widget.selectedAge,
+        gender: widget.selectedGender,
+        height: widget.selectedHeight,
+        weight: widget.selectedWeight,
+        bio: widget.selectedFitnessLevel, // Storing fitness level in bio for now or we could add a field
+        weeklyWorkoutGoal: 4, // Default
+        dailyCalorieGoal: 2000, // Default, will be recalculated
+      );
+
+      await ref.read(userProfileProvider.notifier).updateProfile(newProfile);
+      
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving profile: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -256,9 +293,7 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
                       width: double.infinity,
                       height: SizeConfig.h(56),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushReplacementNamed(context, AppRoutes.home);
-                        },
+                        onPressed: _isSaving ? null : _saveAndContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentGreen,
                           foregroundColor: Colors.black,
@@ -267,14 +302,20 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
                             borderRadius: BorderRadius.circular(28),
                           ),
                         ),
-                        child: Text(
-                          "Let's Get Started",
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(16),
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+                        child: _isSaving 
+                          ? const SizedBox(
+                              height: 24, 
+                              width: 24, 
+                              child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)
+                            )
+                          : Text(
+                              "Let's Get Started",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(16),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                       ),
                     ),
                   ),

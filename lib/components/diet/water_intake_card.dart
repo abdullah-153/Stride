@@ -268,10 +268,10 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
                             style: TextStyle(
                               color: capsuleTextColor,
                               fontWeight: FontWeight.bold,
-                              fontSize: 30,
+                              fontSize: (percentage * 100).toInt() >= 100 ? 24 : 30,
                             ),
                           ),
-                          Text('%', style: TextStyle(color: capsuleTextColor)),
+                          Text('%', style: TextStyle(color: capsuleTextColor, fontSize: (percentage*100).toInt() >= 100 ? 12 : 14)),
                         ],
                       ),
                     ),

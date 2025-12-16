@@ -15,13 +15,12 @@ import '../utils/size_config.dart';
 import '../providers/user_profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../pages/edit_profile_page.dart';
-import '../pages/notifications_settings_page.dart';
-import '../pages/privacy_security_page.dart';
 import '../pages/weight_tracking_page.dart';
 import '../utils/profile_bottom_sheets.dart';
 import '../utils/edit_goals_bottom_sheet.dart';
 import '../utils/body_update_sheet.dart';
 import '../services/auth_service.dart';
+import '../components/profile/streak_heatmap.dart';
 import '../components/common/global_back_button.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -331,99 +330,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                         children: [
                           Text("STREAK SUMMARY", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
                           SizedBox(height: SizeConfig.h(12)),
-                          StreakSummaryCard(
+                          StreakHeatMap(
+                            activityDates: data.stats.activityDates,
                             isDarkMode: isDarkMode,
-                            weeklyActivity: const [true, true, false, true, true, false, true], // Mock
-                            dailyCalories: const [300, 450, 0, 500, 320, 0, 600],
-                            dailyDuration: const [30, 45, 0, 50, 32, 0, 60],
-                            currentStreak: data.stats.currentStreak,
                           ),
                         ],
                       ),
                     ),
-
-                    SizedBox(height: SizeConfig.h(24)),
-
-                    // Fitness Goals Section
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("FITNESS GOALS", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
-                              GestureDetector(
-                                onTap: () async {
-                                  final result = await EditGoalsBottomSheet.show(
-                                    context,
-                                    isDarkMode: isDarkMode,
-                                    currentWeeklyWorkoutGoal: ref.read(userProfileProvider).value?.weeklyWorkoutGoal ?? 3,
-                                    currentDailyCalorieGoal: ref.read(userProfileProvider).value?.dailyCalorieGoal ?? 2000,
-                                    currentWeightGoal: ref.read(userProfileProvider).value?.weightGoal,
-                                  );
-                                  
-                                  if (result != null && mounted) {
-                                    final notifier = ref.read(userProfileProvider.notifier);
-                                    await notifier.updateGoals(
-                                      weeklyWorkoutGoal: result['weeklyWorkoutGoal'] as int,
-                                      dailyCalorieGoal: result['dailyCalorieGoal'] as int,
-                                      weightGoal: result['weightGoal'] as double?,
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: SizeConfig.w(12),
-                                    vertical: SizeConfig.h(6),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFCEF24B).withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xFFCEF24B).withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.edit_rounded,
-                                        size: SizeConfig.sp(14),
-                                        color: const Color(0xFFCEF24B),
-                                      ),
-                                      SizedBox(width: SizeConfig.w(4)),
-                                      Text(
-                                        "Edit",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(12),
-                                          fontWeight: FontWeight.w600,
-                                          color: isDarkMode ? Colors.white : Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: SizeConfig.h(16)),
-                          FitnessGoalsCard(
-                            isDarkMode: isDarkMode,
-                            weeklyWorkoutGoal: ref.watch(userProfileProvider).value?.weeklyWorkoutGoal ?? 3,
-                            currentWeeklyWorkouts: 0, // TODO: Implement real tracking
-                            dailyCalorieGoal: ref.watch(userProfileProvider).value?.dailyCalorieGoal ?? 2000,
-                            currentCalories: 0, // TODO: Implement real tracking
-                            weightGoal: ref.watch(userProfileProvider).value?.weightGoal,
-                            currentWeight: ref.watch(userWeightProvider),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(24)),
                     
+                    SizedBox(height: SizeConfig.h(24)),
                     // Badges Section
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
@@ -478,13 +393,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                   title: "Notifications",
                                   isDarkMode: isDarkMode,
                                   onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const NotificationsSettingsPage(),
-                                      ),
-                                    );
+                                    ProfileBottomSheets.showNotificationsSheet(context, ref);
                                   },
                                 ),
                                 Divider(
@@ -498,13 +407,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                   title: "Privacy & Security",
                                   isDarkMode: isDarkMode,
                                   onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const PrivacySecurityPage(),
-                                      ),
-                                    );
+                                    ProfileBottomSheets.showPrivacySheet(context, ref);
                                   },
                                 ),
                                 Divider(
@@ -521,19 +424,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                     ProfileBottomSheets.showInfoSheet(
                                       context,
                                       title: 'Help & Support',
-                                      content: '''Welcome to Fitness Tracker!
-
-Frequently Asked Questions:
-
-Q: How do I log a workout?
-A: Navigate to the Workout page and tap the "+" button to add a new workout.
-
-Q: How do I track my diet?
-A: Go to the Diet page and add meals throughout the day.
-
-Q: What are XP points?
-A: XP points are earned by completing workouts and logging meals. They help you level up!
-''',
+                                      content: '', // Content is now internal to the method
                                     );
                                   },
                                 ),
@@ -561,10 +452,7 @@ A: XP points are earned by completing workouts and logging meals. They help you 
                               title: "Units: ${ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric ? 'Metric (kg/cm)' : 'Imperial (lbs/ft)'}",
                               isDarkMode: isDarkMode,
                               onTap: () {
-                                final isMetric = ref.read(userProfileProvider).value!.preferredUnits == UnitPreference.metric;
-                                ref.read(userProfileProvider.notifier).updateUnitPreference(
-                                  isMetric ? UnitPreference.imperial : UnitPreference.metric
-                                );
+                                ProfileBottomSheets.showUnitsSheet(context, ref);
                               },
                             ),
                           ),

@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'api/themealdb_api_service.dart';
 import 'api/usda_api_service.dart';
-import 'api/fatsecret_api_service.dart';
 import 'firestore/meal_database_service.dart';
 
 class MealService {
@@ -12,15 +11,12 @@ class MealService {
 
   // final TheMealDBService _apiService = TheMealDBService(); // REMOVED
   final MealDatabaseService _dbService = MealDatabaseService();
-  final FatSecretApiService _fatSecretService = FatSecretApiService(
-    clientId: 'af10bb31b03242ae8724620a47328287',
-    clientSecret: 'f1ab7f1bacd84277a29b982ca5f2e9a8',
-  );
+  final USDAApiService _usdaService = USDAApiService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
-  /// Search for foods (FatSecret)
+  /// Search for foods (USDA)
   Future<List<Map<String, dynamic>>> searchMeals(String query) async {
     try {
       // Try cache first
@@ -29,8 +25,8 @@ class MealService {
         return cachedMeals;
       }
 
-      // Fetch from FatSecret API
-      final apiMeals = await _fatSecretService.searchFoods(query);
+      // Fetch from USDA API
+      final apiMeals = await _usdaService.searchFoods(query);
       
       // Cache the results
       for (final meal in apiMeals) {
@@ -44,17 +40,15 @@ class MealService {
     }
   }
 
-  /// Get autocomplete suggestions (FatSecret)
+  /// Get autocomplete suggestions (USDA - No explicit endpoint, return empty or implement basic)
   Future<List<String>> getAutocompleteSuggestions(String query) async {
-    try {
-      return await _fatSecretService.getSuggestions(query);
-    } catch (e) {
-      print('Error getting autocomplete suggestions: $e');
+      // USDA API doesn't have a lightweight autocomplete endpoint.
+      // We could call searchFoods but it's heavier. 
+      // For now, return empty to disable autocomplete or rely on local history if we implemented it.
       return [];
-    }
   }
 
-  /// Get meal by ID (FatSecret)
+  /// Get meal by ID (USDA)
   Future<Map<String, dynamic>?> getMealById(String id) async {
     try {
       // Try cache first
@@ -63,8 +57,8 @@ class MealService {
         return cachedMeal;
       }
 
-      // Fetch from FatSecret API
-      final apiMeal = await _fatSecretService.getFoodById(id);
+      // Fetch from USDA API
+      final apiMeal = await _usdaService.getFoodById(id);
       
       if (apiMeal != null) {
         await _dbService.cacheMeal(apiMeal);

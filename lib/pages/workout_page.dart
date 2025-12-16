@@ -298,6 +298,13 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         _playingIndex = null;
         _remainingSeconds = null;
       });
+    } catch (e) {
+       print("Workout completion error: $e");
+       if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text("Issues saving workout. Check internet.")),
+         );
+       }
     } finally {
       if (mounted) {
         setState(() {
@@ -530,62 +537,37 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                       SizedBox(height: SizeConfig.h(24)),
                     ],
 
-                    // Divider before My Plans
+                    // Divider before My Plans - MOVED AFTER CAPSULE
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: horizontal),
+                    //   child: Divider(color: borderColor, thickness: 1),
+                    // ),
+                    // SizedBox(height: SizeConfig.h(24)),
+
+                    // 5. Create Plan Capsule
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: _buildCreatePlanCapsule(context),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(24)),
+                    
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Divider(color: borderColor, thickness: 1),
                     ),
+                    
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // 5. My Plans Section (Always show)
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "My Plans",
-                            style: TextStyle(
-                              fontSize: SizeConfig.sp(18),
-                              fontWeight: FontWeight.w600,
-                              color: primaryText,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const CreateWorkoutPlanPage()),
-                              );
-                              if (result == true) {
-                                _loadWorkouts();
-                                _loadUserPlans();
-                              }
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFCEF24B),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, size: 16, color: Colors.black),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "Create Plan",
-                                    style: TextStyle(
-                                      fontSize: SizeConfig.sp(12),
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        "My Plans",
+                        style: TextStyle(
+                          fontSize: SizeConfig.sp(18),
+                          fontWeight: FontWeight.w600,
+                          color: primaryText,
+                        ),
                       ),
                     ),
                     SizedBox(height: SizeConfig.h(12)),
@@ -613,7 +595,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                     ),
                                     SizedBox(height: SizeConfig.h(12)),
                                     Text(
-                                      'No workout plans yet',
+                                      'Generate a workout plan',
                                       style: TextStyle(
                                         fontSize: SizeConfig.sp(16),
                                         fontWeight: FontWeight.w600,
@@ -622,7 +604,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                     ),
                                     SizedBox(height: SizeConfig.h(6)),
                                     Text(
-                                      'Tap "Create Plan" to get started',
+                                      'Use our AI to create a custom routine',
                                       style: TextStyle(
                                         fontSize: SizeConfig.sp(13),
                                         color: isDarkMode ? Colors.white54 : Colors.black38,
@@ -697,15 +679,42 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                     // Workout cards
                     if (_filteredWorkouts.isEmpty)
                       Padding(
-                        padding: EdgeInsets.all(horizontal),
-                        child: Center(
-                          child: Text(
-                            "No workouts found for this category",
-                            style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white54
-                                  : Colors.grey.shade600,
-                              fontSize: SizeConfig.sp(14),
+                        padding: EdgeInsets.symmetric(horizontal: horizontal),
+                        child: Container(
+                          padding: EdgeInsets.all(SizeConfig.w(24)),
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDarkMode ? Colors.white10 : Colors.black12,
+                            ),
+                          ),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.fitness_center_outlined,
+                                  size: SizeConfig.w(48),
+                                  color: isDarkMode ? Colors.white54 : Colors.black38,
+                                ),
+                                SizedBox(height: SizeConfig.h(12)),
+                                Text(
+                                  "It's a rest day or no active plans",
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(16),
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                                  ),
+                                ),
+                                SizedBox(height: SizeConfig.h(6)),
+                                Text(
+                                  "Tap + to add a custom workout",
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(13),
+                                    color: isDarkMode ? Colors.white54 : Colors.black38,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -755,7 +764,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
               ),
         ),
       ),
-      ),
+    ),
       
       // Page-wide Loading Overlay
       if (_isSubmitting)
@@ -780,6 +789,109 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCreatePlanCapsule(BuildContext context) {
+    final isDarkMode = ref.watch(themeProvider);
+    final limeColor = const Color(0xFFCEF24B);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CreateWorkoutPlanPage()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: SizeConfig.h(120),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(SizeConfig.w(24)),
+           gradient: LinearGradient(
+              colors: isDarkMode
+                ? [const Color(0xFF1A1A1A), const Color(0xFF2C2C2C)] // Dark Surface
+                : [const Color(0xFFF9FBE7), const Color(0xFFF0F4C3)], // Light Lime
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+           ),
+           border: Border.all(
+              color: isDarkMode ? limeColor.withOpacity(0.3) : limeColor.withOpacity(0.5),
+              width: 1,
+           ),
+           boxShadow: [
+              BoxShadow(
+                  color: limeColor.withOpacity(isDarkMode ? 0.15 : 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+              ),
+           ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              bottom: -20,
+               child: Icon(
+                Icons.fitness_center_rounded,
+                size: SizeConfig.w(140),
+                color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+              ),
+            ),
+            Padding(
+               padding: EdgeInsets.all(SizeConfig.w(24)),
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                            Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                    color: limeColor,
+                                    borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                    "AI POWERED",
+                                    style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Create a workout plan",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(20), 
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black87
+                              ),
+                            ),
+                            Text(
+                              "Tailored to your fitness goals",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(12),
+                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.arrow_forward, color: isDarkMode ? Colors.white : Colors.black),
+                    )
+                 ],
+               ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

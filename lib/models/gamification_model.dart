@@ -13,6 +13,7 @@ class UserStats {
   final int workoutStreak;
   final DateTime? lastDietLogDate;
   final DateTime? lastWorkoutLogDate;
+  final List<DateTime> activityDates;
 
   UserStats({
     required this.currentXp,
@@ -24,6 +25,7 @@ class UserStats {
     this.workoutStreak = 0,
     this.lastDietLogDate,
     this.lastWorkoutLogDate,
+    this.activityDates = const [],
   });
 
   factory UserStats.initial() {
@@ -34,6 +36,7 @@ class UserStats {
       longestStreak: 0,
       dietStreak: 0,
       workoutStreak: 0,
+      activityDates: [],
     );
   }
 
@@ -47,6 +50,7 @@ class UserStats {
     int? workoutStreak,
     DateTime? lastDietLogDate,
     DateTime? lastWorkoutLogDate,
+    List<DateTime>? activityDates,
   }) {
     return UserStats(
       currentXp: currentXp ?? this.currentXp,
@@ -58,6 +62,7 @@ class UserStats {
       workoutStreak: workoutStreak ?? this.workoutStreak,
       lastDietLogDate: lastDietLogDate ?? this.lastDietLogDate,
       lastWorkoutLogDate: lastWorkoutLogDate ?? this.lastWorkoutLogDate,
+      activityDates: activityDates ?? this.activityDates,
     );
   }
 
@@ -72,6 +77,7 @@ class UserStats {
       'workoutStreak': workoutStreak,
       'lastDietLogDate': lastDietLogDate?.toIso8601String(),
       'lastWorkoutLogDate': lastWorkoutLogDate?.toIso8601String(),
+      'activityDates': activityDates.map((d) => d.toIso8601String()).toList(),
     };
   }
 
@@ -98,6 +104,12 @@ class UserStats {
               ? (json['lastWorkoutLogDate'] as Timestamp).toDate()
               : DateTime.parse(json['lastWorkoutLogDate'] as String))
           : null,
+      activityDates: (json['activityDates'] as List<dynamic>?)
+              ?.map((e) => e is Timestamp 
+                  ? e.toDate() 
+                  : DateTime.parse(e as String))
+              .toList() ??
+          [],
     );
   }
 }

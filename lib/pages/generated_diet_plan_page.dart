@@ -5,16 +5,19 @@ import '../components/auth/auth_glass_card.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
 import '../components/common/global_back_button.dart';
 
-class GeneratedDietPlanPage extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/user_profile_provider.dart';
+
+class GeneratedDietPlanPage extends ConsumerStatefulWidget {
   final DietPlan dietPlan;
 
   const GeneratedDietPlanPage({super.key, required this.dietPlan});
 
   @override
-  State<GeneratedDietPlanPage> createState() => _GeneratedDietPlanPageState();
+  ConsumerState<GeneratedDietPlanPage> createState() => _GeneratedDietPlanPageState();
 }
 
-class _GeneratedDietPlanPageState extends State<GeneratedDietPlanPage> with TickerProviderStateMixin {
+class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _animationController;
 
@@ -46,6 +49,15 @@ class _GeneratedDietPlanPageState extends State<GeneratedDietPlanPage> with Tick
 
       final service = NutritionService();
       await service.saveDietPlan(widget.dietPlan);
+      
+      // Instantly update user profile goals locally and sync
+      await ref.read(userProfileProvider.notifier).updateGoals(
+        dailyCalorieGoal: widget.dietPlan.dailyCalories,
+        // We could also update weight goal if the plan has one, but it's usually separate
+      );
+      
+      // Force reload to ensure everything is consistent
+      await ref.read(userProfileProvider.notifier).loadProfile();
 
       if (!mounted) return;
       Navigator.pop(context); // Pop dialog
@@ -58,7 +70,9 @@ class _GeneratedDietPlanPageState extends State<GeneratedDietPlanPage> with Tick
       );
 
       // Navigate back to Diet Page
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      // Navigate back to Diet Page (Pop GeneratedPage and GeneratePage)
+      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
       
     } catch (e) {
       if (!mounted) return;
@@ -74,7 +88,7 @@ class _GeneratedDietPlanPageState extends State<GeneratedDietPlanPage> with Tick
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.grey[50],
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
         leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
         // title removed
@@ -138,7 +152,7 @@ class _GeneratedDietPlanPageState extends State<GeneratedDietPlanPage> with Tick
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF1A1A2E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+          color: isDarkMode ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.95),
           border: Border(top: BorderSide(color: isDarkMode ? Colors.white10 : Colors.black12)),
           boxShadow: [
             BoxShadow(

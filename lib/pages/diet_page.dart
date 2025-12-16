@@ -41,6 +41,8 @@ class _DietPageState extends ConsumerState<DietPage>
 
   late Animation<Offset> _slideAnimation;
   final GlobalKey<StreakCelebrationOverlayState> _celebrationKey = GlobalKey();
+  
+  Map<DateTime, DailyNutrition> _historyMap = {};
 
   @override
   void initState() {
@@ -61,6 +63,7 @@ class _DietPageState extends ConsumerState<DietPage>
         );
 
     _loadData(_currentDate);
+    _loadHistory(); // Fetch calendar dots data
   }
 
   @override
@@ -118,6 +121,25 @@ class _DietPageState extends ConsumerState<DietPage>
     }
   }
 
+  Future<void> _loadHistory() async {
+    try {
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 30)); // Fetch last 30 days
+      final history = await _nutritionService.getNutritionHistory(start, end);
+      
+      if (mounted) {
+        setState(() {
+          _historyMap = {
+            for (var item in history)
+              DateTime(item.date.year, item.date.month, item.date.day): item
+          };
+        });
+      }
+    } catch (e) {
+      print("Error loading history: $e");
+    }
+  }
+
   Future<void> _addWater(int amount) async {
     HapticFeedback.lightImpact();
     await _nutritionService.logWater(amount);
@@ -138,7 +160,9 @@ class _DietPageState extends ConsumerState<DietPage>
   Future<void> _deleteMeal(String mealId) async {
     HapticFeedback.mediumImpact();
     await _nutritionService.deleteMeal(_currentDate, mealId);
+    await _nutritionService.deleteMeal(_currentDate, mealId);
     _loadData(_currentDate);
+    _loadHistory();
   }
 
   Future<void> _addMeal(Meal meal) async {
@@ -161,7 +185,17 @@ class _DietPageState extends ConsumerState<DietPage>
       ),
     );
 
-    await _nutritionService.logMeal(newMeal);
+    try {
+      await _nutritionService.logMeal(newMeal);
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Dismiss loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Error adding meal: $e. Saved locally if possible.')),
+        );
+      }
+      return; // Stop execution
+    }
     
     if (mounted) Navigator.pop(context); // Dismiss loading
 
@@ -234,6 +268,7 @@ class _DietPageState extends ConsumerState<DietPage>
       }
       
       _loadData(_currentDate); // Refresh data
+      _loadHistory();
     }
   }
 
@@ -396,6 +431,7 @@ class _DietPageState extends ConsumerState<DietPage>
                           selectedDate: _currentDate,
                           onDateSelected: (date) => _loadData(date),
                           minDate: FirebaseAuth.instance.currentUser?.metadata.creationTime,
+                          historyData: _historyMap,
                         ),
 
                         SizedBox(height: SizeConfig.h(20)),
@@ -445,7 +481,7 @@ class _DietPageState extends ConsumerState<DietPage>
                             horizontal: SizeConfig.w(16),
                           ),
                           child: _dailyNutrition!.meals.isEmpty
-                              ? _buildEmptyMealsState(isDarkMode)
+                              ? _buildEmptyMealsState(isDarkMode, _currentDate)
                               : Column(
                                   children: _dailyNutrition!.meals
                                       .map(
@@ -633,7 +669,10 @@ class _DietPageState extends ConsumerState<DietPage>
     );
   }
 
-  Widget _buildEmptyMealsState(bool isDarkMode) {
+  Widget _buildEmptyMealsState(bool isDarkMode, DateTime date) {
+    bool isToday = _isSameDay(date, DateTime.now());
+    bool isPast = date.isBefore(DateTime.now()) && !isToday;
+
     return Container(
       padding: EdgeInsets.all(SizeConfig.w(24)),
       decoration: BoxDecoration(
@@ -650,21 +689,23 @@ class _DietPageState extends ConsumerState<DietPage>
             ),
             SizedBox(height: SizeConfig.h(12)),
             Text(
-              'No meals logged yet',
+              isPast ? 'No meals were logged on this day' : 'No meals logged yet',
               style: TextStyle(
                 fontSize: SizeConfig.sp(16),
                 fontWeight: FontWeight.w600,
                 color: isDarkMode ? Colors.white70 : Colors.black54,
               ),
             ),
-            SizedBox(height: SizeConfig.h(6)),
-            Text(
-              'Tap "Add Meal" to get started',
-              style: TextStyle(
-                fontSize: SizeConfig.sp(13),
-                color: isDarkMode ? Colors.white54 : Colors.black38,
+            if (isToday) ...[
+              SizedBox(height: SizeConfig.h(6)),
+              Text(
+                'Tap "Add Meal" to get started',
+                style: TextStyle(
+                  fontSize: SizeConfig.sp(13),
+                  color: isDarkMode ? Colors.white54 : Colors.black38,
+                ),
               ),
-            ),
+            ]
           ],
         ),
       ),
@@ -737,7 +778,7 @@ class _DietPageState extends ConsumerState<DietPage>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              "Create a Plan",
+                              "Create a diet plan",
                               style: TextStyle(
                                 fontSize: SizeConfig.sp(20), 
                                 fontWeight: FontWeight.bold,

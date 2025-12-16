@@ -168,12 +168,18 @@ class GamificationFirestoreService extends BaseFirestoreService {
             newStreak = 1;
           }
           
+          
           updates['${FirestoreFields.stats}.${FirestoreFields.currentStreak}'] = newStreak;
           updates['${FirestoreFields.stats}.${FirestoreFields.lastLogDate}'] = Timestamp.fromDate(date);
           
           if (newStreak > longestStreak) {
             updates['${FirestoreFields.stats}.${FirestoreFields.longestStreak}'] = newStreak;
           }
+
+          // Add to activity history for heatmap
+          // Normalize to midnight to avoid duplicates for same day
+          final activityDate = DateTime(date.year, date.month, date.day);
+          updates['${FirestoreFields.stats}.activityDates'] = FieldValue.arrayUnion([activityDate.toIso8601String()]);
           
           transaction.update(docRef, updates);
         });

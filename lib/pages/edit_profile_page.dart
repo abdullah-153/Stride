@@ -7,6 +7,7 @@ import '../utils/image_picker_helper.dart';
 import '../utils/validators.dart';
 import '../utils/size_config.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
+import '../components/common/global_back_button.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -93,13 +94,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: isDarkMode ? Colors.white : Colors.black,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
         title: Text(
           'Edit Profile',
           style: TextStyle(

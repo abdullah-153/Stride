@@ -12,6 +12,7 @@ import 'utils/app_constants.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'services/auth_service.dart';
 import 'firebase_options.dart';
+import 'providers/user_profile_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,11 +78,18 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-
+    // Also watch profile to determine if onboarding is needed
+    // We only care if auth is data (logged in).
+    
     return authState.when(
       data: (user) {
         if (user != null) {
-          return const HomeScreen();
+            // User is logged in, check profile
+            // We use a separate FutureBuilder or watch the provider if it's available globally
+            // Assuming userProfileProvider depends on auth, it should be available.
+            
+            // We need to return a widget that handles the profile check.
+            return const ProfileCheckGate();
         }
         return const StartupPage();
       },
@@ -91,6 +99,27 @@ class AuthGate extends ConsumerWidget {
       error: (e, trace) => Scaffold(
         body: Center(child: Text('Error: $e')),
       ),
+    );
+  }
+}
+
+class ProfileCheckGate extends ConsumerWidget {
+  const ProfileCheckGate({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(userProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        if (profile != null) {
+          return const HomeScreen();
+        } else {
+          return OnboardingPage();
+        }
+      },
+      loading: () => const Scaffold(body: Center(child: BouncingDotsIndicator())),
+      error: (e, stack) => const Scaffold(body: Center(child: BouncingDotsIndicator())),
     );
   }
 }
