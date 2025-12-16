@@ -23,59 +23,7 @@ class MealHistoryCalendar extends StatefulWidget {
   State<MealHistoryCalendar> createState() => _MealHistoryCalendarState();
 }
 
-class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
-  // We will show up to 14 days ending today.
-  
-  @override
-  Widget build(BuildContext context) {
-    // ... (rest of build method unchanged until we hit _getGoalStatusColor usage)
-    // Actually, I am ONLY replacing the class definition and _getGoalStatusColor method. 
-    // But replace_file_content targets contiguous blocks.
-    // I can replace the top, and then I have to replace the bottom separately?
-    // Or I can replace the whole file content? No, risky.
-    // I will use MultiReplaceFileContent since I need to import too.
-    // Actually, simple ReplaceFileContent for the method `_getGoalStatusColor` first.
-    // Then another for Constructor.
-    // Wait, adding Import at top too.
-    
-    // I will use `MultiReplaceFileContent`.
-    
-    // Chunk 1: Imports + Class Definition.
-    // Chunk 2: _getGoalStatusColor implementation.
-    return Container(); // Dummy return for thinking block
-  }
 
-  Color _getGoalStatusColor(DateTime date) {
-    // Normalize date to midnight for lookup
-    final normalizedDate = DateTime(date.year, date.month, date.day);
-    
-    // Check history data if available
-    if (widget.historyData != null && widget.historyData!.containsKey(normalizedDate)) {
-      final data = widget.historyData![normalizedDate]!;
-      if (data.calorieGoalMet) return Colors.green;
-      if (data.meals.isNotEmpty) return Colors.orange;
-      return Colors.red.withOpacity(0.5);
-    }
-    
-    // Future check
-    final now = DateTime.now();
-    final normalizedNow = DateTime(now.year, now.month, now.day);
-    if (normalizedDate.isAfter(normalizedNow)) return Colors.transparent;
-
-    // Creation date check
-    if (widget.minDate != null) {
-       final normalizedMin = DateTime(widget.minDate!.year, widget.minDate!.month, widget.minDate!.day);
-       if (normalizedDate.isBefore(normalizedMin)) return Colors.transparent;
-    }
-
-    // Default to Red (Missed/No Log)
-    return Colors.red.withOpacity(0.5);
-  }
-}
-
-  @override
-  State<MealHistoryCalendar> createState() => _MealHistoryCalendarState();
-}
 
 class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
   // We will show up to 14 days ending today.

@@ -3,7 +3,7 @@ import '../services/ai_diet_service.dart';
 import '../models/diet_plan_model.dart';
 import 'generated_diet_plan_page.dart';
 import '../utils/size_config.dart';
-import '../components/auth/auth_glass_card.dart';
+// import '../components/auth/auth_glass_card.dart'; // Removed to use custom container
 import '../components/diet/premium_slider.dart';
 import '../components/diet/premium_selector.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
@@ -11,6 +11,7 @@ import '../components/common/global_back_button.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_profile_provider.dart';
+import '../providers/theme_provider.dart'; // Added import
 
 class GenerateDietPage extends ConsumerStatefulWidget {
   const GenerateDietPage({super.key});
@@ -80,7 +81,7 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = ref.watch(themeProvider);
     
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : Colors.white, // Pure black/white
@@ -128,7 +129,20 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
                  const SizedBox(height: 30),
                  
                  _buildAnimatedSection(2, _buildSectionTitle('Biometrics', isDarkMode)),
-                 _buildAnimatedSection(3, AuthGlassCard(
+                 _buildAnimatedSection(3, Container(
+                   padding: const EdgeInsets.all(20),
+                   decoration: BoxDecoration(
+                     color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                     borderRadius: BorderRadius.circular(20),
+                     border: Border.all(color: isDarkMode ? Colors.white10 : Colors.grey.shade200),
+                     boxShadow: [
+                       BoxShadow(
+                         color: isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.1),
+                         blurRadius: 10,
+                         offset: const Offset(0, 4),
+                       ),
+                     ],
+                   ),
                    child: Column(
                      children: [
                        // 1. Read-Only Personal Data Summary (Premium Look)
@@ -219,7 +233,20 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage> with Single
                  
                  const SizedBox(height: 30),
                  _buildAnimatedSection(4, _buildSectionTitle('Cuisine', isDarkMode)),
-                 _buildAnimatedSection(5, AuthGlassCard(
+                 _buildAnimatedSection(5, Container(
+                   padding: const EdgeInsets.all(20),
+                   decoration: BoxDecoration(
+                     color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                     borderRadius: BorderRadius.circular(20),
+                     border: Border.all(color: isDarkMode ? Colors.white10 : Colors.grey.shade200),
+                     boxShadow: [
+                       BoxShadow(
+                         color: isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.1),
+                         blurRadius: 10,
+                         offset: const Offset(0, 4),
+                       ),
+                     ],
+                   ),
                    child: PremiumSelector<String>(
                      label: 'Preferred Region',
                      items: _regions,
