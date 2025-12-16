@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/size_config.dart';
@@ -26,7 +26,8 @@ class GoalPage extends ConsumerStatefulWidget {
   ConsumerState<GoalPage> createState() => _GoalPageState();
 }
 
-class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderStateMixin {
+class _GoalPageState extends ConsumerState<GoalPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -48,10 +49,7 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
   }
@@ -64,30 +62,34 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
 
   Future<void> _saveAndContinue() async {
     setState(() => _isSaving = true);
-    
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       final name = user?.displayName ?? 'User';
-      
+
       final newProfile = UserProfile(
         name: name,
         age: widget.selectedAge,
         gender: widget.selectedGender,
         height: widget.selectedHeight,
         weight: widget.selectedWeight,
-        bio: widget.selectedFitnessLevel, // Storing fitness level in bio for now or we could add a field
+        bio: widget
+            .selectedFitnessLevel, // Storing fitness level in bio for now or we could add a field
         weeklyWorkoutGoal: 4, // Default
         dailyCalorieGoal: 2000, // Default, will be recalculated
       );
 
       await ref.read(userProfileProvider.notifier).updateProfile(newProfile);
-      
+
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving profile: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error saving profile: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -103,7 +105,6 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
       backgroundColor: Colors.black, // Premium Dark Background
       body: Stack(
         children: [
-          // Background Elements (Subtle Glow)
           Positioned(
             top: -SizeConfig.screenHeight * 0.1,
             right: -SizeConfig.screenWidth * 0.2,
@@ -123,7 +124,7 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24)),
@@ -131,14 +132,13 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: SizeConfig.h(40)),
-                  
-                  // Header
+
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Text(
+                        Text(
                           "YOU'RE ALL SET!",
                           style: TextStyle(
                             fontSize: SizeConfig.sp(14),
@@ -163,7 +163,6 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
 
                   SizedBox(height: SizeConfig.h(40)),
 
-                  // Summary Card
                   SlideTransition(
                     position: _slideAnimation,
                     child: Container(
@@ -196,8 +195,7 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                             ),
                           ),
                           SizedBox(height: SizeConfig.h(20)),
-                          
-                          // Stats Grid
+
                           Row(
                             children: [
                               _buildStatItem(
@@ -229,14 +227,14 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                               ),
                             ],
                           ),
-                          
+
                           SizedBox(height: SizeConfig.h(24)),
                           Container(
                             height: 1,
                             color: Colors.white.withOpacity(0.1),
                           ),
                           SizedBox(height: SizeConfig.h(24)),
-                          
+
                           Text(
                             "FITNESS LEVEL",
                             style: TextStyle(
@@ -249,8 +247,8 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                           SizedBox(height: SizeConfig.h(12)),
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.w(16), 
-                              vertical: SizeConfig.h(12)
+                              horizontal: SizeConfig.w(16),
+                              vertical: SizeConfig.h(12),
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.accentGreen.withOpacity(0.2),
@@ -263,7 +261,7 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.fitness_center, 
+                                  Icons.fitness_center,
                                   color: AppColors.accentGreen,
                                   size: SizeConfig.sp(18),
                                 ),
@@ -283,10 +281,9 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                       ),
                     ),
                   ),
-                  
+
                   const Spacer(),
-                  
-                  // Continue Button
+
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: SizedBox(
@@ -302,20 +299,23 @@ class _GoalPageState extends ConsumerState<GoalPage> with SingleTickerProviderSt
                             borderRadius: BorderRadius.circular(28),
                           ),
                         ),
-                        child: _isSaving 
-                          ? const SizedBox(
-                              height: 24, 
-                              width: 24, 
-                              child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)
-                            )
-                          : Text(
-                              "Let's Get Started",
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(16),
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Let's Get Started",
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(16),
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
                       ),
                     ),
                   ),

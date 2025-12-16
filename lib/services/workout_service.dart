@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
@@ -22,79 +22,79 @@ class WorkoutService {
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
-  // _initializeWorkoutLibrary removed to prevent seeding dummy data
 
   Future<List<Workout>> getTodayWorkouts() async {
     try {
-      // Check for active plan first
       if (_currentUserId != null) {
-        final activePlanData = await _planService.getActiveWorkoutPlan(_currentUserId!);
+        final activePlanData = await _planService.getActiveWorkoutPlan(
+          _currentUserId!,
+        );
         if (activePlanData != null) {
-           final planId = activePlanData['planId'];
-           final currentDay = activePlanData['currentDay'] as int;
-           
-           final plan = await _planService.getWorkoutPlan(_currentUserId!, planId);
-           if (plan != null) {
-              final weeklyPlan = plan['weeklyPlan'] as List;
-              var dayData = weeklyPlan.firstWhere(
-                  (day) => day['day'] == currentDay, 
-                  orElse: () => null
-              );
-              
-               if (dayData != null) {
-                  final exercisesList = dayData['exercises'] as List;
-                  List<Workout> workouts = [];
-                  
-                  for (var i = 0; i < exercisesList.length; i++) {
-                     final ex = exercisesList[i];
-                     
-                     // Parse reps
-                     int? repsInt;
-                     var repsVal = ex['reps'];
-                     if (repsVal is int) {
-                        repsInt = repsVal;
-                     } else if (repsVal is String) {
-                        final parts = repsVal.split('-');
-                        if (parts.isNotEmpty) {
-                           repsInt = int.tryParse(parts[0]);
-                        }
-                     }
-                     
-                     // Get exercise duration
-                     final exerciseMinutes = ex['estimatedMinutes'] as int? ?? 5;
-                     
-                     // Create single exercise
-                     final exercise = Exercise(
-                        name: (ex['name'] as String?) ?? 'Exercise',
-                        sets: ex['sets'] as int?,
-                        reps: repsInt,
-                        muscleGroups: ex['targetMuscle'] != null ? [(ex['targetMuscle'] as String)] : const <String>[], 
-                     );
+          final planId = activePlanData['planId'];
+          final currentDay = activePlanData['currentDay'] as int;
 
-                     // Create individual workout for this exercise
-                     final workout = Workout(
-                       id: 'plan_${planId}_day_${currentDay}_ex_$i',
-                       title: ex['name'] ?? 'Exercise ${i + 1}',
-                       category: WorkoutCategory.strength,
-                       durationMinutes: exerciseMinutes,
-                       caloriesBurned: (exerciseMinutes * 6.5).round(),
-                       points: 10,
-                       difficulty: DifficultyLevel.intermediate,
-                       exercises: [exercise],
-                       description: '${ex['sets']} sets × ${ex['reps']} reps',
-                       isRecommended: false,
-                     );
-                     
-                     workouts.add(workout);
+          final plan = await _planService.getWorkoutPlan(
+            _currentUserId!,
+            planId,
+          );
+          if (plan != null) {
+            final weeklyPlan = plan['weeklyPlan'] as List;
+            var dayData = weeklyPlan.firstWhere(
+              (day) => day['day'] == currentDay,
+              orElse: () => null,
+            );
+
+            if (dayData != null) {
+              final exercisesList = dayData['exercises'] as List;
+              List<Workout> workouts = [];
+
+              for (var i = 0; i < exercisesList.length; i++) {
+                final ex = exercisesList[i];
+
+                int? repsInt;
+                var repsVal = ex['reps'];
+                if (repsVal is int) {
+                  repsInt = repsVal;
+                } else if (repsVal is String) {
+                  final parts = repsVal.split('-');
+                  if (parts.isNotEmpty) {
+                    repsInt = int.tryParse(parts[0]);
                   }
-                  
-                  return workouts;
-               }
-           }
+                }
+
+                final exerciseMinutes = ex['estimatedMinutes'] as int? ?? 5;
+
+                final exercise = Exercise(
+                  name: (ex['name'] as String?) ?? 'Exercise',
+                  sets: ex['sets'] as int?,
+                  reps: repsInt,
+                  muscleGroups: ex['targetMuscle'] != null
+                      ? [(ex['targetMuscle'] as String)]
+                      : const <String>[],
+                );
+
+                final workout = Workout(
+                  id: 'plan_${planId}_day_${currentDay}_ex_$i',
+                  title: ex['name'] ?? 'Exercise ${i + 1}',
+                  category: WorkoutCategory.strength,
+                  durationMinutes: exerciseMinutes,
+                  caloriesBurned: (exerciseMinutes * 6.5).round(),
+                  points: 10,
+                  difficulty: DifficultyLevel.intermediate,
+                  exercises: [exercise],
+                  description: '${ex['sets']} sets Ãƒâ€” ${ex['reps']} reps',
+                  isRecommended: false,
+                );
+
+                workouts.add(workout);
+              }
+
+              return workouts;
+            }
+          }
         }
       }
 
-      // No active plan? Return empty list instead of random dummy data
       return [];
     } catch (e) {
       print('Error getting today workouts: $e');
@@ -112,7 +112,6 @@ class WorkoutService {
   }
 
   Future<List<Workout>> getRecommendedWorkouts() async {
-    // Removed placeholder workouts - only show active plan workouts
     return [];
   }
 
@@ -152,12 +151,11 @@ class WorkoutService {
       await profileService.incrementWorkoutsCompleted();
     } catch (e) {
       print('Error completing workout (offline mode): $e');
-      
-      // Offline Store Logic
+
       try {
         final prefs = await SharedPreferences.getInstance();
         final pendingWorkouts = prefs.getStringList('pending_workouts') ?? [];
-        
+
         final offlineData = {
           'userId': _currentUserId,
           'workout': workout.toJson(),
@@ -165,17 +163,14 @@ class WorkoutService {
           'notes': notes,
           'completedAt': DateTime.now().toIso8601String(),
         };
-        
+
         pendingWorkouts.add(jsonEncode(offlineData));
         await prefs.setStringList('pending_workouts', pendingWorkouts);
         print('Workout saved locally for later sync');
-        
-        // Optimistically treat as success for the UI
-        return; 
+
+        return;
       } catch (innerE) {
         print('Error saving locally: $innerE');
-        // If even local save fails, then we might want to rethrow or just fail silently
-        // But rethrow is probably better here to let UI know something is really wrong
         rethrow;
       }
     }

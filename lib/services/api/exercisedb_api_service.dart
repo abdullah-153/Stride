@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ExerciseDBService {
@@ -7,8 +7,9 @@ class ExerciseDBService {
   ExerciseDBService._internal();
 
   static const String _baseUrl = 'https://exercisedb.p.rapidapi.com';
-  
-  static const String _apiKey = '062805dc92mshc3188d9b8cb9782p135bcajsn79aaa48cb366';
+
+  static const String _apiKey =
+      '062805dc92mshc3188d9b8cb9782p135bcajsn79aaa48cb366';
   static const String _apiHost = 'exercisedb.p.rapidapi.com';
 
   Map<String, String> get _headers => {
@@ -16,7 +17,10 @@ class ExerciseDBService {
     'X-RapidAPI-Host': _apiHost,
   };
 
-  Future<List<Map<String, dynamic>>> getAllExercises({int limit = 10, int offset = 0}) async {
+  Future<List<Map<String, dynamic>>> getAllExercises({
+    int limit = 10,
+    int offset = 0,
+  }) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/exercises?limit=$limit&offset=$offset'),
@@ -25,7 +29,9 @@ class ExerciseDBService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List;
-        return data.map((exercise) => _parseExercise(exercise as Map<String, dynamic>)).toList();
+        return data
+            .map((exercise) => _parseExercise(exercise as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to get exercises: ${response.statusCode}');
       }
@@ -54,7 +60,10 @@ class ExerciseDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getExercisesByBodyPart(String bodyPart, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByBodyPart(
+    String bodyPart, {
+    int limit = 10,
+  }) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/exercises/bodyPart/$bodyPart?limit=$limit'),
@@ -63,9 +72,13 @@ class ExerciseDBService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List;
-        return data.map((exercise) => _parseExercise(exercise as Map<String, dynamic>)).toList();
+        return data
+            .map((exercise) => _parseExercise(exercise as Map<String, dynamic>))
+            .toList();
       } else {
-        throw Exception('Failed to get exercises by body part: ${response.statusCode}');
+        throw Exception(
+          'Failed to get exercises by body part: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error getting exercises by body part: $e');
@@ -73,7 +86,10 @@ class ExerciseDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getExercisesByEquipment(String equipment, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByEquipment(
+    String equipment, {
+    int limit = 10,
+  }) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/exercises/equipment/$equipment?limit=$limit'),
@@ -82,9 +98,13 @@ class ExerciseDBService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List;
-        return data.map((exercise) => _parseExercise(exercise as Map<String, dynamic>)).toList();
+        return data
+            .map((exercise) => _parseExercise(exercise as Map<String, dynamic>))
+            .toList();
       } else {
-        throw Exception('Failed to get exercises by equipment: ${response.statusCode}');
+        throw Exception(
+          'Failed to get exercises by equipment: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error getting exercises by equipment: $e');
@@ -92,7 +112,10 @@ class ExerciseDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getExercisesByTarget(String target, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByTarget(
+    String target, {
+    int limit = 10,
+  }) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/exercises/target/$target?limit=$limit'),
@@ -101,9 +124,13 @@ class ExerciseDBService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List;
-        return data.map((exercise) => _parseExercise(exercise as Map<String, dynamic>)).toList();
+        return data
+            .map((exercise) => _parseExercise(exercise as Map<String, dynamic>))
+            .toList();
       } else {
-        throw Exception('Failed to get exercises by target: ${response.statusCode}');
+        throw Exception(
+          'Failed to get exercises by target: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error getting exercises by target: $e');

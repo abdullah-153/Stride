@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 import '../models/diet_plan_model.dart';
 
 class AIDietService {
   static const List<String> _apiKeys = [
-    'AIzaSyDCBjX5WeMdX-ZlW_Ap9JV0H0tQx8JiTJ0', 
+    'AIzaSyDCBjX5WeMdX-ZlW_Ap9JV0H0tQx8JiTJ0',
     'AIzaSyAL54y5K_etp88QxrTM56BJt5_lQsG_CUA',
     'AIzaSyAvHrGeUdRR0Qq6HXFf2MQriGbbgUfsA98',
     'AIzaSyALUEk3_qkW4bMtDKPLbYdAlZ0pQ1UZRrU',
@@ -17,9 +17,7 @@ class AIDietService {
     return GenerativeModel(
       model: 'gemini-2.5-flash-lite',
       apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        responseMimeType: 'application/json',
-      ),
+      generationConfig: GenerationConfig(responseMimeType: 'application/json'),
     );
   }
 
@@ -38,7 +36,8 @@ class AIDietService {
     required List<String> allergies,
     required int mealsPerDay,
   }) async {
-    final prompt = """
+    final prompt =
+        """
       Generate a detailed 7-day diet plan json based on the following user profile:
       - Current Weight: ${currentWeight}kg
       - Target Weight: ${targetWeight}kg
@@ -83,41 +82,44 @@ class AIDietService {
     """;
 
     final content = [Content.text(prompt)];
-    
-    // Simple round-robin pseudo-random start to distribute load
-    int currentKeyIndex = DateTime.now().millisecondsSinceEpoch % _apiKeys.length;
+
+    int currentKeyIndex =
+        DateTime.now().millisecondsSinceEpoch % _apiKeys.length;
 
     for (int i = 0; i < _apiKeys.length; i++) {
       final apiKey = _apiKeys[(currentKeyIndex + i) % _apiKeys.length];
       try {
         final model = _getModel(apiKey);
         if (kDebugMode) {
-          print("Generating diet plan with key ending in ...${apiKey.substring(apiKey.length - 6)}");
+          print(
+            "Generating diet plan with key ending in ...${apiKey.substring(apiKey.length - 6)}",
+          );
         }
-        
+
         final response = await model.generateContent(content);
 
         if (response.text == null) {
           throw Exception('AI returned empty response');
         }
 
-        // Clean up json markdown if strictly needed, though responseMimeType usually handles it
-        String cleanJson = response.text!.replaceAll('```json', '').replaceAll('```', '').trim();
+        String cleanJson = response.text!
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
         final Map<String, dynamic> jsonMap = jsonDecode(cleanJson);
-        
-        return DietPlan.fromJson(jsonMap);
 
+        return DietPlan.fromJson(jsonMap);
       } catch (e) {
         if (kDebugMode) {
-          print('AI Diet Generation Error with key ...${apiKey.substring(apiKey.length - 6)}: $e');
+          print(
+            'AI Diet Generation Error with key ...${apiKey.substring(apiKey.length - 6)}: $e',
+          );
         }
-        
-        // If it's the last key, rethrow the exception
+
         if (i == _apiKeys.length - 1) {
-             print('All API keys failed for diet generation.');
-             rethrow;
+          print('All API keys failed for diet generation.');
+          rethrow;
         }
-        // Otherwise, continue to the next key
         print('Switching to next API key...');
         continue;
       }

@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/workout_model.dart';
 
 class WorkoutColors {
-  // Category-specific gradient colors
   static const Map<WorkoutCategory, List<Color>> categoryGradients = {
     WorkoutCategory.all: [Color(0xFF667EEA), Color(0xFF764BA2)],
     WorkoutCategory.cardio: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
@@ -13,7 +12,6 @@ class WorkoutColors {
     WorkoutCategory.sports: [Color(0xFF0575E6), Color(0xFF021B79)],
   };
 
-  // Solid colors for category (used for chips, tags, etc.)
   static const Map<WorkoutCategory, Color> categorySolidColors = {
     WorkoutCategory.all: Color(0xFF667EEA),
     WorkoutCategory.cardio: Color(0xFFFF6B6B),
@@ -24,7 +22,6 @@ class WorkoutColors {
     WorkoutCategory.sports: Color(0xFF0575E6),
   };
 
-  /// Get primary color for a category
   static Color getCategoryColor(
     WorkoutCategory category, {
     bool isDark = false,
@@ -33,13 +30,11 @@ class WorkoutColors {
         categorySolidColors[category] ??
         categorySolidColors[WorkoutCategory.all]!;
     if (isDark) {
-      // Lighten color for dark mode
       return Color.lerp(color, Colors.white, 0.2)!;
     }
     return color;
   }
 
-  /// Get gradient colors for a category
   static List<Color> getCategoryGradient(
     WorkoutCategory category, {
     bool isDark = false,
@@ -47,13 +42,11 @@ class WorkoutColors {
     final gradient =
         categoryGradients[category] ?? categoryGradients[WorkoutCategory.all]!;
     if (isDark) {
-      // Adjust gradient for dark mode
       return gradient.map((c) => Color.lerp(c, Colors.white, 0.15)!).toList();
     }
     return gradient;
   }
 
-  /// Get a linear gradient for a category
   static LinearGradient getCategoryLinearGradient(
     WorkoutCategory category, {
     bool isDark = false,
@@ -64,7 +57,6 @@ class WorkoutColors {
     return LinearGradient(colors: colors, begin: begin, end: end);
   }
 
-  /// Get difficulty color
   static Color getDifficultyColor(DifficultyLevel difficulty) {
     switch (difficulty) {
       case DifficultyLevel.beginner:
@@ -76,19 +68,15 @@ class WorkoutColors {
     }
   }
 
-  /// Get muscle group color
   static Color getMuscleGroupColor(String muscleGroup) {
-    // Hash the muscle group name to get consistent color
     final hash = muscleGroup.hashCode;
     final hue = (hash % 360).toDouble();
     return HSLColor.fromAHSL(1.0, hue, 0.6, 0.5).toColor();
   }
 
-  /// Accent color (lime green from existing design)
   static const Color accent = Color.fromRGBO(206, 242, 75, 1);
   static const Color accentDark = Color.fromRGBO(206, 235, 75, 0.8);
 
-  /// Get accent color based on theme
   static Color getAccent({bool isDark = false}) {
     return isDark ? accentDark : accent;
   }

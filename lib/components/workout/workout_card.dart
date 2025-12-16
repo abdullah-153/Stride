@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/animations.dart';
@@ -58,7 +58,7 @@ class _WorkoutCardState extends State<WorkoutCard>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    
+
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -75,12 +75,12 @@ class _WorkoutCardState extends State<WorkoutCard>
   @override
   void didUpdateWidget(covariant WorkoutCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isPaused && !oldWidget.isPaused) {
-       _pulseCtrl.repeat(reverse: true);
+      _pulseCtrl.repeat(reverse: true);
     } else if (!widget.isPaused && oldWidget.isPaused) {
-       _pulseCtrl.stop();
-       _pulseCtrl.reset();
+      _pulseCtrl.stop();
+      _pulseCtrl.reset();
     }
 
     if (oldWidget.isCompleted != widget.isCompleted) {
@@ -88,10 +88,8 @@ class _WorkoutCardState extends State<WorkoutCard>
         _rotateCtrl.forward(from: 0.0);
         _fillCtrl.forward();
       } else {
-        // Restarting from completed state
         _rotateCtrl.reverse();
         if (widget.isPlaying) {
-          // If playing when restarting, ensure fill is forward
           _fillCtrl.forward();
         } else {
           _fillCtrl.reverse();
@@ -101,7 +99,6 @@ class _WorkoutCardState extends State<WorkoutCard>
       if (widget.isPlaying) {
         _fillCtrl.forward();
       } else {
-        // Only reverse if not completed
         if (!widget.isCompleted) {
           _fillCtrl.reverse();
         }
@@ -123,8 +120,6 @@ class _WorkoutCardState extends State<WorkoutCard>
     final width = MediaQuery.of(context).size.width;
     final bool dark = widget.isDarkMode;
 
-    // --- Color Palette (Lime / Black / Grey) ---
-    // IDLE
     final idleBg = dark ? const Color(0xFF1E1E1E) : Colors.grey.shade100;
     final idleText = dark ? Colors.white : Colors.black87;
     final idleSubText = dark ? Colors.white70 : Colors.grey.shade700;
@@ -133,27 +128,22 @@ class _WorkoutCardState extends State<WorkoutCard>
         ? const Color.fromRGBO(0, 0, 0, 0.7)
         : const Color.fromRGBO(0, 0, 0, 0.05);
 
-    // ACTIVE (Playing) - Black/White with Lime hints
-    // Completed state - Requested Black background
-    // Completed state - Subtle Minimal Premium
     final completedBg = dark
-        ? const Color(0xFF2C2C2E) 
-        : const Color(0xFF2C2C2E); 
-    
+        ? const Color(0xFF2C2C2E)
+        : const Color(0xFF2C2C2E);
+
     final completedText = Colors.white; // Clean white text
-    final completedBorder = Colors.transparent; 
+    final completedBorder = Colors.transparent;
     final completedShadow = Colors.black.withOpacity(0.2);
 
     final idleTitle = dark ? Colors.white : Colors.black87;
-    // When playing (wave fills), text should contrast with the wave color (Lime) -> Black text
-    // BUT user said "colors should be subtle". If wave is lime, black text is correct for contrast.
-    final playTitle = Colors.black; 
-    
+    final playTitle = Colors.black;
+
     final idleSubtitle = dark ? Colors.white70 : Colors.grey.shade700;
     final playSubtitle = Colors.black87;
 
-    final waveColor = const Color(0xFFCEF24B); 
-    final waveOpacity = 1.0; 
+    final waveColor = const Color(0xFFCEF24B);
+    final waveOpacity = 1.0;
 
     final cardWidth = width * 0.42;
     final cardHeight = width * 0.58;
@@ -164,22 +154,19 @@ class _WorkoutCardState extends State<WorkoutCard>
         final t = _fillCtrl.value.clamp(0.0, 1.0);
         final phase = _waveCtrl.value * 2 * pi;
 
-        // NO FADE ANIMATION for background
         final bgColor = widget.isCompleted ? completedBg : idleBg;
 
         Color textColor;
         Color subTextColor;
 
         if (widget.isCompleted) {
-           textColor = completedText;
-           subTextColor = completedText.withOpacity(0.7);
+          textColor = completedText;
+          subTextColor = completedText.withOpacity(0.7);
         } else {
-           // As wave fills (t goes 0->1), text turns black to be visible on Lime
-           textColor = Color.lerp(idleTitle, playTitle, t)!;
-           subTextColor = Color.lerp(idleSubtitle, playSubtitle, t)!;
+          textColor = Color.lerp(idleTitle, playTitle, t)!;
+          subTextColor = Color.lerp(idleSubtitle, playSubtitle, t)!;
         }
 
-        // Border Color
         final idleBorder = dark ? Colors.white12 : Colors.grey.shade300;
         final activeBorder = const Color(0xFFB5D93B);
         final pausedBorderColor = const Color(0xFFCEF24B); // Lime
@@ -191,11 +178,7 @@ class _WorkoutCardState extends State<WorkoutCard>
           borderColor = completedBorder;
           borderWidth = 1.5;
         } else if (widget.isPaused) {
-          // Pulse Animation
           final pulse = _pulseCtrl.value; // 0..1..0
-          // Pulse width from 1.5 to 3.5? Or Opacity?
-          // User said "moving border or other animation".
-          // Let's do a glowing border effect (opacity + width)
           borderColor = pausedBorderColor.withOpacity(0.4 + (0.6 * pulse));
           borderWidth = 1.0 + (pulse * 2.5); // 1.0 to 3.5
         } else {
@@ -213,7 +196,7 @@ class _WorkoutCardState extends State<WorkoutCard>
             border: Border.all(color: borderColor, width: borderWidth),
             boxShadow: [
               BoxShadow(
-                color: widget.isCompleted 
+                color: widget.isCompleted
                     ? completedShadow
                     : (dark ? Colors.black26 : Colors.black12),
                 blurRadius: widget.isCompleted ? 8 : 8,
@@ -224,7 +207,6 @@ class _WorkoutCardState extends State<WorkoutCard>
           clipBehavior: Clip.antiAlias, // Clip the wave
           child: Stack(
             children: [
-              // 1. Wave Background (Handles the "Fill")
               if (!widget.isCompleted && t > 0)
                 Positioned.fill(
                   child: CustomPaint(
@@ -239,168 +221,176 @@ class _WorkoutCardState extends State<WorkoutCard>
                     ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    width * 0.04,
-                    width * 0.045,
-                    width * 0.04,
-                    width * 0.05,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final fontScale = constraints.maxWidth / 160;
-
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.time,
-                                      style: TextStyle(
-                                        color: textColor,
-                                        fontSize: 52 * fontScale,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.1,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    SizedBox(height: 2 * fontScale),
-                                    Text(
-                                      "Minutes",
-                                      style: TextStyle(
-                                        color: subTextColor,
-                                        fontSize: 20 * fontScale,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              AnimatedBuilder(
-                                animation: _rotateCtrl,
-                                builder: (context, child) {
-                                  // Button Colors logic
-                                  // Active (Playing) button should contrast with Lime BG -> Black
-                                  // Idle button -> Theme dependent
-                                  // Completed -> Theme dependent
-
-                                  final circleBg = widget.isCompleted
-                                      ? (dark ? Colors.yellow.withOpacity(0.1) : Colors.white)
-                                      : widget.isPlaying
-                                          ? Colors.black // Black button on Lime
-                                          : (dark ? const Color(0xFF2C2C2E) : Colors.white);
-
-                                  final circleBorder = (!widget.isPlaying && !widget.isCompleted)
-                                      ? Border.all(
-                                          color: dark ? Colors.white12 : Colors.grey.shade300,
-                                          width: 1,
-                                        )
-                                      : null;
-
-                                  final iconColor = widget.isCompleted
-                                      ? (dark ? const Color(0xFFCEF24B) : const Color(0xFF5A701E))
-                                      : widget.isPlaying
-                                          ? const Color(0xFFCEF24B) // Lime icon on Black
-                                          : (dark ? Colors.white : Colors.black);
-
-                                  return Transform.rotate(
-                                    angle: _rotateCtrl.value * pi,
-                                    child: Hero(
-                                      tag: widget.heroTag,
-                                      child: Container(
-                                        width: constraints.maxWidth * 0.35,
-                                        height: constraints.maxWidth * 0.35,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: circleBg,
-                                          border: circleBorder,
-                                          boxShadow: widget.isPlaying
-                                              ? [
-                                                  const BoxShadow(
-                                                    color: Color.fromRGBO(
-                                                      206,
-                                                      242,
-                                                      75,
-                                                      0.5,
-                                                    ),
-                                                    blurRadius: 15,
-                                                    spreadRadius: 1,
-                                                  ),
-                                                ]
-                                              : [],
-                                        ),
-                                        child: IconButton(
-                                          icon: AnimatedSwitcher(
-                                            duration: kAnimShort,
-                                            transitionBuilder: (child, anim) =>
-                                                ScaleTransition(
-                                                  scale: anim,
-                                                  child: child,
-                                                ),
-                                            child: Icon(
-                                              widget.isCompleted
-                                                  ? Icons.restart_alt_rounded
-                                                  : widget.isPlaying
-                                                  ? Icons.pause_rounded
-                                                  : Icons.play_arrow_rounded,
-                                              key: ValueKey(
-                                                '${widget.isPlaying}_${widget.isCompleted}',
-                                              ),
-                                              color: iconColor,
-                                              size: 32 * fontScale,
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            HapticFeedback.selectionClick();
-                                            widget.onPressed?.call();
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.title,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 20 * fontScale,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.2,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 2 * fontScale),
-                              Text(
-                                "${widget.points} pts  •  ~${widget.metricValue} ${widget.metricLabel}",
-                                style: TextStyle(
-                                  color: subTextColor,
-                                  fontSize: 16 * fontScale,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                overflow: TextOverflow.fade,
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  width * 0.04,
+                  width * 0.045,
+                  width * 0.04,
+                  width * 0.05,
                 ),
-              ],
-            ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final fontScale = constraints.maxWidth / 160;
+
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.time,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 52 * fontScale,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.1,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 2 * fontScale),
+                                  Text(
+                                    "Minutes",
+                                    style: TextStyle(
+                                      color: subTextColor,
+                                      fontSize: 20 * fontScale,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            AnimatedBuilder(
+                              animation: _rotateCtrl,
+                              builder: (context, child) {
+
+                                final circleBg = widget.isCompleted
+                                    ? (dark
+                                          ? Colors.yellow.withOpacity(0.1)
+                                          : Colors.white)
+                                    : widget.isPlaying
+                                    ? Colors
+                                          .black // Black button on Lime
+                                    : (dark
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.white);
+
+                                final circleBorder =
+                                    (!widget.isPlaying && !widget.isCompleted)
+                                    ? Border.all(
+                                        color: dark
+                                            ? Colors.white12
+                                            : Colors.grey.shade300,
+                                        width: 1,
+                                      )
+                                    : null;
+
+                                final iconColor = widget.isCompleted
+                                    ? (dark
+                                          ? const Color(0xFFCEF24B)
+                                          : const Color(0xFF5A701E))
+                                    : widget.isPlaying
+                                    ? const Color(
+                                        0xFFCEF24B,
+                                      ) // Lime icon on Black
+                                    : (dark ? Colors.white : Colors.black);
+
+                                return Transform.rotate(
+                                  angle: _rotateCtrl.value * pi,
+                                  child: Hero(
+                                    tag: widget.heroTag,
+                                    child: Container(
+                                      width: constraints.maxWidth * 0.35,
+                                      height: constraints.maxWidth * 0.35,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: circleBg,
+                                        border: circleBorder,
+                                        boxShadow: widget.isPlaying
+                                            ? [
+                                                const BoxShadow(
+                                                  color: Color.fromRGBO(
+                                                    206,
+                                                    242,
+                                                    75,
+                                                    0.5,
+                                                  ),
+                                                  blurRadius: 15,
+                                                  spreadRadius: 1,
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: IconButton(
+                                        icon: AnimatedSwitcher(
+                                          duration: kAnimShort,
+                                          transitionBuilder: (child, anim) =>
+                                              ScaleTransition(
+                                                scale: anim,
+                                                child: child,
+                                              ),
+                                          child: Icon(
+                                            widget.isCompleted
+                                                ? Icons.restart_alt_rounded
+                                                : widget.isPlaying
+                                                ? Icons.pause_rounded
+                                                : Icons.play_arrow_rounded,
+                                            key: ValueKey(
+                                              '${widget.isPlaying}_${widget.isCompleted}',
+                                            ),
+                                            color: iconColor,
+                                            size: 32 * fontScale,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          HapticFeedback.selectionClick();
+                                          widget.onPressed?.call();
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 20 * fontScale,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 2 * fontScale),
+                            Text(
+                              "${widget.points} pts  Ã¢â‚¬Â¢  ~${widget.metricValue} ${widget.metricLabel}",
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 16 * fontScale,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              overflow: TextOverflow.fade,
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

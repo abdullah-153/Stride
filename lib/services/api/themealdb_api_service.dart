@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class TheMealDBService {
@@ -17,10 +17,12 @@ class TheMealDBService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final meals = data['meals'] as List?;
-        
+
         if (meals == null) return [];
-        
-        return meals.map((meal) => _parseMeal(meal as Map<String, dynamic>)).toList();
+
+        return meals
+            .map((meal) => _parseMeal(meal as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to search meals: ${response.statusCode}');
       }
@@ -32,16 +34,14 @@ class TheMealDBService {
 
   Future<Map<String, dynamic>?> getRandomMeal() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/random.php'),
-      );
+      final response = await http.get(Uri.parse('$_baseUrl/random.php'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final meals = data['meals'] as List?;
-        
+
         if (meals == null || meals.isEmpty) return null;
-        
+
         return _parseMeal(meals[0] as Map<String, dynamic>);
       } else {
         throw Exception('Failed to get random meal: ${response.statusCode}');
@@ -54,16 +54,14 @@ class TheMealDBService {
 
   Future<Map<String, dynamic>?> getMealById(String id) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/lookup.php?i=$id'),
-      );
+      final response = await http.get(Uri.parse('$_baseUrl/lookup.php?i=$id'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final meals = data['meals'] as List?;
-        
+
         if (meals == null || meals.isEmpty) return null;
-        
+
         return _parseMeal(meals[0] as Map<String, dynamic>);
       } else {
         throw Exception('Failed to get meal: ${response.statusCode}');
@@ -83,16 +81,22 @@ class TheMealDBService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final meals = data['meals'] as List?;
-        
+
         if (meals == null) return [];
-        
-        return meals.map((meal) => {
-          'id': meal['idMeal'],
-          'name': meal['strMeal'],
-          'imageUrl': meal['strMealThumb'],
-        } as Map<String, dynamic>).toList();
+
+        return meals
+            .map(
+              (meal) => {
+                'id': meal['idMeal'],
+                'name': meal['strMeal'],
+                'imageUrl': meal['strMealThumb'],
+              },
+            )
+            .toList();
       } else {
-        throw Exception('Failed to get meals by category: ${response.statusCode}');
+        throw Exception(
+          'Failed to get meals by category: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error getting meals by category: $e');
@@ -102,19 +106,15 @@ class TheMealDBService {
 
   Future<List<String>> getCategories() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/categories.php'),
-      );
+      final response = await http.get(Uri.parse('$_baseUrl/categories.php'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final categories = data['categories'] as List?;
-        
+
         if (categories == null) return [];
-        
-        return categories
-            .map((cat) => cat['strCategory'] as String)
-            .toList();
+
+        return categories.map((cat) => cat['strCategory'] as String).toList();
       } else {
         throw Exception('Failed to get categories: ${response.statusCode}');
       }
@@ -126,11 +126,11 @@ class TheMealDBService {
 
   Map<String, dynamic> _parseMeal(Map<String, dynamic> meal) {
     final ingredients = <Map<String, String>>[];
-    
+
     for (int i = 1; i <= 20; i++) {
       final ingredient = meal['strIngredient$i'];
       final measure = meal['strMeasure$i'];
-      
+
       if (ingredient != null && ingredient.toString().isNotEmpty) {
         ingredients.add({
           'name': ingredient.toString(),

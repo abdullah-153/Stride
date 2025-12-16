@@ -1,40 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/gamification_model.dart';
 import 'base_firestore_service.dart';
 import 'firestore_collections.dart';
 
 class GamificationFirestoreService extends BaseFirestoreService {
-  static final GamificationFirestoreService _instance = GamificationFirestoreService._internal();
+  static final GamificationFirestoreService _instance =
+      GamificationFirestoreService._internal();
   factory GamificationFirestoreService() => _instance;
   GamificationFirestoreService._internal();
 
   static const int XP_PER_LEVEL = 100;
 
   Future<GamificationData> getGamificationData(String userId) async {
-    return handleFirestoreOperation(
-      () async {
-        final doc = await getUserDocument(userId)
-            .collection(FirestoreCollections.gamification)
-            .doc('data')
-            .get();
-        
-        if (!doc.exists || doc.data() == null) {
-          final initialData = _createInitialGamificationData();
-          await _initializeGamificationData(userId, initialData);
-          return initialData;
-        }
-        
-        return _gamificationDataFromJson(doc.data()!);
-      },
-      errorMessage: 'Failed to fetch gamification data',
-    );
+    return handleFirestoreOperation(() async {
+      final doc = await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.gamification).doc('data').get();
+
+      if (!doc.exists || doc.data() == null) {
+        final initialData = _createInitialGamificationData();
+        await _initializeGamificationData(userId, initialData);
+        return initialData;
+      }
+
+      return _gamificationDataFromJson(doc.data()!);
+    }, errorMessage: 'Failed to fetch gamification data');
   }
 
   Stream<GamificationData> streamGamificationData(String userId) {
-    final docRef = getUserDocument(userId)
-        .collection(FirestoreCollections.gamification)
-        .doc('data');
-    
+    final docRef = getUserDocument(
+      userId,
+    ).collection(FirestoreCollections.gamification).doc('data');
+
     return docRef.snapshots().map((snapshot) {
       if (!snapshot.exists || snapshot.data() == null) {
         return _createInitialGamificationData();
@@ -45,192 +42,193 @@ class GamificationFirestoreService extends BaseFirestoreService {
 
   Future<void> addXp(String userId, int xpToAdd) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final docRef = getUserDocument(userId)
-            .collection(FirestoreCollections.gamification)
-            .doc('data');
-        
-        await firestore.runTransaction((transaction) async {
-          final snapshot = await transaction.get(docRef);
-          
-          if (!snapshot.exists) {
-            final initialData = _createInitialGamificationData();
-            transaction.set(docRef, _gamificationDataToJson(initialData));
-            return;
-          }
-          
-          final data = snapshot.data()!;
-          final stats = data[FirestoreFields.stats] as Map<String, dynamic>;
-          
-          int currentXp = stats[FirestoreFields.currentXp] as int;
-          int currentLevel = stats[FirestoreFields.currentLevel] as int;
-          
-          currentXp += xpToAdd;
-          
-          while (currentXp >= XP_PER_LEVEL) {
-            currentXp -= XP_PER_LEVEL;
-            currentLevel++;
-          }
-          
-          transaction.update(docRef, {
-            '${FirestoreFields.stats}.${FirestoreFields.currentXp}': currentXp,
-            '${FirestoreFields.stats}.${FirestoreFields.currentLevel}': currentLevel,
-            FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-          });
+
+    return handleFirestoreOperation(() async {
+      final docRef = getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.gamification).doc('data');
+
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+
+        if (!snapshot.exists) {
+          final initialData = _createInitialGamificationData();
+          transaction.set(docRef, _gamificationDataToJson(initialData));
+          return;
+        }
+
+        final data = snapshot.data()!;
+        final stats = data[FirestoreFields.stats] as Map<String, dynamic>;
+
+        int currentXp = stats[FirestoreFields.currentXp] as int;
+        int currentLevel = stats[FirestoreFields.currentLevel] as int;
+
+        currentXp += xpToAdd;
+
+        while (currentXp >= XP_PER_LEVEL) {
+          currentXp -= XP_PER_LEVEL;
+          currentLevel++;
+        }
+
+        transaction.update(docRef, {
+          '${FirestoreFields.stats}.${FirestoreFields.currentXp}': currentXp,
+          '${FirestoreFields.stats}.${FirestoreFields.currentLevel}':
+              currentLevel,
+          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
         });
-      },
-      errorMessage: 'Failed to add XP',
-    );
+      });
+    }, errorMessage: 'Failed to add XP');
   }
 
   Future<void> addWaterXp(String userId) async {
-    // 10 XP per water log (assuming per glass/bottle)
     await addXp(userId, 10);
   }
 
-
-  Future<void> updateStreak(String userId, StreakType streakType, DateTime date) async {
+  Future<void> updateStreak(
+    String userId,
+    StreakType streakType,
+    DateTime date,
+  ) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final docRef = getUserDocument(userId)
-            .collection(FirestoreCollections.gamification)
-            .doc('data');
-        
-        await firestore.runTransaction((transaction) async {
-          final snapshot = await transaction.get(docRef);
-          
-          if (!snapshot.exists) {
-            final initialData = _createInitialGamificationData();
-            transaction.set(docRef, _gamificationDataToJson(initialData));
-            return;
-          }
-          
-          final data = snapshot.data()!;
-          final stats = data[FirestoreFields.stats] as Map<String, dynamic>;
-          
-          final updates = <String, dynamic>{
-            FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-          };
-          
-          // Update specific streak type (diet or workout)
-          if (streakType == StreakType.diet) {
-            final lastDietLog = timestampToDateTime(stats[FirestoreFields.lastDietLogDate]);
-            final dietStreak = stats[FirestoreFields.dietStreak] as int? ?? 0;
-            
-            if (_isSameDay(lastDietLog, date)) {
-              // Same day - maintain current streak, just update timestamp
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] = Timestamp.fromDate(date);
-            } else if (_shouldIncrementStreak(lastDietLog, date)) {
-              // Consecutive day - increment streak
-              updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] = dietStreak + 1;
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] = Timestamp.fromDate(date);
-            } else {
-              // Gap or first time - reset to 1
-              updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] = 1;
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] = Timestamp.fromDate(date);
-            }
-          } else if (streakType == StreakType.workout) {
-            final lastWorkoutLog = timestampToDateTime(stats[FirestoreFields.lastWorkoutLogDate]);
-            final workoutStreak = stats[FirestoreFields.workoutStreak] as int? ?? 0;
-            
-            if (_isSameDay(lastWorkoutLog, date)) {
-              // Same day - maintain current streak, just update timestamp
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] = Timestamp.fromDate(date);
-            } else if (_shouldIncrementStreak(lastWorkoutLog, date)) {
-              // Consecutive day - increment streak
-              updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] = workoutStreak + 1;
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] = Timestamp.fromDate(date);
-            } else {
-              // Gap or first time - reset to 1
-              updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] = 1;
-              updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] = Timestamp.fromDate(date);
-            }
-          }
-          
-          // Update global streak (only when both diet and workout are done on same day)
-          final lastLog = timestampToDateTime(stats[FirestoreFields.lastLogDate]);
-          final currentStreak = stats[FirestoreFields.currentStreak] as int? ?? 0;
-          final longestStreak = stats[FirestoreFields.longestStreak] as int? ?? 0;
-          
-          int newStreak = currentStreak;
-          if (_isSameDay(lastLog, date)) {
-            // Same day - maintain current streak
-            newStreak = currentStreak;
-          } else if (_shouldIncrementStreak(lastLog, date)) {
-            // Consecutive day - increment
-            newStreak = currentStreak + 1;
-          } else {
-            // Gap or first time - reset to 1
-            newStreak = 1;
-          }
-          
-          
-          updates['${FirestoreFields.stats}.${FirestoreFields.currentStreak}'] = newStreak;
-          updates['${FirestoreFields.stats}.${FirestoreFields.lastLogDate}'] = Timestamp.fromDate(date);
-          
-          if (newStreak > longestStreak) {
-            updates['${FirestoreFields.stats}.${FirestoreFields.longestStreak}'] = newStreak;
-          }
 
-          // Add to activity history for heatmap
-          // Normalize to midnight to avoid duplicates for same day
-          final activityDate = DateTime(date.year, date.month, date.day);
-          updates['${FirestoreFields.stats}.activityDates'] = FieldValue.arrayUnion([activityDate.toIso8601String()]);
-          
-          transaction.update(docRef, updates);
-        });
-      },
-      errorMessage: 'Failed to update streak',
-    );
+    return handleFirestoreOperation(() async {
+      final docRef = getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.gamification).doc('data');
+
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+
+        if (!snapshot.exists) {
+          final initialData = _createInitialGamificationData();
+          transaction.set(docRef, _gamificationDataToJson(initialData));
+          return;
+        }
+
+        final data = snapshot.data()!;
+        final stats = data[FirestoreFields.stats] as Map<String, dynamic>;
+
+        final updates = <String, dynamic>{
+          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+        };
+
+        if (streakType == StreakType.diet) {
+          final lastDietLog = timestampToDateTime(
+            stats[FirestoreFields.lastDietLogDate],
+          );
+          final dietStreak = stats[FirestoreFields.dietStreak] as int? ?? 0;
+
+          if (_isSameDay(lastDietLog, date)) {
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] =
+                Timestamp.fromDate(date);
+          } else if (_shouldIncrementStreak(lastDietLog, date)) {
+            updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] =
+                dietStreak + 1;
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] =
+                Timestamp.fromDate(date);
+          } else {
+            updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] =
+                1;
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastDietLogDate}'] =
+                Timestamp.fromDate(date);
+          }
+        } else if (streakType == StreakType.workout) {
+          final lastWorkoutLog = timestampToDateTime(
+            stats[FirestoreFields.lastWorkoutLogDate],
+          );
+          final workoutStreak =
+              stats[FirestoreFields.workoutStreak] as int? ?? 0;
+
+          if (_isSameDay(lastWorkoutLog, date)) {
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] =
+                Timestamp.fromDate(date);
+          } else if (_shouldIncrementStreak(lastWorkoutLog, date)) {
+            updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] =
+                workoutStreak + 1;
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] =
+                Timestamp.fromDate(date);
+          } else {
+            updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] =
+                1;
+            updates['${FirestoreFields.stats}.${FirestoreFields.lastWorkoutLogDate}'] =
+                Timestamp.fromDate(date);
+          }
+        }
+
+        final lastLog = timestampToDateTime(stats[FirestoreFields.lastLogDate]);
+        final currentStreak = stats[FirestoreFields.currentStreak] as int? ?? 0;
+        final longestStreak = stats[FirestoreFields.longestStreak] as int? ?? 0;
+
+        int newStreak = currentStreak;
+        if (_isSameDay(lastLog, date)) {
+          newStreak = currentStreak;
+        } else if (_shouldIncrementStreak(lastLog, date)) {
+          newStreak = currentStreak + 1;
+        } else {
+          newStreak = 1;
+        }
+
+        updates['${FirestoreFields.stats}.${FirestoreFields.currentStreak}'] =
+            newStreak;
+        updates['${FirestoreFields.stats}.${FirestoreFields.lastLogDate}'] =
+            Timestamp.fromDate(date);
+
+        if (newStreak > longestStreak) {
+          updates['${FirestoreFields.stats}.${FirestoreFields.longestStreak}'] =
+              newStreak;
+        }
+
+        final activityDate = DateTime(date.year, date.month, date.day);
+        updates['${FirestoreFields.stats}.activityDates'] =
+            FieldValue.arrayUnion([activityDate.toIso8601String()]);
+
+        transaction.update(docRef, updates);
+      });
+    }, errorMessage: 'Failed to update streak');
   }
 
   Future<void> unlockAchievement(String userId, String achievementId) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.gamification)
-            .doc('data')
-            .update({
-          '${FirestoreFields.achievements}.$achievementId.${FirestoreFields.isUnlocked}': true,
-          '${FirestoreFields.achievements}.$achievementId.${FirestoreFields.unlockedAt}': FieldValue.serverTimestamp(),
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-      errorMessage: 'Failed to unlock achievement',
-    );
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.gamification).doc('data').update({
+        '${FirestoreFields.achievements}.$achievementId.${FirestoreFields.isUnlocked}':
+            true,
+        '${FirestoreFields.achievements}.$achievementId.${FirestoreFields.unlockedAt}':
+            FieldValue.serverTimestamp(),
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to unlock achievement');
   }
 
   Future<void> resetStreak(String userId, StreakType streakType) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final updates = <String, dynamic>{
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        };
-        
-        if (streakType == StreakType.diet) {
-          updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] = 0;
-        } else if (streakType == StreakType.workout) {
-          updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] = 0;
-        }
-        
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.gamification)
-            .doc('data')
-            .update(updates);
-      },
-      errorMessage: 'Failed to reset streak',
-    );
+
+    return handleFirestoreOperation(() async {
+      final updates = <String, dynamic>{
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      if (streakType == StreakType.diet) {
+        updates['${FirestoreFields.stats}.${FirestoreFields.dietStreak}'] = 0;
+      } else if (streakType == StreakType.workout) {
+        updates['${FirestoreFields.stats}.${FirestoreFields.workoutStreak}'] =
+            0;
+      }
+
+      await getUserDocument(userId)
+          .collection(FirestoreCollections.gamification)
+          .doc('data')
+          .update(updates);
+    }, errorMessage: 'Failed to reset streak');
   }
 
-  Future<void> _initializeGamificationData(String userId, GamificationData data) async {
+  Future<void> _initializeGamificationData(
+    String userId,
+    GamificationData data,
+  ) async {
     await getUserDocument(userId)
         .collection(FirestoreCollections.gamification)
         .doc('data')
@@ -238,10 +236,7 @@ class GamificationFirestoreService extends BaseFirestoreService {
   }
 
   GamificationData _createInitialGamificationData() {
-    return GamificationData(
-      stats: UserStats.initial(),
-      achievements: [],
-    );
+    return GamificationData(stats: UserStats.initial(), achievements: []);
   }
 
   Map<String, dynamic> _gamificationDataToJson(GamificationData data) {
@@ -254,7 +249,7 @@ class GamificationFirestoreService extends BaseFirestoreService {
             : null,
       };
     }
-    
+
     return {
       FirestoreFields.stats: data.stats.toJson(),
       FirestoreFields.achievements: achievementsMap,
@@ -264,32 +259,34 @@ class GamificationFirestoreService extends BaseFirestoreService {
 
   GamificationData _gamificationDataFromJson(Map<String, dynamic> json) {
     final statsData = json[FirestoreFields.stats] as Map<String, dynamic>;
-    final achievementsData = json[FirestoreFields.achievements] as Map<String, dynamic>? ?? {};
-    
+    final achievementsData =
+        json[FirestoreFields.achievements] as Map<String, dynamic>? ?? {};
+
     final stats = UserStats.fromJson(statsData);
-    
+
     final achievements = <Achievement>[];
     achievementsData.forEach((key, value) {
       final achievementData = value as Map<String, dynamic>;
-      achievements.add(Achievement(
-        id: key,
-        title: '',
-        description: '',
-        iconAsset: '',
-        isUnlocked: achievementData[FirestoreFields.isUnlocked] as bool? ?? false,
-        unlockedAt: timestampToDateTime(achievementData[FirestoreFields.unlockedAt]),
-      ));
+      achievements.add(
+        Achievement(
+          id: key,
+          title: '',
+          description: '',
+          iconAsset: '',
+          isUnlocked:
+              achievementData[FirestoreFields.isUnlocked] as bool? ?? false,
+          unlockedAt: timestampToDateTime(
+            achievementData[FirestoreFields.unlockedAt],
+          ),
+        ),
+      );
     });
-    
-    return GamificationData(
-      stats: stats,
-      achievements: achievements,
-    );
+
+    return GamificationData(stats: stats, achievements: achievements);
   }
 
   bool _isSameDay(DateTime? date1, DateTime? date2) {
     if (date1 == null || date2 == null) return false;
-    // Ensure we are comparing local dates to avoid UTC mismatch issues
     final d1 = date1.toLocal();
     final d2 = date2.toLocal();
     return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
@@ -297,30 +294,37 @@ class GamificationFirestoreService extends BaseFirestoreService {
 
   bool _shouldIncrementStreak(DateTime? lastLog, DateTime currentLog) {
     if (lastLog == null) return false;
-    
-    // Convert both to local BEFORE extracting day components
+
     final lastDate = lastLog.toLocal();
     final currentDate = currentLog.toLocal();
-    
+
     final lastDay = DateTime(lastDate.year, lastDate.month, lastDate.day);
-    final currentDay = DateTime(currentDate.year, currentDate.month, currentDate.day);
-    
+    final currentDay = DateTime(
+      currentDate.year,
+      currentDate.month,
+      currentDate.day,
+    );
+
     final difference = currentDay.difference(lastDay).inDays;
-    
+
     return difference == 1;
   }
 
   bool _shouldResetStreak(DateTime? lastLog, DateTime currentLog) {
     if (lastLog == null) return true;
-    
+
     final lastDate = lastLog.toLocal();
     final currentDate = currentLog.toLocal();
-    
+
     final lastDay = DateTime(lastDate.year, lastDate.month, lastDate.day);
-    final currentDay = DateTime(currentDate.year, currentDate.month, currentDate.day);
-    
+    final currentDay = DateTime(
+      currentDate.year,
+      currentDate.month,
+      currentDate.day,
+    );
+
     final difference = currentDay.difference(lastDay).inDays;
-    
+
     return difference > 1;
   }
 }

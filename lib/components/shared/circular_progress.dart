@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:dashed_circular_progress_bar/dashed_circular_progress_bar.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
@@ -52,7 +52,6 @@ class _DietCircularProgressState extends State<DietCircularProgress> {
         widget.diameter ?? SizeConfig.w(180); // Use passed diameter or default
     double stroke = SizeConfig.w(16);
 
-    // Dark mode colors: keep blue accent, swap light backgrounds/text to dark-friendly
     final bool dark = widget.isDarkMode;
     final Color fgColor = Colors.lightBlue; // accent unchanged
     final Color bgColor = dark

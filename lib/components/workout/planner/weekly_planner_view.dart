@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../utils/size_config.dart';
@@ -21,14 +21,19 @@ class WeeklyPlannerView extends StatefulWidget {
 }
 
 class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
-  // Fixed 7-day structure (Null means Rest Day)
   final List<Map<String, dynamic>?> _weeklySchedule = List.filled(7, null);
-  final List<String> _dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  
-  // History for Undo
+  final List<String> _dayLabels = [
+    'MON',
+    'TUE',
+    'WED',
+    'THU',
+    'FRI',
+    'SAT',
+    'SUN',
+  ];
+
   final List<List<Map<String, dynamic>?>> _history = [];
-  
-  // Scrolling
+
   final ScrollController _scrollController = ScrollController();
   Timer? _autoScrollTimer;
 
@@ -47,25 +52,26 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
   void _initializeSchedule() {
     final originalWeeklyPlan = widget.generatedPlan['weeklyPlan'] as List;
-    
-    // Distribute generated days into the 7-day slots
-    for (int i = 0; i < originalWeeklyPlan.length; i++) {
-        int targetIndex = i;
-        if (originalWeeklyPlan.length == 3) {
-           if (i == 1) targetIndex = 2;
-           if (i == 2) targetIndex = 4;
-        } else if (originalWeeklyPlan.length == 4) {
-           if (i >= 2) targetIndex = i + 1;
-        } else if (originalWeeklyPlan.length == 5) {
-           targetIndex = i;
-        }
 
-        if (targetIndex < 7) {
-          _weeklySchedule[targetIndex] = Map<String, dynamic>.from(originalWeeklyPlan[i]);
-          _weeklySchedule[targetIndex]!['originalDayIndex'] = targetIndex + 1;
-        }
+    for (int i = 0; i < originalWeeklyPlan.length; i++) {
+      int targetIndex = i;
+      if (originalWeeklyPlan.length == 3) {
+        if (i == 1) targetIndex = 2;
+        if (i == 2) targetIndex = 4;
+      } else if (originalWeeklyPlan.length == 4) {
+        if (i >= 2) targetIndex = i + 1;
+      } else if (originalWeeklyPlan.length == 5) {
+        targetIndex = i;
+      }
+
+      if (targetIndex < 7) {
+        _weeklySchedule[targetIndex] = Map<String, dynamic>.from(
+          originalWeeklyPlan[i],
+        );
+        _weeklySchedule[targetIndex]!['originalDayIndex'] = targetIndex + 1;
+      }
     }
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _notifyUpdate();
@@ -74,7 +80,9 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
   }
 
   void _saveToHistory() {
-    final copy = _weeklySchedule.map((day) => day == null ? null : Map<String, dynamic>.from(day)).toList();
+    final copy = _weeklySchedule
+        .map((day) => day == null ? null : Map<String, dynamic>.from(day))
+        .toList();
     _history.add(copy);
     if (_history.length > 20) _history.removeAt(0);
   }
@@ -99,7 +107,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
     final updatedPlan = Map<String, dynamic>.from(widget.generatedPlan);
     updatedPlan['weeklyPlan'] = activeDays;
-    
+
     widget.onPlanUpdated(updatedPlan);
   }
 
@@ -121,26 +129,23 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
   }
 
   void _onAddNewDay(int index) {
-     _saveToHistory();
-     setState(() {
-       _weeklySchedule[index] = {
-         'name': 'Custom Workout',
-         'exercises': [],
-         'estimatedMinutes': 0,
-         'originalDayIndex': index + 1
-       };
-     });
-     _notifyUpdate();
+    _saveToHistory();
+    setState(() {
+      _weeklySchedule[index] = {
+        'name': 'Custom Workout',
+        'exercises': [],
+        'estimatedMinutes': 0,
+        'originalDayIndex': index + 1,
+      };
+    });
+    _notifyUpdate();
   }
 
-  // --- Auto Scroll Logic ---
   void _checkAutoScroll(Offset position) {
     const double edgeThreshold = 80.0; // Increased threshold
     final double screenWidth = MediaQuery.of(context).size.width;
-    
-    // Debug print or simple logic check: 
-    // Position is global. 0 is left, screenWidth is right.
-    
+
+
     if (position.dx < edgeThreshold) {
       _startAutoScroll(-8.0); // Slightly faster scroll
     } else if (position.dx > screenWidth - edgeThreshold) {
@@ -152,11 +157,12 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
   void _startAutoScroll(double delta) {
     if (_autoScrollTimer != null) return;
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (
+      timer,
+    ) {
       if (_scrollController.hasClients) {
         final newOffset = _scrollController.offset + delta;
-        // Don't overscroll bounds (though jumpTo handles it safely usually)
-        if (newOffset >= _scrollController.position.minScrollExtent && 
+        if (newOffset >= _scrollController.position.minScrollExtent &&
             newOffset <= _scrollController.position.maxScrollExtent) {
           _scrollController.jumpTo(newOffset);
         }
@@ -169,26 +175,20 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     _autoScrollTimer = null;
   }
 
-  // --- Shift Logic ---
   void _handleDrop(int sourceIndex, int targetIndex) {
     _stopAutoScroll();
     _saveToHistory();
-    
+
     setState(() {
-      // Logic: Move Source to Target. 
-      // If Target is empty -> Simple Move.
-      // If Target is occupied -> Shift Logic.
-      // "Snap workouts backwards... so that the day next to the day from which workouts are moved [Target?] will be moved to the now empty day [Source?]"
-      // Interpreting user's specific request: "Swap with Shift"
-      // If I drag A (Source) to B (Target). A goes to Target. B shifts to Source.
-      
+
       final sourceItem = _weeklySchedule[sourceIndex];
       final targetItem = _weeklySchedule[targetIndex];
-      
+
       _weeklySchedule[targetIndex] = sourceItem;
-      _weeklySchedule[sourceIndex] = targetItem; // Swap allows simple shifting without losing data
+      _weeklySchedule[sourceIndex] =
+          targetItem; // Swap allows simple shifting without losing data
     });
-    
+
     HapticFeedback.mediumImpact();
     _notifyUpdate();
   }
@@ -219,8 +219,18 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
                 TextButton.icon(
                   onPressed: _undo,
                   icon: Icon(Icons.undo_rounded, size: 16, color: accentColor),
-                  label: Text("Undo", style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                  label: Text(
+                    "Undo",
+                    style: TextStyle(
+                      color: accentColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
             ],
           ),
@@ -230,13 +240,19 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
           margin: EdgeInsets.symmetric(horizontal: SizeConfig.w(8)),
           padding: EdgeInsets.all(SizeConfig.w(12)),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
           ),
           child: Row(
             children: [
-              Icon(Icons.touch_app_rounded, size: 20, color: isDark ? Colors.white54 : Colors.black54),
+              Icon(
+                Icons.touch_app_rounded,
+                size: 20,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -251,9 +267,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
           ),
         ),
         SizedBox(height: SizeConfig.h(24)),
-        
-        // Horizontal Scrollable Container containing Headers AND Body
-        // This ensures the header stays aligned with the body during scroll
+
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           controller: _scrollController,
@@ -262,27 +276,28 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
               Row(
                 children: List.generate(7, (index) {
-                   return Container(
-                     width: SizeConfig.w(280),
-                     margin: EdgeInsets.only(right: SizeConfig.w(16)),
-                     padding: EdgeInsets.only(left: SizeConfig.w(8), bottom: SizeConfig.h(8)),
-                     child: Text(
-                       _dayLabels[index],
-                       style: TextStyle(
-                         fontWeight: FontWeight.bold, 
-                         color: accentColor,
-                         letterSpacing: 1.2,
-                         fontSize: SizeConfig.sp(12)
-                       ),
-                     ),
-                   );
+                  return Container(
+                    width: SizeConfig.w(280),
+                    margin: EdgeInsets.only(right: SizeConfig.w(16)),
+                    padding: EdgeInsets.only(
+                      left: SizeConfig.w(8),
+                      bottom: SizeConfig.h(8),
+                    ),
+                    child: Text(
+                      _dayLabels[index],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                        letterSpacing: 1.2,
+                        fontSize: SizeConfig.sp(12),
+                      ),
+                    ),
+                  );
                 }),
               ),
-              
-              // Draggable Cards Row
+
               Row(
                 children: List.generate(7, (index) {
                   return _buildDragTargetSlot(index);
@@ -296,14 +311,11 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
   }
 
   void _onAddExercise(int index) {
-     if (_weeklySchedule[index] == null) {
-       _onAddNewDay(index); // If empty, first create the day structure
-       // Then wait a bit and show add exercise dialog? or just let them add via the button now present
-       // User said "click to add workouts" on rest day.
-       // So converting to workout day is step 1.
-       return;
-     }
-     _showAddExerciseDialog(index);
+    if (_weeklySchedule[index] == null) {
+      _onAddNewDay(index); // If empty, first create the day structure
+      return;
+    }
+    _showAddExerciseDialog(index);
   }
 
   void _showAddExerciseDialog(int dayIndex) {
@@ -311,15 +323,17 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     int sets = 3;
     int reps = 12;
     int minutes = 10; // Default estimate
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.only(
-          top: 24, left: 24, right: 24, 
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24
+          top: 24,
+          left: 24,
+          right: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         ),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
@@ -329,23 +343,46 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Add Exercise", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              "Add Exercise",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 16),
             TextField(
               decoration: InputDecoration(
                 labelText: "Exercise Name",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onChanged: (val) => name = val,
             ),
             SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildCompactInput("Sets", "3", (val) => sets = int.tryParse(val) ?? 3)),
+                Expanded(
+                  child: _buildCompactInput(
+                    "Sets",
+                    "3",
+                    (val) => sets = int.tryParse(val) ?? 3,
+                  ),
+                ),
                 SizedBox(width: 12),
-                Expanded(child: _buildCompactInput("Reps", "12", (val) => reps = int.tryParse(val) ?? 12)),
+                Expanded(
+                  child: _buildCompactInput(
+                    "Reps",
+                    "12",
+                    (val) => reps = int.tryParse(val) ?? 12,
+                  ),
+                ),
                 SizedBox(width: 12),
-                Expanded(child: _buildCompactInput("Time (min)", "10", (val) => minutes = int.tryParse(val) ?? 10)),
+                Expanded(
+                  child: _buildCompactInput(
+                    "Time (min)",
+                    "10",
+                    (val) => minutes = int.tryParse(val) ?? 10,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 24),
@@ -358,8 +395,12 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
                   Navigator.pop(context);
                   _saveToHistory();
                   setState(() {
-                    final day = Map<String, dynamic>.from(_weeklySchedule[dayIndex]!);
-                    final exercises = List<Map<String, dynamic>>.from(day['exercises']);
+                    final day = Map<String, dynamic>.from(
+                      _weeklySchedule[dayIndex]!,
+                    );
+                    final exercises = List<Map<String, dynamic>>.from(
+                      day['exercises'],
+                    );
                     exercises.add({
                       'name': name,
                       'sets': sets,
@@ -376,9 +417,14 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFCEF24B),
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: Text("Add to Workout", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Add to Workout",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
@@ -386,8 +432,12 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
       ),
     );
   }
-  
-  Widget _buildCompactInput(String label, String initial, Function(String) onChanged) {
+
+  Widget _buildCompactInput(
+    String label,
+    String initial,
+    Function(String) onChanged,
+  ) {
     return TextField(
       decoration: InputDecoration(
         labelText: label,
@@ -399,33 +449,34 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     );
   }
 
-  // ... (Header Row logic adjusted for width)
 
   Widget _buildDragTargetSlot(int index) {
-    // Dynamic width for standard mobile peek effect
-    // Screen Width * 0.75 leaves ~25% for next card's peek and margin
     final double cardWidth = MediaQuery.of(context).size.width * 0.75;
-    
+
     return DragTarget<int>(
-      onWillAccept: (fromIndex) => fromIndex != null && fromIndex != index,
+      onWillAcceptWithDetails: (details) => details.data != index,
       onMove: (details) {
-         _checkAutoScroll(details.offset);
+        _checkAutoScroll(details.offset);
       },
       onLeave: (_) => _stopAutoScroll(),
-      onAccept: (fromIndex) => _handleDrop(fromIndex, index),
+      onAcceptWithDetails: (details) => _handleDrop(details.data, index),
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
-        
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: cardWidth, // Updated width
           margin: EdgeInsets.only(right: SizeConfig.w(12)), // Reduced Margin
-          transform: isHovered ? Matrix4.identity().scaled(1.02) : Matrix4.identity(),
-          decoration: isHovered ? BoxDecoration(
-             borderRadius: BorderRadius.circular(24),
-             border: Border.all(color: const Color(0xFFCEF24B), width: 2),
-             color: const Color(0xFFCEF24B).withOpacity(0.1),
-          ) : null,
+          transform: isHovered
+              ? Matrix4.identity().scaled(1.02)
+              : Matrix4.identity(),
+          decoration: isHovered
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFCEF24B), width: 2),
+                  color: const Color(0xFFCEF24B).withOpacity(0.1),
+                )
+              : null,
           child: _buildDraggableCard(index, isHovered, cardWidth),
         );
       },
@@ -435,11 +486,10 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
   Widget _buildDraggableCard(int index, bool isHovered, double cardWidth) {
     final dayData = _weeklySchedule[index];
     final isDark = widget.isDark; // Use widget parameter
-    
+
     Widget content;
     if (dayData == null) {
-       // "Rest Day" state with Add capability
-       content = DayPlannerCard(
+      content = DayPlannerCard(
         dayData: null,
         dayIndex: index,
         onUpdateDay: (d) => _onDayUpdated(index, d),
@@ -449,7 +499,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
         accentColor: const Color(0xFFCEF24B),
       );
     } else {
-       content = DayPlannerCard(
+      content = DayPlannerCard(
         dayData: dayData,
         dayIndex: index,
         onUpdateDay: (d) => _onDayUpdated(index, d),
@@ -461,12 +511,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     }
 
     if (dayData == null) {
-         // Even empty slots should be "draggable" in the sense that they are valid targets?
-         // No, User said "for blank workouts write rest day, click to add workouts".
-         // But implied they can drag workouts TO here, or drag THIS to elsewhere?
-         // Moving an empty day doesn't make sense, but dragging ONTO it does.
-         // Wait, "click to add workouts" -> _onAddExercise handles this.
-         return SizedBox(height: SizeConfig.h(400), child: content);
+      return SizedBox(height: SizeConfig.h(400), child: content);
     }
 
     return LongPressDraggable<int>(
@@ -501,14 +546,22 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
       childWhenDragging: SizedBox(
         height: SizeConfig.h(400),
         child: Container(
-           decoration: BoxDecoration(
-             color: isDark ? Colors.white.withOpacity(0.02) : Colors.black.withOpacity(0.02),
-             borderRadius: BorderRadius.circular(24),
-             border: Border.all(color: isDark ? Colors.white10 : Colors.black12, style: BorderStyle.solid),
-           ),
-           child: Center(
-             child: Icon(Icons.arrow_forward_rounded, color: isDark ? Colors.white24 : Colors.black26),
-           ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.02)
+                : Colors.black.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? Colors.white10 : Colors.black12,
+              style: BorderStyle.solid,
+            ),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: isDark ? Colors.white24 : Colors.black26,
+            ),
+          ),
         ),
       ),
       onDragStarted: () => HapticFeedback.selectionClick(),

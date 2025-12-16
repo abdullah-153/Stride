@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import '../components/onboarding/weight_selector.dart';
 import '../components/onboarding/height_selector.dart';
@@ -51,11 +51,10 @@ class BodyUpdateSheet extends StatefulWidget {
 class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
   late PageController _pageController;
   int _currentPage = 0;
-  
+
   late double _weight;
   late double _height;
   late int _age;
-  // Unit prefs handling
   late bool _isMetric;
 
   @override
@@ -102,15 +101,17 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
       ),
       child: Column(
         children: [
-          // Header
           Padding(
             padding: EdgeInsets.all(SizeConfig.w(24)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _currentPage == 0 ? "Update Weight" : 
-                  _currentPage == 1 ? "Update Height" : "Update Age",
+                  _currentPage == 0
+                      ? "Update Weight"
+                      : _currentPage == 1
+                      ? "Update Height"
+                      : "Update Age",
                   style: TextStyle(
                     fontSize: SizeConfig.sp(20),
                     fontWeight: FontWeight.w700,
@@ -125,27 +126,31 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
             ),
           ),
 
-          // Progress Indicator
           Row(
-            children: List.generate(3, (index) => Expanded(
-              child: Container(
-                height: 4,
-                color: index <= _currentPage 
-                    ? (_currentPage == 0 ? Colors.orange 
-                       : _currentPage == 1 ? Colors.green 
-                       : const Color(0xFFFF7700)) 
-                    : Colors.grey[300],
+            children: List.generate(
+              3,
+              (index) => Expanded(
+                child: Container(
+                  height: 4,
+                  color: index <= _currentPage
+                      ? (_currentPage == 0
+                            ? Colors.orange
+                            : _currentPage == 1
+                            ? Colors.green
+                            : const Color(0xFFFF7700))
+                      : Colors.grey[300],
+                ),
               ),
-            )),
+            ),
           ),
 
           Expanded(
             child: PageView(
               controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(), // Force navigation via button
+              physics:
+                  const NeverScrollableScrollPhysics(), // Force navigation via button
               onPageChanged: (index) => setState(() => _currentPage = index),
               children: [
-                  // Weight Page
                 Center(
                   child: WeightSelector(
                     initialWeight: _weight,
@@ -153,7 +158,6 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
                     onWeightChanged: (val) => _weight = val,
                   ),
                 ),
-                // Height Page
                 Center(
                   child: HeightSelector(
                     initialHeight: _height,
@@ -161,7 +165,6 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
                     onHeightChanged: (val) => _height = val,
                   ),
                 ),
-                // Age Page
                 Center(
                   child: AgeSelector(
                     initialAge: _age,
@@ -172,7 +175,6 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
             ),
           ),
 
-          // Bottom Action
           Padding(
             padding: EdgeInsets.all(SizeConfig.w(24)),
             child: SizedBox(
@@ -180,9 +182,11 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
               child: ElevatedButton(
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _currentPage == 0 ? Colors.orange 
-                       : _currentPage == 1 ? Colors.green 
-                       : const Color(0xFFFF7700),
+                  backgroundColor: _currentPage == 0
+                      ? Colors.orange
+                      : _currentPage == 1
+                      ? Colors.green
+                      : const Color(0xFFFF7700),
                   padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

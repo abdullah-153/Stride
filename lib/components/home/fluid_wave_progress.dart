@@ -1,6 +1,4 @@
-import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import '../../utils/size_config.dart';
+﻿import 'package:flutter/material.dart';
 
 class FluidWaveProgress extends StatelessWidget {
   final double value; // 0.0 to 1.0
@@ -70,54 +68,42 @@ class _FluidWavePainter extends CustomPainter {
     final height = size.height;
     final progressWidth = width * value;
 
-    // Main progress fill with gradient
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
+    final paint = Paint()..style = PaintingStyle.fill;
 
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        color.withOpacity(0.85),
-        color,
-      ],
+      colors: [color.withOpacity(0.85), color],
     );
-    
+
     final rect = Rect.fromLTWH(0, 0, progressWidth, height);
     paint.shader = gradient.createShader(rect);
-    
-    // Draw the main progress rectangle
+
     canvas.drawRect(rect, paint);
 
-    // Add bubbles for visual interest
     final bubblePaint = Paint()
       ..color = Colors.white.withOpacity(0.25)
       ..style = PaintingStyle.fill;
 
-    // Only draw bubbles if there's enough space
     if (progressWidth > height * 2) {
-      // Large bubble
       canvas.drawCircle(
         Offset(progressWidth * 0.7, height * 0.35),
         height * 0.15,
         bubblePaint,
       );
 
-      // Medium bubble
       canvas.drawCircle(
         Offset(progressWidth * 0.5, height * 0.65),
         height * 0.12,
         bubblePaint,
       );
 
-      // Small bubble
       canvas.drawCircle(
         Offset(progressWidth * 0.85, height * 0.6),
         height * 0.08,
         bubblePaint,
       );
 
-      // Tiny bubble
       if (progressWidth > height * 3) {
         canvas.drawCircle(
           Offset(progressWidth * 0.3, height * 0.45),
@@ -130,8 +116,8 @@ class _FluidWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FluidWavePainter oldDelegate) {
-    return oldDelegate.value != value || 
-           oldDelegate.color != color ||
-           oldDelegate.isDarkMode != isDarkMode;
+    return oldDelegate.value != value ||
+        oldDelegate.color != color ||
+        oldDelegate.isDarkMode != isDarkMode;
   }
 }

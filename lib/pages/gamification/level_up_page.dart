@@ -1,157 +1,108 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../utils/size_config.dart';
+import '../../utils/size_config.dart';
 
-class GlobalStreakSuccessPage extends StatefulWidget {
-  final int globalStreak;
-  final Color themeColor;
-  final String title;
-  final String subtitle;
+class LevelUpPage extends StatefulWidget {
+  final int newLevel;
+  final int xpGained;
+  final int totalXP;
 
-  const GlobalStreakSuccessPage({
+  const LevelUpPage({
     super.key,
-    required this.globalStreak,
-    required this.themeColor,
-    this.title = 'Perfect Day!',
-    this.subtitle = 'You completed both workout and diet goals today',
+    required this.newLevel,
+    required this.xpGained,
+    required this.totalXP,
   });
 
   @override
-  State<GlobalStreakSuccessPage> createState() => _GlobalStreakSuccessPageState();
+  State<LevelUpPage> createState() => _LevelUpPageState();
 }
 
-class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
+class _LevelUpPageState extends State<LevelUpPage>
     with TickerProviderStateMixin {
   late AnimationController _waveController;
   late AnimationController _fillController;
   late AnimationController _contentController;
   late AnimationController _numberController;
-  late AnimationController _confettiController;
-  
+
   late Animation<double> _fillAnimation;
   late Animation<double> _numberFadeAnimation;
   late Animation<double> _numberScaleAnimation;
   late Animation<double> _textFadeAnimation;
   late Animation<double> _buttonSlideAnimation;
 
-  final List<_ConfettiParticle> _confetti = [];
-
   @override
   void initState() {
     super.initState();
-    
-    // Heavy haptic feedback for streak celebration
+
     HapticFeedback.heavyImpact();
-    
-    // Hide system UI for full immersion
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    
-    // Wave animation (continuous)
+
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat();
-    
-    // Fill animation (bottom to top)
+
     _fillController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    
+
     _fillAnimation = CurvedAnimation(
       parent: _fillController,
       curve: Curves.easeInOut,
     );
-    
-    // Content animations
+
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    
+
     _numberController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
 
-    // Confetti animation - continuous loop
-    _confettiController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..addListener(() {
-      setState(() {
-        for (var p in _confetti) {
-          // Pass screen height to recycling logic
-          p.update(SizeConfig.screenHeight);
-        }
-      });
-    })..repeat();
-    
-    // Number animations
     _numberFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _numberController,
         curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
       ),
     );
-    
+
     _numberScaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _numberController,
         curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
       ),
     );
-    
-    // Text fade animation
+
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _contentController,
         curve: const Interval(0.3, 0.6, curve: Curves.easeOut),
       ),
     );
-    
-    // Button slide animation
+
     _buttonSlideAnimation = Tween<double>(begin: 100.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _contentController,
         curve: const Interval(0.5, 0.8, curve: Curves.easeOutCubic),
       ),
     );
-    
+
     _startAnimationSequence();
   }
-  
+
   Future<void> _startAnimationSequence() async {
     await Future.delayed(const Duration(milliseconds: 300));
     await _fillController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 200));
     _numberController.forward();
     _contentController.forward();
-    
-    // Start confetti (already repeating in init, but ensuring filled)
-    _generateConfetti();
-  }
-
-  void _generateConfetti() {
-    final random = Random();
-    for (int i = 0; i < 60; i++) {
-      _confetti.add(_ConfettiParticle(
-        x: random.nextDouble() * SizeConfig.screenWidth,
-        y: -random.nextDouble() * 200 - 50,
-        color: [
-          widget.themeColor,
-          widget.themeColor.withOpacity(0.7),
-          Colors.white,
-          Colors.white.withOpacity(0.7),
-        ][random.nextInt(4)],
-        size: random.nextDouble() * 8 + 4,
-        speed: random.nextDouble() * 3 + 2,
-        wobble: random.nextDouble() * 2 - 1,
-        rotation: random.nextDouble() * 2 * pi,
-      ));
-    }
   }
 
   @override
@@ -164,55 +115,36 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
     _fillController.dispose();
     _contentController.dispose();
     _numberController.dispose();
-    _confettiController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
-    
-    // Determine text color based on theme color brightness
-    final textOnWave = widget.themeColor.computeLuminance() > 0.5 
-        ? Colors.black 
-        : Colors.white;
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Dynamic theme color wave fill animation
           AnimatedBuilder(
             animation: Listenable.merge([_fillController, _waveController]),
             builder: (context, child) {
               return CustomPaint(
                 size: Size.infinite,
-                painter: _PremiumWavePainter(
+                painter: _LevelUpWavePainter(
                   progress: _fillAnimation.value,
                   phase: _waveController.value * 2 * pi,
-                  color: widget.themeColor,
                 ),
               );
             },
           ),
 
-          // Confetti overlay
-          if (_confetti.isNotEmpty)
-            IgnorePointer(
-              child: CustomPaint(
-                size: Size.infinite,
-                painter: _ConfettiPainter(_confetti),
-              ),
-            ),
-          
-          // Content overlay
           SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(flex: 2),
-                
-                // Animated streak number
+
                 AnimatedBuilder(
                   animation: _numberController,
                   builder: (context, child) {
@@ -222,52 +154,51 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
                         scale: _numberScaleAnimation.value,
                         child: Column(
                           children: [
-                            // Flame icon with glow
                             Container(
-                              padding: EdgeInsets.all(SizeConfig.w(20)),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: textOnWave.withOpacity(0.2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: textOnWave.withOpacity(0.3),
-                                    blurRadius: 30,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
+                              padding: EdgeInsets.symmetric(
+                                horizontal: SizeConfig.w(24),
+                                vertical: SizeConfig.h(8),
                               ),
-                              child: Icon(
-                                Icons.local_fire_department_rounded,
-                                size: SizeConfig.sp(50),
-                                color: textOnWave,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Text(
+                                'LEVEL',
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(14),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 3.0,
+                                ),
                               ),
                             ),
-                            SizedBox(height: SizeConfig.h(24)),
-                            // Streak number
+                            SizedBox(height: SizeConfig.h(16)),
                             Text(
-                              '${widget.globalStreak}',
+                              '${widget.newLevel}',
                               style: TextStyle(
-                                fontSize: SizeConfig.sp(120),
+                                fontSize: SizeConfig.sp(140),
                                 fontWeight: FontWeight.w900,
-                                color: textOnWave,
+                                color: Colors.white,
                                 height: 1.0,
                                 shadows: [
                                   Shadow(
-                                    color: textOnWave.withOpacity(0.5),
+                                    color: const Color(
+                                      0xFF8B5CF6,
+                                    ).withOpacity(0.5),
                                     blurRadius: 40,
                                     offset: Offset.zero,
                                   ),
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 4),
+                                  ),
                                 ],
-                              ),
-                            ),
-                            SizedBox(height: SizeConfig.h(8)),
-                            Text(
-                              'DAY STREAK',
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(16),
-                                fontWeight: FontWeight.w700,
-                                color: textOnWave.withOpacity(0.8),
-                                letterSpacing: 4.0,
                               ),
                             ),
                           ],
@@ -276,10 +207,9 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
                     );
                   },
                 ),
-                
+
                 SizedBox(height: SizeConfig.h(40)),
-                
-                // Motivational text
+
                 AnimatedBuilder(
                   animation: _contentController,
                   builder: (context, child) {
@@ -288,26 +218,85 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
                       child: Column(
                         children: [
                           Text(
-                            widget.title,
+                            'LEVEL UP!',
                             style: TextStyle(
-                              fontSize: SizeConfig.sp(32),
-                              fontWeight: FontWeight.w800,
-                              color: textOnWave,
-                              letterSpacing: 1.0,
+                              fontSize: SizeConfig.sp(36),
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 4.0,
+                              shadows: [
+                                Shadow(
+                                  color: const Color(
+                                    0xFFF59E0B,
+                                  ).withOpacity(0.5),
+                                  blurRadius: 20,
+                                  offset: Offset.zero,
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: SizeConfig.h(12)),
+                          SizedBox(height: SizeConfig.h(16)),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(20),
+                              vertical: SizeConfig.h(12),
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  color: const Color(0xFFF59E0B),
+                                  size: SizeConfig.sp(20),
+                                ),
+                                SizedBox(width: SizeConfig.w(8)),
+                                Text(
+                                  '+${widget.xpGained} XP',
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(16),
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: SizeConfig.w(12)),
+                                Text(
+                                  'Ã¢â‚¬Â¢',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                  ),
+                                ),
+                                SizedBox(width: SizeConfig.w(12)),
+                                Text(
+                                  '${widget.totalXP} Total',
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(14),
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withOpacity(0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: SizeConfig.h(16)),
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: SizeConfig.w(40),
                             ),
                             child: Text(
-                              widget.subtitle,
+                              'Keep pushing your limits and achieving greatness!',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: SizeConfig.sp(16),
                                 fontWeight: FontWeight.w400,
-                                color: textOnWave.withOpacity(0.9),
+                                color: Colors.white.withOpacity(0.9),
                                 height: 1.4,
                               ),
                             ),
@@ -317,10 +306,9 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
                     );
                   },
                 ),
-                
+
                 const Spacer(flex: 3),
-                
-                // Continue button
+
                 AnimatedBuilder(
                   animation: _contentController,
                   builder: (context, child) {
@@ -342,8 +330,8 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: textOnWave,
-                                foregroundColor: widget.themeColor,
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF8B5CF6),
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
@@ -373,36 +361,31 @@ class _GlobalStreakSuccessPageState extends State<GlobalStreakSuccessPage>
   }
 }
 
-class _PremiumWavePainter extends CustomPainter {
-  final double progress;
-  final double phase;
-  final Color color;
+class _LevelUpWavePainter extends CustomPainter {
+  final double progress; // 0..1 (bottom to top)
+  final double phase; // wave animation phase
 
-  _PremiumWavePainter({
-    required this.progress,
-    required this.phase,
-    required this.color,
-  });
+  _LevelUpWavePainter({required this.progress, required this.phase});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0.01) return;
 
-    // Create gradient
     final gradient = LinearGradient(
       begin: Alignment.bottomCenter,
       end: Alignment.topCenter,
       colors: [
-        color,
-        color.withOpacity(0.9),
-        HSLColor.fromColor(color).withLightness(
-          (HSLColor.fromColor(color).lightness + 0.1).clamp(0, 1)
-        ).toColor(),
+        const Color(0xFF8B5CF6), // Purple
+        const Color(0xFFA855F7), // Light purple
+        const Color(0xFFF59E0B), // Gold
       ],
+      stops: const [0.0, 0.5, 1.0],
     );
 
     final paint = Paint()
-      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..shader = gradient.createShader(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+      )
       ..style = PaintingStyle.fill;
 
     if (progress >= 0.99) {
@@ -414,20 +397,26 @@ class _PremiumWavePainter extends CustomPainter {
     final waveTop = size.height - fillHeight;
 
     const waveAmplitude = 25.0;
-    const waveCount = 2.5;
-    const steps = 60;
+    const waveCount = 3;
+    final steps = 60;
 
     final path = Path();
+
     path.moveTo(0, size.height);
-    
+
     for (int i = 0; i <= steps; i++) {
       final x = (i / steps) * size.width;
       final nx = x / size.width;
       final wave = sin(phase + nx * waveCount * 2 * pi);
       final y = waveTop + (wave * waveAmplitude * (1 - progress * 0.5));
-      path.lineTo(x, y);
+
+      if (i == 0) {
+        path.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
-    
+
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
@@ -436,74 +425,7 @@ class _PremiumWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _PremiumWavePainter oldDelegate) {
+  bool shouldRepaint(covariant _LevelUpWavePainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.phase != phase;
   }
-}
-
-class _ConfettiParticle {
-  double x;
-  double y;
-  final Color color;
-  final double size;
-  final double speed;
-  final double wobble;
-  double rotation;
-
-  _ConfettiParticle({
-    required this.x,
-    required this.y,
-    required this.color,
-    required this.size,
-    required this.speed,
-    required this.wobble,
-    required this.rotation,
-  });
-
-  void update(double screenHeight) {
-    y += speed * 2; // Slightly slower for more graceful fall
-    x += sin(y * 0.01) * wobble;
-    rotation += 0.05;
-
-    // Reset if off screen (infinite loop)
-    if (y > screenHeight + 50) {
-      y = -20;
-      x = Random().nextDouble() * SizeConfig.screenWidth;
-    }
-  }
-}
-
-class _ConfettiPainter extends CustomPainter {
-  final List<_ConfettiParticle> particles;
-
-  _ConfettiPainter(this.particles);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var p in particles) {
-      // Draw all particles (recycling logic handles bounds)
-      
-      canvas.save();
-      canvas.translate(p.x, p.y);
-      canvas.rotate(p.rotation);
-      
-      final paint = Paint()
-        ..color = p.color
-        ..style = PaintingStyle.fill;
-      
-      // Draw rectangle confetti
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.6),
-          Radius.circular(2),
-        ),
-        paint,
-      );
-      
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ConfettiPainter oldDelegate) => true;
 }

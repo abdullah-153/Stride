@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 import 'package:fitness_tracker_frontend/services/activity_service.dart';
@@ -85,7 +85,6 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
         ? const Color(0xFF2C2C2E)
         : Colors.black;
 
-    // Show loading state
     if (_isLoading) {
       return Container(
         width: double.infinity,
@@ -107,21 +106,18 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
       );
     }
 
-    // Use API data or fallback to defaults
     final workoutsCompleted = _activityData?.workoutsCompleted ?? 0;
-    // For workout progress, we can use the weekly goal / 7 as a rough daily goal, or just use 1 if goal is 0
-    final dailyWorkoutGoal = (_userProfile?.weeklyWorkoutGoal ?? 5) > 0 
-        ? ((_userProfile?.weeklyWorkoutGoal ?? 5) / 7).ceil() 
+    final dailyWorkoutGoal = (_userProfile?.weeklyWorkoutGoal ?? 5) > 0
+        ? ((_userProfile?.weeklyWorkoutGoal ?? 5) / 7).ceil()
         : 1;
-    final totalWorkouts = dailyWorkoutGoal > 0 ? dailyWorkoutGoal : 1; 
-    
+    final totalWorkouts = dailyWorkoutGoal > 0 ? dailyWorkoutGoal : 1;
+
     final calories = _activityData?.caloriesBurned ?? 0;
     final calorieGoal = _userProfile?.dailyCalorieGoal ?? 2000;
-    
+
     final steps = _activityData?.steps ?? 0;
     final stepGoal = 10000; // Default step goal as it's not in profile yet
-    
-    // Calculate progress for workout card
+
     final workoutProgress = (workoutsCompleted / totalWorkouts).clamp(0.0, 1.0);
 
     return Container(
@@ -167,75 +163,78 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
                       onTap: _navigateToWorkout,
                       borderRadius: BorderRadius.circular(SizeConfig.w(16)),
                       child: Ink(
-                        // Removed fixed height here
                         decoration: BoxDecoration(
                           color: workoutBg,
                           borderRadius: BorderRadius.circular(SizeConfig.w(16)),
                           border: Border.all(
-                            color: widget.isDarkMode 
-                                ? Colors.white.withOpacity(0.1) 
+                            color: widget.isDarkMode
+                                ? Colors.white.withOpacity(0.1)
                                 : Colors.transparent,
-                            width: 1
+                            width: 1,
                           ),
                         ),
                         child: Stack(
                           children: [
-                             // Background Decorative Icon
                             Positioned(
                               right: -SizeConfig.w(10),
                               bottom: -SizeConfig.h(10),
                               child: Icon(
                                 Icons.fitness_center_rounded,
                                 size: SizeConfig.w(80),
-                                color: widget.isDarkMode 
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.white.withOpacity(0.15),
+                                color: widget.isDarkMode
+                                    ? Colors.white.withOpacity(0.05)
+                                    : Colors.white.withOpacity(0.15),
                               ),
                             ),
-                            
+
                             Padding(
                               padding: EdgeInsets.all(SizeConfig.w(14)),
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Workout",
-                                            style: TextStyle(
-                                              fontSize: SizeConfig.sp(15),
-                                              fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Workout",
+                                        style: TextStyle(
+                                          fontSize: SizeConfig.sp(15),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      SizedBox(
+                                        width: SizeConfig.w(40),
+                                        height: SizeConfig.w(40),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            CircularProgressIndicator(
+                                              value:
+                                                  workoutProgress, // The progress value
+                                              strokeWidth: 3,
+                                              backgroundColor: Colors.white
+                                                  .withOpacity(0.2),
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                    Color
+                                                  >(Color(0xFFCEF24B)),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios_rounded,
+                                              size: SizeConfig.w(12),
                                               color: Colors.white,
                                             ),
-                                          ),
-                                          const Spacer(),
-                                          // Progress Ring with Arrow inside
-                                          SizedBox(
-                                            width: SizeConfig.w(40),
-                                            height: SizeConfig.w(40),
-                                            child: Stack(
-                                              alignment: Alignment.center,
-                                              children: [
-                                                CircularProgressIndicator(
-                                                  value: workoutProgress, // The progress value
-                                                  strokeWidth: 3,
-                                                  backgroundColor: Colors.white.withOpacity(0.2),
-                                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCEF24B)),
-                                                ),
-                                                Icon(
-                                                  Icons.arrow_forward_ios_rounded,
-                                                  size: SizeConfig.w(12),
-                                                  color: Colors.white,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                  // Removed Spacer
+                                    ],
+                                  ),
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
                                     textBaseline: TextBaseline.alphabetic,
                                     children: [
                                       Text(
@@ -277,7 +276,10 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
                         unit: "kcal",
                         onTap: _navigateToDiet,
                         isDarkMode: widget.isDarkMode,
-                        progress: (calories / 2500).clamp(0.0, 1.0), // Example goal
+                        progress: (calories / 2500).clamp(
+                          0.0,
+                          1.0,
+                        ), // Example goal
                       ),
                       SizedBox(height: SizeConfig.h(8)),
                       _ActivityMiniCard(
@@ -326,20 +328,17 @@ class _ActivityMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Colors & Styles
     final cardBgColor = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
-    // Enhanced border visibility for Light Mode
     final borderColor = isDarkMode
         ? Colors.white.withOpacity(0.1)
         : Colors.black.withOpacity(0.08); // Increased from 0.05
     final titleColor = isDarkMode ? Colors.white70 : Colors.black54;
     final valueColor = isDarkMode ? Colors.white : Colors.black87;
     final unitColor = isDarkMode ? Colors.white54 : Colors.black45;
-    
-    // Parse value for animation (remove non-digits for parsing)
+
     final numericString = value.replaceAll(RegExp(r'[^0-9.]'), '');
     final double endValue = double.tryParse(numericString) ?? 0;
-    
+
     final isSteps = title == "Steps";
     final isCalories = title == "Calories";
 
@@ -358,7 +357,9 @@ class _ActivityMiniCard extends StatelessWidget {
               BoxShadow(
                 color: isDarkMode
                     ? Colors.black.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05), // Increased shadow in light mode
+                    : Colors.black.withOpacity(
+                        0.05,
+                      ), // Increased shadow in light mode
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -366,25 +367,27 @@ class _ActivityMiniCard extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // Background Decorative Icon
               Positioned(
                 right: -SizeConfig.w(10),
                 bottom: -SizeConfig.h(10),
                 child: Icon(
-                  isSteps ? Icons.directions_walk_rounded : Icons.local_fire_department_rounded,
+                  isSteps
+                      ? Icons.directions_walk_rounded
+                      : Icons.local_fire_department_rounded,
                   size: SizeConfig.w(60),
-                  color: isDarkMode 
-                    ? Colors.white.withOpacity(0.03)
-                    : Colors.black.withOpacity(0.05), // Increased opacity for light mode
+                  color: isDarkMode
+                      ? Colors.white.withOpacity(0.03)
+                      : Colors.black.withOpacity(
+                          0.05,
+                        ), // Increased opacity for light mode
                 ),
               ),
-              
+
               Padding(
                 padding: EdgeInsets.all(SizeConfig.w(14)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Text Content
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -402,24 +405,23 @@ class _ActivityMiniCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                             // Animated Counter
-                             TweenAnimationBuilder<double>(
-                               tween: Tween<double>(begin: 0, end: endValue),
-                               duration: const Duration(milliseconds: 1500),
-                               curve: Curves.easeOutExpo,
-                               builder: (context, val, child) {
-                                 String text = "";
-                                 if (endValue >= 1000) {
-                                   // Keep k format if original had it, or re-format
-                                   if (value.contains('k')) {
-                                      text = '${(val / 1000).toStringAsFixed(1)}k'; 
-                                   } else {
-                                      text = val.toInt().toString();
-                                   }
-                                 } else {
-                                   text = val.toInt().toString();
-                                 }
-                                 return Text(
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0, end: endValue),
+                              duration: const Duration(milliseconds: 1500),
+                              curve: Curves.easeOutExpo,
+                              builder: (context, val, child) {
+                                String text = "";
+                                if (endValue >= 1000) {
+                                  if (value.contains('k')) {
+                                    text =
+                                        '${(val / 1000).toStringAsFixed(1)}k';
+                                  } else {
+                                    text = val.toInt().toString();
+                                  }
+                                } else {
+                                  text = val.toInt().toString();
+                                }
+                                return Text(
                                   text,
                                   style: TextStyle(
                                     fontSize: SizeConfig.sp(22),
@@ -428,8 +430,8 @@ class _ActivityMiniCard extends StatelessWidget {
                                     height: 1.0,
                                   ),
                                 );
-                               },
-                             ),
+                              },
+                            ),
                             SizedBox(width: SizeConfig.w(4)),
                             Text(
                               unit,
@@ -443,8 +445,7 @@ class _ActivityMiniCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
-                    // Circular Progress (Now for both Steps and Calories)
+
                     SizedBox(
                       width: SizeConfig.w(40),
                       height: SizeConfig.w(40),
@@ -455,7 +456,9 @@ class _ActivityMiniCard extends StatelessWidget {
                             value: 1.0,
                             strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                              isDarkMode
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade200,
                             ),
                           ),
                           TweenAnimationBuilder<double>(
@@ -468,7 +471,9 @@ class _ActivityMiniCard extends StatelessWidget {
                                 strokeWidth: 3,
                                 strokeCap: StrokeCap.round,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  isCalories ? Colors.deepOrangeAccent : Colors.blueAccent
+                                  isCalories
+                                      ? Colors.deepOrangeAccent
+                                      : Colors.blueAccent,
                                 ),
                               );
                             },

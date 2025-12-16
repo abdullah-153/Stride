@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class BaseFirestoreService {
@@ -17,20 +17,26 @@ abstract class BaseFirestoreService {
     return firestore.collection('users').doc(userId);
   }
 
-  CollectionReference getUserSubcollection(String userId, String subcollection) {
+  CollectionReference getUserSubcollection(
+    String userId,
+    String subcollection,
+  ) {
     return getUserDocument(userId).collection(subcollection);
   }
 
-  Map<String, dynamic> addTimestamps(Map<String, dynamic> data, {bool isUpdate = false}) {
+  Map<String, dynamic> addTimestamps(
+    Map<String, dynamic> data, {
+    bool isUpdate = false,
+  }) {
     final now = FieldValue.serverTimestamp();
-    
+
     if (isUpdate) {
       data['updatedAt'] = now;
     } else {
       data['createdAt'] = now;
       data['updatedAt'] = now;
     }
-    
+
     return data;
   }
 
@@ -90,12 +96,12 @@ abstract class BaseFirestoreService {
 
   Future<void> batchWrite(List<Map<String, dynamic>> operations) async {
     final batch = firestore.batch();
-    
+
     for (final operation in operations) {
       final type = operation['type'] as String;
       final ref = operation['ref'] as DocumentReference;
       final data = operation['data'] as Map<String, dynamic>?;
-      
+
       switch (type) {
         case 'set':
           batch.set(ref, data!);
@@ -108,7 +114,7 @@ abstract class BaseFirestoreService {
           break;
       }
     }
-    
+
     await batch.commit();
   }
 
@@ -142,7 +148,7 @@ abstract class BaseFirestoreService {
 
   Future<void> enableOfflinePersistence() async {
     try {
-      await firestore.settings.persistenceEnabled;
+      firestore.settings.persistenceEnabled;
     } catch (e) {
       print('Offline persistence already enabled or not supported: $e');
     }

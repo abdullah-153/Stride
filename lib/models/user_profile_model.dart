@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitness_tracker_frontend/models/nutrition_model.dart';
 import 'package:fitness_tracker_frontend/models/diet_plan_model.dart';
 
@@ -13,22 +13,18 @@ class UserProfile {
   final DateTime? dateOfBirth;
   final String? profileImagePath; // Fixed: returned to nullable
   final String gender; // Added gender
-  
-  // Goals
+
   final int weeklyWorkoutGoal;
   final int dailyCalorieGoal;
   final double? weightGoal; // Target weight in kg
-  
-  // Nutrition & Diet
+
   final NutritionGoal? nutritionGoal;
   final DietPlan? activeDietPlan;
 
-  // Activity Stats
   final int totalWorkoutsCompleted;
   final int totalMealsLogged;
   final int daysActive;
-  
-  // Preferences
+
   final UnitPreference preferredUnits;
 
   const UserProfile({
@@ -51,10 +47,8 @@ class UserProfile {
     this.preferredUnits = UnitPreference.metric,
   });
 
-  // Calculate BMI
   double get bmi => weight / ((height / 100) * (height / 100));
 
-  // Copy with method for immutable updates
   UserProfile copyWith({
     String? name,
     String? bio,
@@ -84,19 +78,21 @@ class UserProfile {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       profileImagePath: profileImagePath ?? this.profileImagePath,
       weeklyWorkoutGoal: weeklyWorkoutGoal ?? this.weeklyWorkoutGoal,
-      // If a nutrition goal is updated, we might want to sync the daily calorie goal for backward compatibility
-      dailyCalorieGoal: dailyCalorieGoal ?? nutritionGoal?.dailyCalories ?? this.dailyCalorieGoal,
+      dailyCalorieGoal:
+          dailyCalorieGoal ??
+          nutritionGoal?.dailyCalories ??
+          this.dailyCalorieGoal,
       weightGoal: weightGoal ?? this.weightGoal,
       nutritionGoal: nutritionGoal ?? this.nutritionGoal,
       activeDietPlan: activeDietPlan ?? this.activeDietPlan,
-      totalWorkoutsCompleted: totalWorkoutsCompleted ?? this.totalWorkoutsCompleted,
+      totalWorkoutsCompleted:
+          totalWorkoutsCompleted ?? this.totalWorkoutsCompleted,
       totalMealsLogged: totalMealsLogged ?? this.totalMealsLogged,
       daysActive: daysActive ?? this.daysActive,
       preferredUnits: preferredUnits ?? this.preferredUnits,
     );
   }
 
-  // JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -129,15 +125,17 @@ class UserProfile {
       gender: json['gender'] as String? ?? 'Male',
       dateOfBirth: json['dateOfBirth'] != null
           ? (json['dateOfBirth'] is Timestamp
-              ? (json['dateOfBirth'] as Timestamp).toDate()
-              : DateTime.parse(json['dateOfBirth'] as String))
+                ? (json['dateOfBirth'] as Timestamp).toDate()
+                : DateTime.parse(json['dateOfBirth'] as String))
           : null,
       profileImagePath: json['profileImagePath'] as String?,
       weeklyWorkoutGoal: json['weeklyWorkoutGoal'] as int? ?? 5,
       dailyCalorieGoal: json['dailyCalorieGoal'] as int? ?? 2000,
-      weightGoal: json['weightGoal'] != null ? (json['weightGoal'] as num).toDouble() : null,
-      nutritionGoal: json['nutritionGoal'] != null 
-          ? NutritionGoal.fromJson(json['nutritionGoal']) 
+      weightGoal: json['weightGoal'] != null
+          ? (json['weightGoal'] as num).toDouble()
+          : null,
+      nutritionGoal: json['nutritionGoal'] != null
+          ? NutritionGoal.fromJson(json['nutritionGoal'])
           : null,
       activeDietPlan: json['activeDietPlan'] != null
           ? DietPlan.fromJson(json['activeDietPlan'])
@@ -154,7 +152,6 @@ class UserProfile {
     );
   }
 
-  // Default profile for new users
   factory UserProfile.defaultProfile() {
     return const UserProfile(
       name: 'User',

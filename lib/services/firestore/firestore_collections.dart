@@ -1,10 +1,10 @@
-class FirestoreCollections {
+﻿class FirestoreCollections {
   static const String users = 'users';
-  
+
   static const String profile = 'profile';
   static const String gamification = 'gamification';
   static const String settings = 'settings';
-  
+
   static const String workouts = 'workouts';
   static const String completedWorkouts = 'completedWorkouts';
   static const String nutrition = 'nutrition';
@@ -19,7 +19,7 @@ class FirestoreFields {
   static const String userId = 'userId';
   static const String timestamp = 'timestamp';
   static const String date = 'date';
-  
+
   static const String name = 'name';
   static const String email = 'email';
   static const String bio = 'bio';
@@ -36,7 +36,7 @@ class FirestoreFields {
   static const String totalMealsLogged = 'totalMealsLogged';
   static const String daysActive = 'daysActive';
   static const String preferredUnits = 'preferredUnits';
-  
+
   static const String stats = 'stats';
   static const String currentXp = 'currentXp';
   static const String currentLevel = 'currentLevel';
@@ -50,7 +50,7 @@ class FirestoreFields {
   static const String achievements = 'achievements';
   static const String isUnlocked = 'isUnlocked';
   static const String unlockedAt = 'unlockedAt';
-  
+
   static const String workoutId = 'workoutId';
   static const String title = 'title';
   static const String category = 'category';
@@ -64,7 +64,7 @@ class FirestoreFields {
   static const String completedAt = 'completedAt';
   static const String actualDuration = 'actualDuration';
   static const String notes = 'notes';
-  
+
   static const String waterIntake = 'waterIntake';
   static const String goal = 'goal';
   static const String dailyCalories = 'dailyCalories';
@@ -72,18 +72,18 @@ class FirestoreFields {
   static const String carbs = 'carbs';
   static const String fats = 'fats';
   static const String waterGoal = 'waterGoal';
-  
+
   static const String mealType = 'type';
   static const String calories = 'calories';
   static const String macros = 'macros';
   static const String imageUrl = 'imageUrl';
   static const String isFavorite = 'isFavorite';
-  
+
   static const String workoutsCompleted = 'workoutsCompleted';
   static const String totalWorkouts = 'totalWorkouts';
   static const String steps = 'steps';
   static const String maxSteps = 'maxSteps';
-  
+
   static const String notificationsEnabled = 'notificationsEnabled';
   static const String workoutReminders = 'workoutReminders';
   static const String dietReminders = 'dietReminders';
@@ -95,6 +95,8 @@ class FirestoreFields {
 }
 
 class FirebaseStoragePaths {
-  static String userProfileImage(String userId) => 'users/$userId/profile/avatar';
-  static String userMealImage(String userId, String mealId) => 'users/$userId/meals/$mealId';
+  static String userProfileImage(String userId) =>
+      'users/$userId/profile/avatar';
+  static String userMealImage(String userId, String mealId) =>
+      'users/$userId/meals/$mealId';
 }

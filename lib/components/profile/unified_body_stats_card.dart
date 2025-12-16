@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class UnifiedBodyStatsCard extends StatelessWidget {
@@ -23,20 +23,19 @@ class UnifiedBodyStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    // Color Palette
     final cardBg = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-    final borderColor = isDarkMode ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2);
+    final borderColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : Colors.grey.withOpacity(0.2);
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final labelColor = isDarkMode ? Colors.white60 : Colors.black54;
 
-    // Conversions for display
     final displayWeight = isMetric ? weight : weight * 2.20462;
     final weightUnit = isMetric ? 'kg' : 'lbs';
-    
+
     final displayHeight = isMetric ? height : height / 30.48; // ft
     final heightUnit = isMetric ? 'cm' : 'ft';
-    
-    // Formatting Height for Imperial (e.g. 5'9")
+
     String formattedHeight;
     if (isMetric) {
       formattedHeight = height.round().toString();
@@ -49,7 +48,10 @@ class UnifiedBodyStatsCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: SizeConfig.h(20), horizontal: SizeConfig.w(24)),
+        padding: EdgeInsets.symmetric(
+          vertical: SizeConfig.h(20),
+          horizontal: SizeConfig.w(24),
+        ),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(SizeConfig.w(24)),
@@ -64,7 +66,6 @@ class UnifiedBodyStatsCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Stats Row
             IntrinsicHeight(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -82,7 +83,9 @@ class UnifiedBodyStatsCard extends StatelessWidget {
                   _buildStatItem(
                     label: 'Height',
                     value: formattedHeight,
-                    unit: isMetric ? heightUnit : '', // Unit inside value for imperial
+                    unit: isMetric
+                        ? heightUnit
+                        : '', // Unit inside value for imperial
                     textColor: textColor,
                     labelColor: labelColor,
                     icon: Icons.height_rounded,
@@ -101,8 +104,7 @@ class UnifiedBodyStatsCard extends StatelessWidget {
                 ],
               ),
             ),
-            
-            // Clickability Indicator
+
             SizedBox(height: SizeConfig.h(12)),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

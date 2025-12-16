@@ -1,5 +1,4 @@
-class Validators {
-  // Validate name (not empty, reasonable length)
+﻿class Validators {
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Name cannot be empty';
@@ -13,7 +12,6 @@ class Validators {
     return null;
   }
 
-  // Validate weight (positive number, reasonable range)
   static String? validateWeight(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Weight cannot be empty';
@@ -35,7 +33,6 @@ class Validators {
     return null;
   }
 
-  // Validate height (positive number, reasonable range in cm)
   static String? validateHeight(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Height cannot be empty';
@@ -57,7 +54,6 @@ class Validators {
     return null;
   }
 
-  // Validate age (positive integer, reasonable range)
   static String? validateAge(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Age cannot be empty';
@@ -79,7 +75,6 @@ class Validators {
     return null;
   }
 
-  // Validate bio (optional, but with max length)
   static String? validateBio(String? value) {
     if (value != null && value.length > 200) {
       return 'Bio must be less than 200 characters';

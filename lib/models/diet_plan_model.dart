@@ -1,13 +1,9 @@
-class Macros {
+﻿class Macros {
   final int protein;
   final int carbs;
   final int fats;
 
-  Macros({
-    required this.protein,
-    required this.carbs,
-    required this.fats,
-  });
+  Macros({required this.protein, required this.carbs, required this.fats});
 
   factory Macros.fromJson(Map<String, dynamic> json) {
     return Macros(
@@ -18,11 +14,7 @@ class Macros {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'protein': protein,
-      'carbs': carbs,
-      'fats': fats,
-    };
+    return {'protein': protein, 'carbs': carbs, 'fats': fats};
   }
 }
 
@@ -70,10 +62,7 @@ class DailyMealPlan {
   final String day;
   final List<MealItem> meals;
 
-  DailyMealPlan({
-    required this.day,
-    required this.meals,
-  });
+  DailyMealPlan({required this.day, required this.meals});
 
   factory DailyMealPlan.fromJson(Map<String, dynamic> json) {
     return DailyMealPlan(
@@ -85,10 +74,7 @@ class DailyMealPlan {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'day': day,
-      'meals': meals.map((e) => e.toJson()).toList(),
-    };
+    return {'day': day, 'meals': meals.map((e) => e.toJson()).toList()};
   }
 }
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../components/diet/water_intake_card.dart';
@@ -13,9 +13,9 @@ import '../services/gamification_service.dart';
 import '../models/gamification_model.dart';
 import '../components/gamification/streak_card.dart';
 import '../components/gamification/streak_celebration_overlay.dart';
-import 'global_streak_success_page.dart';
+import 'gamification/global_streak_success_page.dart';
 import '../components/common/global_back_button.dart'; // Added import
-import 'level_up_page.dart';
+import 'gamification/level_up_page.dart';
 import '../utils/size_config.dart';
 import '../providers/theme_provider.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +41,7 @@ class _DietPageState extends ConsumerState<DietPage>
 
   late Animation<Offset> _slideAnimation;
   final GlobalKey<StreakCelebrationOverlayState> _celebrationKey = GlobalKey();
-  
+
   Map<DateTime, DailyNutrition> _historyMap = {};
 
   @override
@@ -82,19 +82,20 @@ class _DietPageState extends ConsumerState<DietPage>
       final nutrition = await _nutritionService.getDailyNutrition(date);
       if (mounted) {
         setState(() {
-          // If null (no data for today), show empty state instead of "No data" text
-          _dailyNutrition = nutrition ?? DailyNutrition(
-            date: date,
-            meals: [],
-            waterIntake: 0,
-            goal: NutritionGoal(
-              dailyCalories: 2000,
-              protein: 150,
-              carbs: 200,
-              fats: 65,
-              waterGoal: 2500,
-            ),
-          );
+          _dailyNutrition =
+              nutrition ??
+              DailyNutrition(
+                date: date,
+                meals: [],
+                waterIntake: 0,
+                goal: NutritionGoal(
+                  dailyCalories: 2000,
+                  protein: 150,
+                  carbs: 200,
+                  fats: 65,
+                  waterGoal: 2500,
+                ),
+              );
           _isLoading = false;
         });
         _animationController.forward(from: 0);
@@ -103,8 +104,7 @@ class _DietPageState extends ConsumerState<DietPage>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // Fallback to empty state on error too, so UI doesn't break
-             _dailyNutrition = DailyNutrition(
+          _dailyNutrition = DailyNutrition(
             date: date,
             meals: [],
             waterIntake: 0,
@@ -124,14 +124,16 @@ class _DietPageState extends ConsumerState<DietPage>
   Future<void> _loadHistory() async {
     try {
       final end = DateTime.now();
-      final start = end.subtract(const Duration(days: 30)); // Fetch last 30 days
+      final start = end.subtract(
+        const Duration(days: 30),
+      ); // Fetch last 30 days
       final history = await _nutritionService.getNutritionHistory(start, end);
-      
+
       if (mounted) {
         setState(() {
           _historyMap = {
             for (var item in history)
-              DateTime(item.date.year, item.date.month, item.date.day): item
+              DateTime(item.date.year, item.date.month, item.date.day): item,
           };
         });
       }
@@ -166,23 +168,21 @@ class _DietPageState extends ConsumerState<DietPage>
   }
 
   Future<void> _addMeal(Meal meal) async {
-    // Create a new meal instance with current timestamp
     final newMeal = meal.copyWith(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
     );
 
-    // Check if this is the first meal of the day BEFORE logging
     final gamificationService = GamificationService();
-    final isFirstMealOfDay = await gamificationService.isFirstOfDayForType(StreakType.diet);
+    final isFirstMealOfDay = await gamificationService.isFirstOfDayForType(
+      StreakType.diet,
+    );
 
-    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: BouncingDotsIndicator(color: Colors.white),
-      ),
+      builder: (context) =>
+          const Center(child: BouncingDotsIndicator(color: Colors.white)),
     );
 
     try {
@@ -191,15 +191,16 @@ class _DietPageState extends ConsumerState<DietPage>
       if (mounted) Navigator.pop(context); // Dismiss loading
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Error adding meal: $e. Saved locally if possible.')),
+          SnackBar(
+            content: Text('Error adding meal: $e. Saved locally if possible.'),
+          ),
         );
       }
       return; // Stop execution
     }
-    
+
     if (mounted) Navigator.pop(context); // Dismiss loading
 
-    // Set up level up callback
     gamificationService.onLevelUp = (newLevel, xpGained) async {
       if (mounted) {
         final currentData = await gamificationService.getCurrentData();
@@ -211,49 +212,50 @@ class _DietPageState extends ConsumerState<DietPage>
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
                   LevelUpPage(
-                newLevel: newLevel,
-                xpGained: xpGained,
-                totalXP: totalXP,
-              ),
+                    newLevel: newLevel,
+                    xpGained: xpGained,
+                    totalXP: totalXP,
+                  ),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
+                    return FadeTransition(opacity: animation, child: child);
+                  },
             ),
           );
         }
       }
     };
 
-    // Add XP for meal logging
     final leveledUp = await gamificationService.addXp(25);
 
     if (mounted && !leveledUp) {
       if (isFirstMealOfDay) {
-        final bothCompleted = await gamificationService.areBothStreaksCompletedToday();
+        final bothCompleted = await gamificationService
+            .areBothStreaksCompletedToday();
         final data = await gamificationService.getCurrentData();
         final stats = data.stats;
-        
-        // Show streak page for either Global or just Diet streak
+
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => GlobalStreakSuccessPage(
-              // If both completed, show global streak, otherwise show diet streak
-              globalStreak: bothCompleted ? stats.currentStreak : stats.dietStreak,
-              themeColor: const Color(0xFF0EA5E9),
-              title: bothCompleted ? 'Perfect Day!' : 'Nutrition Streak!',
-              subtitle: bothCompleted 
-                  ? 'You completed both workout and diet goals today'
-                  : 'Healthy eating streak kept alive! Great job!',
-            ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                GlobalStreakSuccessPage(
+                  globalStreak: bothCompleted
+                      ? stats.currentStreak
+                      : stats.dietStreak,
+                  themeColor: const Color(0xFF0EA5E9),
+                  title: bothCompleted ? 'Perfect Day!' : 'Nutrition Streak!',
+                  subtitle: bothCompleted
+                      ? 'You completed both workout and diet goals today'
+                      : 'Healthy eating streak kept alive! Great job!',
+                ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
           ),
         );
       } else {
-        // Show simple snackbar for subsequent meals
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -266,7 +268,7 @@ class _DietPageState extends ConsumerState<DietPage>
           ),
         );
       }
-      
+
       _loadData(_currentDate); // Refresh data
       _loadHistory();
     }
@@ -315,208 +317,230 @@ class _DietPageState extends ConsumerState<DietPage>
       body: StreakCelebrationOverlay(
         key: _celebrationKey,
         child: SafeArea(
-        child: _isLoading
-            ? Center(
-                child: BouncingDotsIndicator(
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-              )
-            : _dailyNutrition == null
-            ? Center(
-                child: Text(
-                  'No data available',
-                  style: TextStyle(color: textColor),
-                ),
-              )
-            : SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: SizeConfig.h(10)),
+          child: _isLoading
+              ? Center(
+                  child: BouncingDotsIndicator(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                )
+              : _dailyNutrition == null
+              ? Center(
+                  child: Text(
+                    'No data available',
+                    style: TextStyle(color: textColor),
+                  ),
+                )
+              : SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: SizeConfig.h(10)),
 
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.w(16),
-                          ),
-                          child: Text(
-                            'Diet\nDashboard',
-                            style: TextStyle(
-                              fontSize: SizeConfig.sp(48),
-                              fontWeight: FontWeight.w300,
-                              color: textColor,
-                              height: 1.1,
-                              letterSpacing: -1.0,
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16),
+                            ),
+                            child: Text(
+                              'Diet\nDashboard',
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(48),
+                                fontWeight: FontWeight.w300,
+                                color: textColor,
+                                height: 1.1,
+                                letterSpacing: -1.0,
+                              ),
                             ),
                           ),
-                        ),
 
-                        SizedBox(height: SizeConfig.h(24)),
+                          SizedBox(height: SizeConfig.h(24)),
 
-                        // Gamification Section
-                        StreamBuilder<GamificationData>(
-                          stream: GamificationService().gamificationStream,
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) return const SizedBox.shrink();
-                            final data = snapshot.data!;
-                            return Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: SizeConfig.w(16),
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: StreakCard(
-                                          streakDays: data.stats.dietStreak,
-                                          isDarkMode: isDarkMode,
-                                          title: 'Diet Streak',
-                                          currentLevel: data.stats.currentLevel,
-                                          currentXp: data.stats.currentXp,
-                                          nextLevelXp: GamificationService().getXpForNextLevel(data.stats.currentLevel),
-                                          gradientColors: isDarkMode
-                                              ? [
-                                                  Colors.black,
-                                                  const Color(0xFF1A1A1A), // Dark grey
-                                                  const Color(0xFF0EA5E9), // Blue accent
-                                                ]
-                                              : [
-                                                  Colors.white,
-                                                  const Color(0xFFF5F5F5), // Light grey
-                                                  const Color(0xFF0EA5E9), // Blue accent
-                                                ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  // LevelProgressCard moved to ProfilePage
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: SizeConfig.h(24)),
-
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.w(16),
-                          ),
-                          child: _buildGeneratePlanCapsule(isDarkMode),
-                        ),
-
-                        SizedBox(height: SizeConfig.h(24)),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.w(16),
-                          ),
-                          child: WaterIntakeSliderCard(isDarkMode: isDarkMode),
-                        ),
-
-                        SizedBox(height: SizeConfig.h(16)),
-
-                        _buildNutritionDashboard(isDarkMode),
-
-                        SizedBox(height: SizeConfig.h(24)),
-
-                        MealHistoryCalendar(
-                          isDarkMode: isDarkMode,
-                          selectedDate: _currentDate,
-                          onDateSelected: (date) => _loadData(date),
-                          minDate: FirebaseAuth.instance.currentUser?.metadata.creationTime,
-                          historyData: _historyMap,
-                        ),
-
-                        SizedBox(height: SizeConfig.h(20)),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.w(16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _isSameDay(_currentDate, DateTime.now())
-                                    ? 'Today\'s Meals'
-                                    : 'Meals for ${DateFormat('MMM d').format(_currentDate)}',
-                                style: TextStyle(
-                                  fontSize: SizeConfig.sp(20),
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
+                          StreamBuilder<GamificationData>(
+                            stream: GamificationService().gamificationStream,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData)
+                                return const SizedBox.shrink();
+                              final data = snapshot.data!;
+                              return Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: SizeConfig.w(16),
                                 ),
-                              ),
-                              if (_isSameDay(_currentDate, DateTime.now()))
-                                TextButton.icon(
-                                  onPressed: _showAddMealSheet,
-                                  icon: Icon(
-                                    Icons.add_circle_outline,
-                                    size: SizeConfig.w(20),
-                                    color: Colors.blue,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: StreakCard(
+                                            streakDays: data.stats.dietStreak,
+                                            isDarkMode: isDarkMode,
+                                            title: 'Diet Streak',
+                                            currentLevel:
+                                                data.stats.currentLevel,
+                                            currentXp: data.stats.currentXp,
+                                            nextLevelXp: GamificationService()
+                                                .getXpForNextLevel(
+                                                  data.stats.currentLevel,
+                                                ),
+                                            gradientColors: isDarkMode
+                                                ? [
+                                                    Colors.black,
+                                                    const Color(
+                                                      0xFF1A1A1A,
+                                                    ), // Dark grey
+                                                    const Color(
+                                                      0xFF0EA5E9,
+                                                    ), // Blue accent
+                                                  ]
+                                                : [
+                                                    Colors.white,
+                                                    const Color(
+                                                      0xFFF5F5F5,
+                                                    ), // Light grey
+                                                    const Color(
+                                                      0xFF0EA5E9,
+                                                    ), // Blue accent
+                                                  ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16),
+                            ),
+                            child: _buildGeneratePlanCapsule(isDarkMode),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16),
+                            ),
+                            child: WaterIntakeSliderCard(
+                              isDarkMode: isDarkMode,
+                            ),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(16)),
+
+                          _buildNutritionDashboard(isDarkMode),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          MealHistoryCalendar(
+                            isDarkMode: isDarkMode,
+                            selectedDate: _currentDate,
+                            onDateSelected: (date) => _loadData(date),
+                            minDate: FirebaseAuth
+                                .instance
+                                .currentUser
+                                ?.metadata
+                                .creationTime,
+                            historyData: _historyMap,
+                          ),
+
+                          SizedBox(height: SizeConfig.h(20)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _isSameDay(_currentDate, DateTime.now())
+                                      ? 'Today\'s Meals'
+                                      : 'Meals for ${DateFormat('MMM d').format(_currentDate)}',
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(20),
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
                                   ),
-                                  label: Text(
-                                    'Add Meal',
-                                    style: TextStyle(
-                                      fontSize: SizeConfig.sp(14),
-                                      fontWeight: FontWeight.w600,
+                                ),
+                                if (_isSameDay(_currentDate, DateTime.now()))
+                                  TextButton.icon(
+                                    onPressed: _showAddMealSheet,
+                                    icon: Icon(
+                                      Icons.add_circle_outline,
+                                      size: SizeConfig.w(20),
                                       color: Colors.blue,
                                     ),
+                                    label: Text(
+                                      'Add Meal',
+                                      style: TextStyle(
+                                        fontSize: SizeConfig.sp(14),
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: SizeConfig.h(12)),
+                          SizedBox(height: SizeConfig.h(12)),
 
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.w(16),
-                          ),
-                          child: _dailyNutrition!.meals.isEmpty
-                              ? _buildEmptyMealsState(isDarkMode, _currentDate)
-                              : Column(
-                                  children: _dailyNutrition!.meals
-                                      .map(
-                                        (meal) => EnhancedMealCard(
-                                          meal: meal,
-                                          onEdit: () {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Edit feature coming soon',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16),
+                            ),
+                            child: _dailyNutrition!.meals.isEmpty
+                                ? _buildEmptyMealsState(
+                                    isDarkMode,
+                                    _currentDate,
+                                  )
+                                : Column(
+                                    children: _dailyNutrition!.meals
+                                        .map(
+                                          (meal) => EnhancedMealCard(
+                                            meal: meal,
+                                            onEdit: () {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Edit feature coming soon',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  backgroundColor: Colors.black,
+                                                  duration: Duration(
+                                                    seconds: 1,
                                                   ),
                                                 ),
-                                                backgroundColor: Colors.black,
-                                                duration: Duration(seconds: 1),
-                                              ),
-                                            );
-                                          },
-                                          onDelete: () => _deleteMeal(meal.id),
-                                          isDarkMode: isDarkMode,
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                        ),
+                                              );
+                                            },
+                                            onDelete: () =>
+                                                _deleteMeal(meal.id),
+                                            isDarkMode: isDarkMode,
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                          ),
 
-                        SizedBox(height: SizeConfig.h(100)),
-                      ],
+                          SizedBox(height: SizeConfig.h(100)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
         ),
       ),
     );
@@ -689,7 +713,9 @@ class _DietPageState extends ConsumerState<DietPage>
             ),
             SizedBox(height: SizeConfig.h(12)),
             Text(
-              isPast ? 'No meals were logged on this day' : 'No meals logged yet',
+              isPast
+                  ? 'No meals were logged on this day'
+                  : 'No meals logged yet',
               style: TextStyle(
                 fontSize: SizeConfig.sp(16),
                 fontWeight: FontWeight.w600,
@@ -705,7 +731,7 @@ class _DietPageState extends ConsumerState<DietPage>
                   color: isDarkMode ? Colors.white54 : Colors.black38,
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -725,86 +751,106 @@ class _DietPageState extends ConsumerState<DietPage>
         height: SizeConfig.h(120),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(SizeConfig.w(24)),
-           gradient: LinearGradient(
-              colors: isDarkMode
-                ? [const Color(0xFF1E3A8A), const Color(0xFF1E40AF)] // Deep Blue
-                : [const Color(0xFFE3F2FD), const Color(0xFFBBDEFB)], // Light Blue
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-           ),
-           border: Border.all(
-              color: isDarkMode ? Colors.blueAccent.withOpacity(0.3) : Colors.blue.withOpacity(0.1),
-              width: 1,
-           ),
-           boxShadow: [
-              BoxShadow(
-                  color: Colors.blue.withOpacity(isDarkMode ? 0.2 : 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-              ),
-           ],
+          gradient: LinearGradient(
+            colors: isDarkMode
+                ? [
+                    const Color(0xFF1E3A8A),
+                    const Color(0xFF1E40AF),
+                  ] // Deep Blue
+                : [
+                    const Color(0xFFE3F2FD),
+                    const Color(0xFFBBDEFB),
+                  ], // Light Blue
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.blueAccent.withOpacity(0.3)
+                : Colors.blue.withOpacity(0.1),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(isDarkMode ? 0.2 : 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Stack(
           children: [
             Positioned(
               right: -30,
               bottom: -20,
-               child: Icon(
+              child: Icon(
                 Icons.auto_awesome,
                 size: SizeConfig.w(140),
-                color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.blue.withOpacity(0.1),
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.blue.withOpacity(0.1),
               ),
             ),
             Padding(
-               padding: EdgeInsets.all(SizeConfig.w(24)),
-               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                            Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                    color: Colors.blue,
-                                    borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                    "AI POWERED",
-                                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
+              padding: EdgeInsets.all(SizeConfig.w(24)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            "AI POWERED",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              "Create a diet plan",
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(20), 
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black87
-                              ),
-                            ),
-                            Text(
-                              "Tailored to your body & goals",
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(12),
-                                color: isDarkMode ? Colors.white70 : Colors.black54,
-                              ),
-                            ),
-                        ],
-                      ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "Create a diet plan",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(20),
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          "Tailored to your body & goals",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(12),
+                            color: isDarkMode ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.black26 : Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.arrow_forward, color: isDarkMode ? Colors.white : Colors.blue),
-                    )
-                 ],
-               ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.black26 : Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: isDarkMode ? Colors.white : Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -1,8 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/shared_preferences_manager.dart';
 import 'package:flutter/services.dart';
 
-/// Notifier for managing app theme state
 class ThemeNotifier extends StateNotifier<bool> {
   ThemeNotifier() : super(false) {
     _loadTheme();
@@ -28,7 +27,6 @@ class ThemeNotifier extends StateNotifier<bool> {
   }
 }
 
-// Global theme provider
 final themeProvider = StateNotifierProvider<ThemeNotifier, bool>((ref) {
   return ThemeNotifier();
 });

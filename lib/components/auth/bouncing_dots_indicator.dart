@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class BouncingDotsIndicator extends StatefulWidget {
   final Color color;
@@ -14,16 +14,17 @@ class BouncingDotsIndicator extends StatefulWidget {
   State<BouncingDotsIndicator> createState() => _BouncingDotsIndicatorState();
 }
 
-class _BouncingDotsIndicatorState extends State<BouncingDotsIndicator> with SingleTickerProviderStateMixin {
+class _BouncingDotsIndicatorState extends State<BouncingDotsIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
-     super.initState();
-     _controller = AnimationController(
-       vsync: this,
-       duration: const Duration(milliseconds: 1200),
-     )..repeat();
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
 
   @override
@@ -44,13 +45,14 @@ class _BouncingDotsIndicatorState extends State<BouncingDotsIndicator> with Sing
             final double delay = index * 0.2;
             final double value = _controller.value;
             double yOffset = 0.0;
-            
-            // Calculate wave effect
+
             double t = (value - delay) % 1.0;
             if (t < 0) t += 1.0;
-            
+
             if (t < 0.5) {
-               yOffset = -10.0 * (1.0 - (2 * (0.25 - (t - 0.25).abs())).abs()); // Bounce up
+              yOffset =
+                  -10.0 *
+                  (1.0 - (2 * (0.25 - (t - 0.25).abs())).abs()); // Bounce up
             }
 
             return Container(

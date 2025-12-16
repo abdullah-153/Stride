@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum StreakType { diet, workout }
 
 class UserStats {
@@ -8,7 +9,6 @@ class UserStats {
   final int longestStreak;
   final DateTime? lastLogDate; // Global last log
 
-  // Specific streaks
   final int dietStreak;
   final int workoutStreak;
   final DateTime? lastDietLogDate;
@@ -89,25 +89,27 @@ class UserStats {
       longestStreak: json['longestStreak'] as int,
       lastLogDate: json['lastLogDate'] != null
           ? (json['lastLogDate'] is Timestamp
-              ? (json['lastLogDate'] as Timestamp).toDate()
-              : DateTime.parse(json['lastLogDate'] as String))
+                ? (json['lastLogDate'] as Timestamp).toDate()
+                : DateTime.parse(json['lastLogDate'] as String))
           : null,
       dietStreak: json['dietStreak'] as int? ?? 0,
       workoutStreak: json['workoutStreak'] as int? ?? 0,
       lastDietLogDate: json['lastDietLogDate'] != null
           ? (json['lastDietLogDate'] is Timestamp
-              ? (json['lastDietLogDate'] as Timestamp).toDate()
-              : DateTime.parse(json['lastDietLogDate'] as String))
+                ? (json['lastDietLogDate'] as Timestamp).toDate()
+                : DateTime.parse(json['lastDietLogDate'] as String))
           : null,
       lastWorkoutLogDate: json['lastWorkoutLogDate'] != null
           ? (json['lastWorkoutLogDate'] is Timestamp
-              ? (json['lastWorkoutLogDate'] as Timestamp).toDate()
-              : DateTime.parse(json['lastWorkoutLogDate'] as String))
+                ? (json['lastWorkoutLogDate'] as Timestamp).toDate()
+                : DateTime.parse(json['lastWorkoutLogDate'] as String))
           : null,
-      activityDates: (json['activityDates'] as List<dynamic>?)
-              ?.map((e) => e is Timestamp 
-                  ? e.toDate() 
-                  : DateTime.parse(e as String))
+      activityDates:
+          (json['activityDates'] as List<dynamic>?)
+              ?.map(
+                (e) =>
+                    e is Timestamp ? e.toDate() : DateTime.parse(e as String),
+              )
               .toList() ??
           [],
     );

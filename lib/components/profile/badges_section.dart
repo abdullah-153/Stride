@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/gamification_model.dart';
 import '../../utils/size_config.dart';
 

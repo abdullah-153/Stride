@@ -1,4 +1,4 @@
-class ActivityData {
+﻿class ActivityData {
   final int workoutsCompleted;
   final int totalWorkouts;
   final int caloriesBurned;

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class LevelProgressCard extends StatelessWidget {
@@ -21,7 +21,6 @@ class LevelProgressCard extends StatelessWidget {
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final subTextColor = isDarkMode ? Colors.white70 : Colors.black54;
 
-    // Standardized Border Color
     final borderColor = isDarkMode
         ? Colors.white.withOpacity(0.1)
         : Colors.grey.withOpacity(0.2);

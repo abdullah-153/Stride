@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/gamification_service.dart';
@@ -9,9 +9,7 @@ import 'home_menu.dart';
 import 'streak_progress.dart';
 import 'today_progress_section.dart';
 import 'weekdays_bar.dart';
-import '../gamification/streak_card.dart';
 
-/// Main content widget for the home page
 class HomePageContent extends ConsumerWidget {
   final bool isDarkMode;
   final Function(bool) onThemeChanged;
@@ -28,11 +26,9 @@ class HomePageContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     SizeConfig.init(context);
 
-    // Get user profile data
     final userName = ref.watch(userNameProvider);
     final profileImage = ref.watch(profileImageProvider);
 
-    // Define colors based on the theme
     final primaryTextColor = isDarkMode ? Colors.white : Colors.black87;
     final secondaryTextColor = isDarkMode ? Colors.white70 : Colors.black45;
     final avatarBgColor = isDarkMode ? const Color(0xFF2C2C2E) : Colors.black12;
@@ -50,7 +46,6 @@ class HomePageContent extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: SizeConfig.h(12)),
-            // Header row
             _buildHeader(
               userName: userName,
               profileImage: profileImage,
@@ -60,7 +55,6 @@ class HomePageContent extends ConsumerWidget {
               avatarIconColor: avatarIconColor,
             ),
             SizedBox(height: SizeConfig.h(10)),
-            // Days bar
             SizedBox(
               height: SizeConfig.h(86),
               child: WeeklyDaysBar(
@@ -70,18 +64,28 @@ class HomePageContent extends ConsumerWidget {
               ),
             ),
             SizedBox(height: SizeConfig.h(10)),
-            // Streak Card
             StreamBuilder<GamificationData>(
               stream: GamificationService().gamificationStream,
               builder: (context, snapshot) {
-                // Default data while loading
-                final currentStreak = snapshot.hasData ? snapshot.data!.stats.currentStreak : 0;
-                final currentLevel = snapshot.hasData ? snapshot.data!.stats.currentLevel : 1;
-                final currentXp = snapshot.hasData ? snapshot.data!.stats.currentXp : 0;
-                final nextLevelXp = GamificationService().getXpForNextLevel(currentLevel);
-                
-                final lastDietDate = snapshot.hasData ? snapshot.data!.stats.lastDietLogDate : null;
-                final lastWorkoutDate = snapshot.hasData ? snapshot.data!.stats.lastWorkoutLogDate : null;
+                final currentStreak = snapshot.hasData
+                    ? snapshot.data!.stats.currentStreak
+                    : 0;
+                final currentLevel = snapshot.hasData
+                    ? snapshot.data!.stats.currentLevel
+                    : 1;
+                final currentXp = snapshot.hasData
+                    ? snapshot.data!.stats.currentXp
+                    : 0;
+                final nextLevelXp = GamificationService().getXpForNextLevel(
+                  currentLevel,
+                );
+
+                final lastDietDate = snapshot.hasData
+                    ? snapshot.data!.stats.lastDietLogDate
+                    : null;
+                final lastWorkoutDate = snapshot.hasData
+                    ? snapshot.data!.stats.lastWorkoutLogDate
+                    : null;
 
                 return StreakProgress(
                   streakDays: currentStreak,
@@ -95,7 +99,6 @@ class HomePageContent extends ConsumerWidget {
               },
             ),
             SizedBox(height: SizeConfig.h(10)),
-            // Main content
             TodayActivitySection(
               isDarkMode: isDarkMode,
               onNavigate: onNavigate,

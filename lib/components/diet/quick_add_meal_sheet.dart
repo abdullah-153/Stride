@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../services/nutrition_service.dart';
 import '../../services/meal_service.dart';
@@ -44,22 +44,19 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
   }
 
   Future<void> _loadAllData() async {
-    await Future.wait([
-      _loadMeals(),
-      _loadRecommendedMeals(),
-    ]);
+    await Future.wait([_loadMeals(), _loadRecommendedMeals()]);
   }
 
   Future<void> _loadRecommendedMeals() async {
     try {
       final profile = await _userProfileService.loadProfile();
-      if (profile.activeDietPlan != null && profile.activeDietPlan!.weeklyPlan.isNotEmpty) {
-        // Calculate day index (0 for Monday, etc.) based on week of plan
-        // Simply cycling through plan days based on actual weekday
-        // Weekday 1 (Mon) -> Index 0
-        final dayIndex = (DateTime.now().weekday - 1) % profile.activeDietPlan!.weeklyPlan.length;
+      if (profile.activeDietPlan != null &&
+          profile.activeDietPlan!.weeklyPlan.isNotEmpty) {
+        final dayIndex =
+            (DateTime.now().weekday - 1) %
+            profile.activeDietPlan!.weeklyPlan.length;
         final dailyPlan = profile.activeDietPlan!.weeklyPlan[dayIndex];
-        
+
         final meals = dailyPlan.meals.map((item) {
           return Meal(
             id: 'rec_${DateTime.now().millisecondsSinceEpoch}_${item.name.hashCode}',
@@ -88,11 +85,16 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
 
   MealType _mapMealType(String typeStr) {
     switch (typeStr.toLowerCase()) {
-      case 'breakfast': return MealType.breakfast;
-      case 'lunch': return MealType.lunch;
-      case 'dinner': return MealType.dinner;
-      case 'snack': return MealType.snack;
-      default: return MealType.snack;
+      case 'breakfast':
+        return MealType.breakfast;
+      case 'lunch':
+        return MealType.lunch;
+      case 'dinner':
+        return MealType.dinner;
+      case 'snack':
+        return MealType.snack;
+      default:
+        return MealType.snack;
     }
   }
 
@@ -103,7 +105,9 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
     if (mounted) {
       setState(() {
         _recentMeals = recentMaps.map((data) => Meal.fromJson(data)).toList();
-        _favoriteMeals = favoriteMaps.map((data) => Meal.fromJson(data)).toList();
+        _favoriteMeals = favoriteMaps
+            .map((data) => Meal.fromJson(data))
+            .toList();
         _isLoading = false;
       });
     }
@@ -139,11 +143,10 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
       return;
     }
 
-    // Clear suggestions when starting a real search
     if (mounted) {
       setState(() {
         _isSearching = true;
-        _suggestions = []; 
+        _suggestions = [];
       });
     }
 
@@ -206,7 +209,10 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.only(left: SizeConfig.w(16), right: SizeConfig.w(16)),
+            labelPadding: EdgeInsets.only(
+              left: SizeConfig.w(16),
+              right: SizeConfig.w(16),
+            ),
             tabs: const [
               Tab(text: 'Recommended'),
               Tab(text: 'Recent'),
@@ -221,9 +227,18 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                 : TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildMealList(_recommendedMeals, emptyMessage: "No plan active. Generate one!"),
-                      _buildMealList(_recentMeals, emptyMessage: "No recent meals"),
-                      _buildMealList(_favoriteMeals, emptyMessage: "No favorites yet"),
+                      _buildMealList(
+                        _recommendedMeals,
+                        emptyMessage: "No plan active. Generate one!",
+                      ),
+                      _buildMealList(
+                        _recentMeals,
+                        emptyMessage: "No recent meals",
+                      ),
+                      _buildMealList(
+                        _favoriteMeals,
+                        emptyMessage: "No favorites yet",
+                      ),
                       _buildSearchTab(textColor),
                     ],
                   ),
@@ -244,15 +259,14 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
             textInputAction: TextInputAction.search,
             onSubmitted: (value) => _searchMeals(value),
             onChanged: (value) {
-              // Debounce suggestions
               Future.delayed(const Duration(milliseconds: 300), () {
                 if (!mounted) return;
                 if (_searchController.text == value) {
-                   if (value.isEmpty) {
-                     setState(() => _suggestions = []);
-                   } else {
-                     _fetchSuggestions(value);
-                   }
+                  if (value.isEmpty) {
+                    setState(() => _suggestions = []);
+                  } else {
+                    _fetchSuggestions(value);
+                  }
                 }
               });
             },
@@ -270,7 +284,7 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
             ),
           ),
           SizedBox(height: SizeConfig.h(20)),
-          
+
           Expanded(
             child: _suggestions.isNotEmpty
                 ? ListView.separated(
@@ -279,7 +293,11 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                     itemBuilder: (context, index) {
                       final suggestion = _suggestions[index];
                       return ListTile(
-                        leading: const Icon(Icons.search, color: Colors.grey, size: 20),
+                        leading: const Icon(
+                          Icons.search,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                         title: Text(
                           suggestion,
                           style: TextStyle(color: textColor, fontSize: 16),
@@ -293,29 +311,32 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                     },
                   )
                 : _isSearching
-                    ? const Center(child: BouncingDotsIndicator())
-                    : _searchResults.isEmpty
-                        ? Center(
-                            child: Text(
-                              _searchController.text.isEmpty
-                                  ? "Start typing to search..."
-                                  : "No results found",
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _searchResults.length,
-                            itemBuilder: (context, index) {
-                              return _buildMealItem(_searchResults[index]);
-                            },
-                          ),
+                ? const Center(child: BouncingDotsIndicator())
+                : _searchResults.isEmpty
+                ? Center(
+                    child: Text(
+                      _searchController.text.isEmpty
+                          ? "Start typing to search..."
+                          : "No results found",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _searchResults.length,
+                    itemBuilder: (context, index) {
+                      return _buildMealItem(_searchResults[index]);
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMealList(List<Meal> meals, {String emptyMessage = 'No meals found'}) {
+  Widget _buildMealList(
+    List<Meal> meals, {
+    String emptyMessage = 'No meals found',
+  }) {
     if (meals.isEmpty) {
       return Center(
         child: Text(
@@ -385,7 +406,7 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                     ),
                     SizedBox(height: SizeConfig.h(4)),
                     Text(
-                      '${meal.calories} kcal • ${meal.macros.protein}g P • ${meal.macros.carbs}g C • ${meal.macros.fats}g F',
+                      '${meal.calories} kcal Ã¢â‚¬Â¢ ${meal.macros.protein}g P Ã¢â‚¬Â¢ ${meal.macros.carbs}g C Ã¢â‚¬Â¢ ${meal.macros.fats}g F',
                       style: TextStyle(
                         fontSize: SizeConfig.sp(12),
                         color: subTextColor,

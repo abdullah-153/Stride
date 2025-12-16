@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class FitnessGoalsCard extends StatelessWidget {
@@ -34,8 +34,14 @@ class FitnessGoalsCard extends StatelessWidget {
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final subTextColor = isDarkMode ? Colors.white70 : Colors.black54;
 
-    final workoutProgress = (currentWeeklyWorkouts / weeklyWorkoutGoal).clamp(0.0, 1.0);
-    final calorieProgress = (currentCalories / dailyCalorieGoal).clamp(0.0, 1.0);
+    final workoutProgress = (currentWeeklyWorkouts / weeklyWorkoutGoal).clamp(
+      0.0,
+      1.0,
+    );
+    final calorieProgress = (currentCalories / dailyCalorieGoal).clamp(
+      0.0,
+      1.0,
+    );
     final weightProgress = weightGoal != null
         ? ((currentWeight - weightGoal!) / currentWeight).abs().clamp(0.0, 1.0)
         : null;
@@ -57,7 +63,6 @@ class FitnessGoalsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Weekly Workout Goal
           _buildGoalItem(
             icon: Icons.fitness_center_rounded,
             label: 'Weekly Workouts',
@@ -71,7 +76,6 @@ class FitnessGoalsCard extends StatelessWidget {
 
           SizedBox(height: SizeConfig.h(16)),
 
-          // Daily Calorie Goal
           _buildGoalItem(
             icon: Icons.local_fire_department,
             label: 'Daily Calories',
@@ -119,11 +123,7 @@ class FitnessGoalsCard extends StatelessWidget {
                 color: color.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: SizeConfig.sp(16),
-                color: color,
-              ),
+              child: Icon(icon, size: SizeConfig.sp(16), color: color),
             ),
             SizedBox(width: SizeConfig.w(12)),
             Expanded(
@@ -203,8 +203,8 @@ class FitnessGoalsCard extends StatelessWidget {
                 color: Colors.purple,
               ),
             ),
-              SizedBox(width: SizeConfig.w(12)),
-              Expanded(
+            SizedBox(width: SizeConfig.w(12)),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -218,7 +218,7 @@ class FitnessGoalsCard extends StatelessWidget {
                   ),
                   SizedBox(height: SizeConfig.h(4)),
                   Text(
-                    '${currentWeight.toStringAsFixed(1)} → ${goalWeight.toStringAsFixed(1)} kg',
+                    '${currentWeight.toStringAsFixed(1)} Ã¢â€ â€™ ${goalWeight.toStringAsFixed(1)} kg',
                     style: TextStyle(
                       fontSize: SizeConfig.sp(12),
                       fontWeight: FontWeight.w500,

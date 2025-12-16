@@ -1,7 +1,7 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../utils/size_config.dart';
+import '../../utils/size_config.dart';
 
 class WaterGoalSuccessPage extends StatefulWidget {
   final VoidCallback? onClose; // Optional callback
@@ -25,27 +25,20 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
   void initState() {
     super.initState();
 
-    // Wave motion controller
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Fill up controller (bottom to top)
     _fillController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     );
 
-    // Fill animation: 0.0 (empty/bottom) -> 1.2 (slightly over full/top)
     _fillAnimation = Tween<double>(begin: 0.0, end: 1.3).animate(
-      CurvedAnimation(
-        parent: _fillController,
-        curve: Curves.easeInOutCubic,
-      ),
+      CurvedAnimation(parent: _fillController, curve: Curves.easeInOutCubic),
     );
 
-    // Text fade in: Starts halfway through fill
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _fillController,
@@ -53,17 +46,17 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
       ),
     );
 
-    // Initial Bubbles
     for (int i = 0; i < 15; i++) {
-      _bubbles.add(Bubble(
-        x: Random().nextDouble(),
-        y: Random().nextDouble(), // Relative to wave height
-        radius: 4 + Random().nextDouble() * 8,
-        speed: 0.005 + Random().nextDouble() * 0.01,
-      ));
+      _bubbles.add(
+        Bubble(
+          x: Random().nextDouble(),
+          y: Random().nextDouble(), // Relative to wave height
+          radius: 4 + Random().nextDouble() * 8,
+          speed: 0.005 + Random().nextDouble() * 0.01,
+        ),
+      );
     }
 
-    // Start animation
     _fillController.forward();
   }
 
@@ -83,7 +76,6 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
       backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
       body: Stack(
         children: [
-          // Wave Background
           AnimatedBuilder(
             animation: Listenable.merge([_fillController, _waveController]),
             builder: (context, child) {
@@ -99,7 +91,6 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
             },
           ),
 
-          // Content
           SafeArea(
             child: AnimatedBuilder(
               animation: _textFadeAnimation,
@@ -122,9 +113,16 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
                       ),
-                      child: const Icon(Icons.water_drop_rounded, size: 60, color: Colors.white),
+                      child: const Icon(
+                        Icons.water_drop_rounded,
+                        size: 60,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     const Text(
@@ -140,7 +138,7 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
                             color: Colors.black26,
                             blurRadius: 10,
                             offset: Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -156,8 +154,7 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
                       ),
                     ),
                     const SizedBox(height: 48),
-                    
-                    // Continue Button
+
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -171,7 +168,9 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.blue.shade700,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                         child: const Text(
                           "CONTINUE",
@@ -223,13 +222,8 @@ class FullScreenWavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Fill percent 0 -> Height (Bottom)
-    // Fill percent 1 -> 0 (Top)
-    
-    // Logic: 
-    // If fillPercent <= 1.0, we draw a wave at height * (1 - fillPercent).
-    // If fillPercent > 1.0, we just draw full rect (screen covered).
-    
+
+
     if (fillPercent >= 1.2) {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height),
@@ -239,53 +233,50 @@ class FullScreenWavePainter extends CustomPainter {
     }
 
     final double baseHeight = size.height * (1 - fillPercent);
-    
-    // Paint Setup
+
     final Paint wavePaint = Paint()..color = color;
     final Paint bgWavePaint = Paint()..color = color.withOpacity(0.6);
 
-    // Draw Background Wave (Offset phase)
     final Path bgPath = Path();
     bgPath.moveTo(0, size.height);
     for (double x = 0; x <= size.width; x++) {
-      final double y = baseHeight + 
-          (15 * sin((x / size.width * 2 * pi) + (waveAnimation.value * 2 * pi) + 2)); 
-      // + 2 radian phase shift for background
+      final double y =
+          baseHeight +
+          (15 *
+              sin(
+                (x / size.width * 2 * pi) + (waveAnimation.value * 2 * pi) + 2,
+              ));
       bgPath.lineTo(x, y);
     }
     bgPath.lineTo(size.width, size.height);
     bgPath.close();
     canvas.drawPath(bgPath, bgWavePaint);
 
-    // Draw Foreground Wave
     final Path fgPath = Path();
     fgPath.moveTo(0, size.height);
     for (double x = 0; x <= size.width; x++) {
-      final double y = baseHeight + 
-          (20 * sin((x / size.width * 2 * pi) + (waveAnimation.value * 2 * pi)));
+      final double y =
+          baseHeight +
+          (20 *
+              sin((x / size.width * 2 * pi) + (waveAnimation.value * 2 * pi)));
       fgPath.lineTo(x, y);
     }
     fgPath.lineTo(size.width, size.height);
     fgPath.close();
     canvas.drawPath(fgPath, wavePaint);
 
-    // Draw Bubbles (Rising in the water)
-    // Bubbles exist BELOW the wave line (y > waveY)
     final Paint bubblePaint = Paint()..color = Colors.white.withOpacity(0.2);
-    
+
     for (var bubble in bubbles) {
-      // Update bubble position
       bubble.y -= bubble.speed;
       if (bubble.y < 0) bubble.y = 1.0; // Reset to bottom relative
 
-      // Map 0..1 bubbleY to (WaveHeight)..Size.Height
       final double waterDepth = size.height - baseHeight;
       if (waterDepth <= 0) continue;
 
       final double by = baseHeight + (bubble.y * waterDepth);
       final double bx = bubble.x * size.width;
 
-      // Only draw if sufficiently below the surface
       if (by > baseHeight + 10) {
         canvas.drawCircle(Offset(bx, by), bubble.radius, bubblePaint);
       }

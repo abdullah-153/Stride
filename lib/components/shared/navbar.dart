@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 import 'dart:math' as math;
 
@@ -48,28 +48,22 @@ class _FloatingNavBarState extends State<FloatingNavBar>
   }
 
   Color _computeNavbarColor(int index, bool isDarkMode) {
-    // Home page special rule:
     if (index == 0) {
       return isDarkMode ? Colors.white : widget.pageColors[0];
     }
-    // Other pages use the page color
     return widget.pageColors[index];
   }
 
   Color _computeAccentColor(int index, bool isDarkMode) {
-    // Accent = selected tile background color
     if (index == 0) {
-      // Home page accent: black in dark mode, white in light mode
       return isDarkMode ? Colors.black : Colors.white;
     }
-    // Other pages: black in light mode, white in dark mode
     return isDarkMode ? Colors.white : Colors.black;
   }
 
   @override
   void didUpdateWidget(FloatingNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sync color when currentIndex or theme changes externally (e.g., back navigation, theme toggle)
     if ((oldWidget.currentIndex != widget.currentIndex ||
             oldWidget.isDarkMode != widget.isDarkMode) &&
         !_isAnimating) {
@@ -100,7 +94,6 @@ class _FloatingNavBarState extends State<FloatingNavBar>
     final key = _itemKeys[index];
     final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) {
-      // Safety fallback: directly change without ripple
       final target = _computeNavbarColor(index, widget.isDarkMode);
       setState(() => _currentColor = target);
       widget.onTap(index);
@@ -144,10 +137,8 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 
     Overlay.of(context).insert(_rippleOverlay!);
 
-    // Forward animation
     await _rippleController.forward();
 
-    // Update navbar color and notify parent immediately (prevents flicker)
     if (mounted) {
       setState(() {
         _currentColor = targetColor;
@@ -155,11 +146,9 @@ class _FloatingNavBarState extends State<FloatingNavBar>
       widget.onTap(index);
     }
 
-    // Small delay so page can settle, then reverse
     await Future.delayed(const Duration(milliseconds: 40));
     await _rippleController.reverse();
 
-    // Cleanup
     _rippleOverlay?.remove();
     _rippleOverlay = null;
 
@@ -175,13 +164,11 @@ class _FloatingNavBarState extends State<FloatingNavBar>
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    // Accent color for currently selected index
     final accentColor = _computeAccentColor(
       widget.currentIndex,
       widget.isDarkMode,
     );
 
-    // Colors for icons: selected icon contrasts with accent; unselected contrast with navbar background
     final selectedIconColor = accentColor.computeLuminance() > 0.5
         ? Colors.black
         : Colors.white;

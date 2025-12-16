@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class PremiumSlider extends StatefulWidget {
   final String label;
@@ -10,7 +10,7 @@ class PremiumSlider extends StatefulWidget {
   final bool isDarkMode;
 
   const PremiumSlider({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.min,
@@ -18,7 +18,7 @@ class PremiumSlider extends StatefulWidget {
     required this.onChanged,
     this.unit = '',
     this.isDarkMode = false,
-  }) : super(key: key);
+  });
 
   @override
   State<PremiumSlider> createState() => _PremiumSliderState();
@@ -29,7 +29,7 @@ class _PremiumSliderState extends State<PremiumSlider> {
   Widget build(BuildContext context) {
     final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
     final subTextColor = widget.isDarkMode ? Colors.white70 : Colors.black54;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -66,16 +66,23 @@ class _PremiumSliderState extends State<PremiumSlider> {
         Container(
           height: 40,
           decoration: BoxDecoration(
-            color: widget.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
+            color: widget.isDarkMode
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(20),
           ),
           child: SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: Colors.blueAccent,
-              inactiveTrackColor: widget.isDarkMode ? Colors.white10 : Colors.grey.shade300,
+              inactiveTrackColor: widget.isDarkMode
+                  ? Colors.white10
+                  : Colors.grey.shade300,
               thumbColor: Colors.white,
               trackHeight: 4.0,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 5),
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 10.0,
+                elevation: 5,
+              ),
               overlayColor: Colors.blueAccent.withOpacity(0.2),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
               trackShape: const RoundedRectSliderTrackShape(),

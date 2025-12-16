@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class MonthlyActivityCalendar extends StatefulWidget {
@@ -14,15 +14,11 @@ class MonthlyActivityCalendar extends StatefulWidget {
   });
 
   @override
-  State<MonthlyActivityCalendar> createState() => _MonthlyActivityCalendarState();
+  State<MonthlyActivityCalendar> createState() =>
+      _MonthlyActivityCalendarState();
 }
 
-enum ActivityType {
-  none,
-  workout,
-  meal,
-  both,
-}
+enum ActivityType { none, workout, meal, both }
 
 class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
   late DateTime _currentMonth;
@@ -48,20 +44,18 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
   List<DateTime> _getDaysInMonth() {
     final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final lastDay = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
-    
+
     final days = <DateTime>[];
-    
-    // Add empty days for alignment
+
     final firstWeekday = firstDay.weekday % 7; // 0 = Monday
     for (int i = 0; i < firstWeekday; i++) {
       days.add(firstDay.subtract(Duration(days: firstWeekday - i)));
     }
-    
-    // Add all days in month
+
     for (int i = 0; i < lastDay.day; i++) {
       days.add(DateTime(_currentMonth.year, _currentMonth.month, i + 1));
     }
-    
+
     return days;
   }
 
@@ -97,11 +91,22 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
     final days = _getDaysInMonth();
     final weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
-    final isCurrentMonth = _currentMonth.year == DateTime.now().year &&
+    final isCurrentMonth =
+        _currentMonth.year == DateTime.now().year &&
         _currentMonth.month == DateTime.now().month;
 
     return Container(
@@ -121,7 +126,6 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with month navigation
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -154,7 +158,9 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                   IconButton(
                     icon: Icon(
                       Icons.chevron_right,
-                      color: isCurrentMonth ? subTextColor.withOpacity(0.3) : textColor,
+                      color: isCurrentMonth
+                          ? subTextColor.withOpacity(0.3)
+                          : textColor,
                     ),
                     onPressed: isCurrentMonth ? null : _nextMonth,
                     padding: EdgeInsets.zero,
@@ -167,33 +173,36 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
 
           SizedBox(height: SizeConfig.h(20)),
 
-          // Weekday headers
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDays.map((day) => SizedBox(
-              width: SizeConfig.w(36),
-              child: Center(
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    fontSize: SizeConfig.sp(10),
-                    fontWeight: FontWeight.w600,
-                    color: subTextColor,
+            children: weekDays
+                .map(
+                  (day) => SizedBox(
+                    width: SizeConfig.w(36),
+                    child: Center(
+                      child: Text(
+                        day,
+                        style: TextStyle(
+                          fontSize: SizeConfig.sp(10),
+                          fontWeight: FontWeight.w600,
+                          color: subTextColor,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )).toList(),
+                )
+                .toList(),
           ),
 
           SizedBox(height: SizeConfig.h(12)),
 
-          // Calendar grid
           Wrap(
             spacing: SizeConfig.w(4),
             runSpacing: SizeConfig.h(4),
             children: days.map((date) {
               final isCurrentMonthDay = date.month == _currentMonth.month;
-              final isToday = date.year == DateTime.now().year &&
+              final isToday =
+                  date.year == DateTime.now().year &&
                   date.month == DateTime.now().month &&
                   date.day == DateTime.now().day;
               final activity = _getActivityForDate(date);
@@ -206,15 +215,15 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                   color: isToday
                       ? Colors.orange.withOpacity(0.2)
                       : (activity != ActivityType.none
-                          ? activityColor.withOpacity(0.15)
-                          : Colors.transparent),
+                            ? activityColor.withOpacity(0.15)
+                            : Colors.transparent),
                   borderRadius: BorderRadius.circular(SizeConfig.w(8)),
                   border: Border.all(
                     color: isToday
                         ? Colors.orange
                         : (activity != ActivityType.none
-                            ? activityColor
-                            : Colors.transparent),
+                              ? activityColor
+                              : Colors.transparent),
                     width: isToday ? 2 : 1,
                   ),
                 ),
@@ -225,7 +234,9 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                         '${date.day}',
                         style: TextStyle(
                           fontSize: SizeConfig.sp(12),
-                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isToday
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                           color: isCurrentMonthDay
                               ? (isToday ? Colors.orange : textColor)
                               : subTextColor.withOpacity(0.3),
@@ -258,11 +269,9 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
           Divider(color: borderColor, thickness: 1),
           SizedBox(height: SizeConfig.h(16)),
 
-          // Legend and stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Legend
               Expanded(
                 child: Wrap(
                   spacing: SizeConfig.w(12),
@@ -274,8 +283,7 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                   ],
                 ),
               ),
-              
-              // Streak
+
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: SizeConfig.w(12),
@@ -287,10 +295,7 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      '🔥',
-                      style: TextStyle(fontSize: SizeConfig.sp(14)),
-                    ),
+                    Text('Ã°Å¸â€Â¥', style: TextStyle(fontSize: SizeConfig.sp(14))),
                     SizedBox(width: SizeConfig.w(4)),
                     Text(
                       '${widget.currentStreak} day streak',

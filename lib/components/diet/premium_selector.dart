@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class PremiumSelector<T> extends StatelessWidget {
   final String label;
@@ -9,14 +9,14 @@ class PremiumSelector<T> extends StatelessWidget {
   final bool isDarkMode;
 
   const PremiumSelector({
-    Key? key,
+    super.key,
     required this.label,
     required this.items,
     required this.selectedValue,
     required this.onSelected,
     required this.itemLabelBuilder,
     this.isDarkMode = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +43,16 @@ class PremiumSelector<T> extends StatelessWidget {
               onTap: () => onSelected(item),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.blueAccent.shade700
-                      : (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white),
+                      : (isDarkMode
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.white),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
@@ -60,7 +65,7 @@ class PremiumSelector<T> extends StatelessWidget {
                             color: Colors.blueAccent.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ]
                       : null,
                 ),

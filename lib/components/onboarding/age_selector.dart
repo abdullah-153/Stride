@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
-import '../shared/digit_box.dart';
 
 class AgeSelector extends StatefulWidget {
   final int initialAge;
@@ -25,11 +24,10 @@ class _AgeSelectorState extends State<AgeSelector> {
   void initState() {
     super.initState();
     selectedAgeIndex = ageList.indexOf(widget.initialAge);
-    if (selectedAgeIndex == -1) selectedAgeIndex = 12; // Default to 25 if not found
-    
-    _controller = FixedExtentScrollController(
-      initialItem: selectedAgeIndex,
-    );
+    if (selectedAgeIndex == -1)
+      selectedAgeIndex = 12; // Default to 25 if not found
+
+    _controller = FixedExtentScrollController(initialItem: selectedAgeIndex);
   }
 
   @override
@@ -59,9 +57,9 @@ class _AgeSelectorState extends State<AgeSelector> {
             color: Colors.grey[600],
           ),
         ),
-        
+
         SizedBox(height: SizeConfig.h(40)),
-        
+
         SizedBox(
           height: SizeConfig.h(200),
           child: ListWheelScrollView.useDelegate(
@@ -81,8 +79,12 @@ class _AgeSelectorState extends State<AgeSelector> {
                     ageList[index].toString(),
                     style: TextStyle(
                       fontSize: SizeConfig.sp(24),
-                      fontWeight: index == selectedAgeIndex ? FontWeight.bold : FontWeight.normal,
-                      color: index == selectedAgeIndex ? const Color(0xFFFF7700) : Colors.grey[400],
+                      fontWeight: index == selectedAgeIndex
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: index == selectedAgeIndex
+                          ? const Color(0xFFFF7700)
+                          : Colors.grey[400],
                     ),
                   ),
                 );

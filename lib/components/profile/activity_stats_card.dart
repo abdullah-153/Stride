@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class ActivityStatsCard extends StatefulWidget {
@@ -64,7 +64,6 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Weekly Stats Section
           _buildSectionHeader(
             'THIS WEEK',
             _weeklyExpanded,
@@ -90,7 +89,11 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Meals',
                               value: widget.weeklyMeals.toString(),
@@ -99,10 +102,15 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Calories',
-                              value: '${(widget.weeklyCaloriesBurned / 1000).toStringAsFixed(1)}k',
+                              value:
+                                  '${(widget.weeklyCaloriesBurned / 1000).toStringAsFixed(1)}k',
                               icon: Icons.local_fire_department,
                               iconColor: Colors.orange,
                               textColor: textColor,
@@ -120,7 +128,6 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
           Divider(color: borderColor, thickness: 1),
           SizedBox(height: SizeConfig.h(16)),
 
-          // Monthly Stats Section
           _buildSectionHeader(
             'THIS MONTH',
             _monthlyExpanded,
@@ -146,7 +153,11 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Meals',
                               value: widget.monthlyMeals.toString(),
@@ -155,10 +166,15 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Calories',
-                              value: '${(widget.monthlyCaloriesBurned / 1000).toStringAsFixed(1)}k',
+                              value:
+                                  '${(widget.monthlyCaloriesBurned / 1000).toStringAsFixed(1)}k',
                               icon: Icons.local_fire_department,
                               iconColor: Colors.orange,
                               textColor: textColor,
@@ -176,7 +192,6 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
           Divider(color: borderColor, thickness: 1),
           SizedBox(height: SizeConfig.h(16)),
 
-          // All Time Stats Section
           _buildSectionHeader(
             'ALL TIME',
             _allTimeExpanded,
@@ -202,7 +217,11 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Meals',
                               value: widget.totalMeals.toString(),
@@ -211,10 +230,15 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
                               textColor: textColor,
                               labelColor: labelColor,
                             ),
-                            VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
+                            VerticalDivider(
+                              color: borderColor,
+                              indent: 4,
+                              endIndent: 4,
+                            ),
                             _buildStatItem(
                               label: 'Total XP',
-                              value: '${(widget.totalXP / 1000).toStringAsFixed(1)}k',
+                              value:
+                                  '${(widget.totalXP / 1000).toStringAsFixed(1)}k',
                               icon: Icons.star_rounded,
                               iconColor: Colors.amber,
                               textColor: textColor,
@@ -279,11 +303,7 @@ class _ActivityStatsCardState extends State<ActivityStatsCard> {
             color: iconColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(SizeConfig.w(10)),
           ),
-          child: Icon(
-            icon,
-            size: SizeConfig.sp(20),
-            color: iconColor,
-          ),
+          child: Icon(icon, size: SizeConfig.sp(20), color: iconColor),
         ),
         SizedBox(height: SizeConfig.h(8)),
         Text(

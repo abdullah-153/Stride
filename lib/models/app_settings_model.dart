@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AppSettings {
   final bool notificationsEnabled;
@@ -35,7 +35,6 @@ class AppSettings {
     );
   }
 
-  // JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'notificationsEnabled': notificationsEnabled,

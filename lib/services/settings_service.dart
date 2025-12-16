@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_settings_model.dart';
 import 'firestore/settings_firestore_service.dart';
 
@@ -25,7 +25,6 @@ class SettingsService {
     }
   }
 
-  // Alias for getSettings to match expected interface
   Future<AppSettings> loadSettings() => getSettings();
 
   Stream<AppSettings> streamSettings() {
@@ -47,7 +46,6 @@ class SettingsService {
     }
   }
 
-  // Alias for updateSettings to match expected interface
   Future<void> saveSettings(AppSettings settings) => updateSettings(settings);
 
   Future<void> updateNotificationPreferences({
@@ -72,7 +70,7 @@ class SettingsService {
 
   Future<void> resetToDefaults() async {
     if (_currentUserId == null) return;
-    
+
     try {
       await updateSettings(AppSettings.defaultSettings());
     } catch (e) {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
 class TodayMealsCard extends StatefulWidget {
@@ -133,7 +133,6 @@ class _TodayMealsCardState extends State<TodayMealsCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -176,7 +175,6 @@ class _TodayMealsCardState extends State<TodayMealsCard> {
 
           SizedBox(height: SizeConfig.h(6)),
 
-          // Meals List
           if (mealList.isEmpty)
             Padding(
               padding: EdgeInsets.only(top: SizeConfig.h(4)),
@@ -203,7 +201,6 @@ class _TodayMealsCardState extends State<TodayMealsCard> {
                   ),
                   child: Row(
                     children: [
-                      // Meal Info
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +239,6 @@ class _TodayMealsCardState extends State<TodayMealsCard> {
                         ),
                       ),
 
-                      // Delete Button
                       IconButton(
                         onPressed: () => deleteMeal(mealType, index),
                         icon: Icon(

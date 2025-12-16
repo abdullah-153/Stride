@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+﻿import 'package:flutter/widgets.dart';
 
 class SizeConfig {
   static late MediaQueryData _mediaQueryData;

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class HomeMenu extends StatelessWidget {
@@ -31,18 +31,14 @@ class HomeMenu extends StatelessWidget {
         }
       },
       itemBuilder: (BuildContext context) {
-        // Use a local variable captured by StatefulBuilder so the Switch updates immediately
         bool menuIsDark = isDarkMode;
         final menuTextStyle = TextStyle(
           color: isDarkMode ? Colors.white : Colors.black,
         );
 
         return <PopupMenuEntry<int>>[
-          // Dark Mode Toggle - interactive switch that updates immediately
           PopupMenuItem<int>(
-            // Leave enabled true so inner interactive widgets receive gestures
             enabled: true,
-            // We intentionally don't provide a value so selecting the item doesn't close the menu
             child: StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
                 return Row(
@@ -50,17 +46,14 @@ class HomeMenu extends StatelessWidget {
                   children: [
                     Text('Dark Mode', style: menuTextStyle),
                     const SizedBox(width: 10),
-                    // Use Switch.adaptive as requested
                     Switch.adaptive(
                       activeTrackColor: Colors.black,
                       activeThumbColor: Colors.white,
                       value: menuIsDark,
                       onChanged: (bool value) {
-                        // update local menu state immediately so the switch UI flips right away
                         setState(() {
                           menuIsDark = value;
                         });
-                        // inform parent to change the app theme
                         onThemeChanged(value);
                       },
                     ),

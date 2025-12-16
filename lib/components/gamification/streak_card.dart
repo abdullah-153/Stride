@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
@@ -60,20 +60,23 @@ class _StreakCardState extends State<StreakCard>
 
   @override
   Widget build(BuildContext context) {
-    // Default gradients
     final defaultGradient = widget.isDarkMode
         ? [const Color(0xFFFF512F), const Color(0xFFDD2476)] // Vibrant Red/Pink
         : [Colors.white, Colors.white]; // White for clean Light Mode
 
     final colors = widget.gradientColors ?? defaultGradient;
-    
-    // Determine text color based on background (Light mode bg -> Black text)
-    final effectiveTextColor = widget.textColor ?? (widget.isDarkMode ? Colors.white : Colors.black);
-    final secondaryTextColor = widget.isDarkMode ? Colors.white.withOpacity(0.9) : Colors.black87;
 
-    // Level Progress
-    final double levelProgress = (widget.currentXp / widget.nextLevelXp).clamp(0.0, 1.0);
-    
+    final effectiveTextColor =
+        widget.textColor ?? (widget.isDarkMode ? Colors.white : Colors.black);
+    final secondaryTextColor = widget.isDarkMode
+        ? Colors.white.withOpacity(0.9)
+        : Colors.black87;
+
+    final double levelProgress = (widget.currentXp / widget.nextLevelXp).clamp(
+      0.0,
+      1.0,
+    );
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -93,27 +96,24 @@ class _StreakCardState extends State<StreakCard>
           ),
           boxShadow: [
             widget.isDarkMode
-              // Dark Mode Shadows (Clean, subtle glow)
-              ? BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                  spreadRadius: 0,
-                )
-              // Light Mode Shadows (Soft, dispersed)
-              : BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                  spreadRadius: 0,
-                ),
+                ? BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                    spreadRadius: 0,
+                  )
+                : BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                    spreadRadius: 0,
+                  ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(SizeConfig.w(24)),
           child: Stack(
             children: [
-              // Background Pattern
               Positioned(
                 right: -SizeConfig.w(20),
                 top: -SizeConfig.h(20),
@@ -127,7 +127,6 @@ class _StreakCardState extends State<StreakCard>
                 ),
               ),
 
-              // Shimmer Effect
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
@@ -161,19 +160,16 @@ class _StreakCardState extends State<StreakCard>
                 },
               ),
 
-              // Content
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(20)),
                 child: Row(
                   children: [
-                    // Level Progress Indicator (Left Side)
                     SizedBox(
                       width: SizeConfig.w(54),
                       height: SizeConfig.w(54),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Background Ring
                           SizedBox(
                             width: SizeConfig.w(54),
                             height: SizeConfig.w(54),
@@ -185,7 +181,6 @@ class _StreakCardState extends State<StreakCard>
                               ),
                             ),
                           ),
-                          // Progress Ring
                           SizedBox(
                             width: SizeConfig.w(54),
                             height: SizeConfig.w(54),
@@ -198,7 +193,6 @@ class _StreakCardState extends State<StreakCard>
                               ),
                             ),
                           ),
-                          // Level Text
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -207,7 +201,9 @@ class _StreakCardState extends State<StreakCard>
                                 style: TextStyle(
                                   fontSize: SizeConfig.sp(10),
                                   fontWeight: FontWeight.w600,
-                                  color: widget.isDarkMode ? Colors.white.withOpacity(0.9) : Colors.black54,
+                                  color: widget.isDarkMode
+                                      ? Colors.white.withOpacity(0.9)
+                                      : Colors.black54,
                                   height: 1.0,
                                 ),
                               ),
@@ -225,10 +221,9 @@ class _StreakCardState extends State<StreakCard>
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(width: SizeConfig.w(16)),
 
-                    // Text Content
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -258,8 +253,7 @@ class _StreakCardState extends State<StreakCard>
                             ],
                           ),
                           SizedBox(height: SizeConfig.h(6)),
-                          
-                          // Level XP Stats
+
                           Row(
                             children: [
                               Text(
@@ -283,7 +277,9 @@ class _StreakCardState extends State<StreakCard>
                                 'to Level ${widget.currentLevel + 1}',
                                 style: TextStyle(
                                   fontSize: SizeConfig.sp(12),
-                                  color: widget.isDarkMode ? Colors.white.withOpacity(0.7) : Colors.black54,
+                                  color: widget.isDarkMode
+                                      ? Colors.white.withOpacity(0.7)
+                                      : Colors.black54,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),

@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthorizationProvider {
@@ -21,11 +21,10 @@ class AuthorizationProvider {
 
     final GoogleSignInAccount account = await googleSignIn.authenticate();
 
-    final authData = account.authentication; // ✅ await properly
+    final authData = account.authentication; // âœ… await properly
     final idtoken = authData.idToken;
 
     final authClient = account.authorizationClient;
-    // ignore: unnecessary_null_comparison
     if (authClient == null) {
       throw FirebaseAuthException(
         code: "auth-client-null",

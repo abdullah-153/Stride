@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'bouncing_dots_indicator.dart';
 
@@ -20,7 +20,6 @@ class AuthNavigationButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Continue Button
         ElevatedButton(
           onPressed: isLoading ? null : onContinue,
           style: ElevatedButton.styleFrom(
@@ -46,12 +45,15 @@ class AuthNavigationButtons extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: SizeConfig.w(8)),
-                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ],
                 ),
         ),
 
-        // Google Sign In (if provided)
         if (onGoogleSignIn != null) ...[
           SizedBox(height: SizeConfig.h(20)),
           Row(
@@ -72,12 +74,14 @@ class AuthNavigationButtons extends StatelessWidget {
             ],
           ),
           SizedBox(height: SizeConfig.h(20)),
-          
+
           OutlinedButton(
             onPressed: isLoading ? null : onGoogleSignIn,
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.8), // Frosted white background
-              side: const BorderSide(color: Colors.white), 
+              backgroundColor: Colors.white.withOpacity(
+                0.8,
+              ), // Frosted white background
+              side: const BorderSide(color: Colors.white),
               minimumSize: Size(double.infinity, SizeConfig.h(56)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -91,7 +95,7 @@ class AuthNavigationButtons extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(SizeConfig.w(8)),
                   decoration: const BoxDecoration(
-                    color: Colors.transparent, 
+                    color: Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                   child: Image.asset(

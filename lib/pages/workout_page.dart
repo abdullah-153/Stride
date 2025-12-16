@@ -1,12 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/workout/steps_counter_card.dart';
 import '../components/workout/workout_capsule_card.dart';
 import '../components/workout/interactive_workout_card.dart';
-import '../components/workout/category_chip.dart';
-import '../components/workout/workout_discovery_card.dart';
 import '../components/workout/workout_detail_sheet.dart';
 import '../models/workout_model.dart';
 import '../services/workout_service.dart';
@@ -16,9 +14,9 @@ import '../services/gamification_service.dart';
 import '../models/gamification_model.dart';
 import '../components/gamification/streak_card.dart';
 import '../components/gamification/streak_celebration_overlay.dart';
-import 'global_streak_success_page.dart';
-import 'level_up_page.dart';
-import 'streak_success_page.dart'; // Add this import
+import 'gamification/global_streak_success_page.dart';
+import 'gamification/level_up_page.dart';
+ // Add this import
 import '../components/common/global_back_button.dart'; // Added import
 import '../providers/theme_provider.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
@@ -34,7 +32,6 @@ class WorkoutPage extends ConsumerStatefulWidget {
 class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   final WorkoutService _workoutService = WorkoutService();
 
-  // Data
   List<Workout> _todayWorkouts = [];
   List<Workout> _recommendedWorkouts = [];
   List<Workout> _filteredWorkouts = [];
@@ -42,10 +39,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   bool _isLoading = true;
   bool _isSubmitting = false; // Page-wide loading state for completion
 
-  // Category filter
   WorkoutCategory _selectedCategory = WorkoutCategory.all;
 
-  // Workout playback state
   int _selectedIndex = 0;
   int? _playingIndex;
   final Set<String> _completed = {};
@@ -71,24 +66,19 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   Future<void> _loadWorkouts() async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
-      // Check if user has plans first
-      // We can use the service directly here or wait for _loadUserPlans
-      // For speed, let's just assume if they have no plans, today is empty.
-      
-      // Load plans to be sure (async parallel is fine, but we want to depend on it)
-      final plans = userId != null 
-          ? await WorkoutPlanService().getUserWorkoutPlans(userId) 
+
+      final plans = userId != null
+          ? await WorkoutPlanService().getUserWorkoutPlans(userId)
           : <Map<String, dynamic>>[];
-          
+
       List<Workout> todayWorkouts = [];
-      
+
       if (plans.isNotEmpty) {
-        // Only load today's workouts if we have a plan
         todayWorkouts = await _workoutService.getTodayWorkouts();
       }
 
-      final recommendedWorkouts =
-          await _workoutService.getRecommendedWorkouts();
+      final recommendedWorkouts = await _workoutService
+          .getRecommendedWorkouts();
 
       if (mounted) {
         setState(() {
@@ -161,11 +151,15 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       context,
       workout,
       isDarkMode: ref.watch(themeProvider),
-      onStartWorkout: () => _startWorkoutFromRecommended(workout, closeOnAdd: true),
+      onStartWorkout: () =>
+          _startWorkoutFromRecommended(workout, closeOnAdd: true),
     );
   }
 
-  void _startWorkoutFromRecommended(Workout workout, {bool closeOnAdd = false}) {
+  void _startWorkoutFromRecommended(
+    Workout workout, {
+    bool closeOnAdd = false,
+  }) {
     if (!_todayWorkouts.any((w) => w.id == workout.id)) {
       setState(() {
         _todayWorkouts.add(workout);
@@ -174,15 +168,17 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           _filteredWorkouts.add(workout);
         }
       });
-
     }
-    
+
     if (closeOnAdd) {
       Navigator.pop(context);
     } else {
-       ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${workout.title} added to today!', style: TextStyle(color: Colors.black)),
+          content: Text(
+            '${workout.title} added to today!',
+            style: TextStyle(color: Colors.black),
+          ),
           backgroundColor: Color(0xFFCEF24B),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
@@ -203,7 +199,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       _completed.remove(workout.id);
 
       if (_remainingSeconds == null || _selectedIndex != index) {
-        _remainingSeconds = 3; // Debug: 3 seconds instead of workout.durationMinutes * 60
+        _remainingSeconds =
+            3; // Debug: 3 seconds instead of workout.durationMinutes * 60
       }
     });
 
@@ -227,62 +224,56 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     });
 
     try {
-      // Check if this is the first workout of the day BEFORE completing
       final gamificationService = GamificationService();
-      final isFirstWorkoutOfDay = await gamificationService.isFirstOfDayForType(StreakType.workout);
+      final isFirstWorkoutOfDay = await gamificationService.isFirstOfDayForType(
+        StreakType.workout,
+      );
 
-      // Complete the workout (this updates the streak)
-      // Now handles offline storage automatically via WorkoutService
       await _workoutService.completeWorkout(workout);
 
-      // Check for level up when adding XP
       gamificationService.onLevelUp = (newLevel, xpGained) async {
         if (mounted) {
-           final currentData = await gamificationService.getCurrentData();
-           final totalXP = currentData.stats.currentXp;
+          final currentData = await gamificationService.getCurrentData();
+          final totalXP = currentData.stats.currentXp;
 
-           await Navigator.of(context).push(
-             PageRouteBuilder(
-               opaque: false,
-               pageBuilder: (_, __, ___) => LevelUpPage(
-                 newLevel: newLevel,
-                 xpGained: xpGained,
-                 totalXP: totalXP,
-               ),
-             ),
-           );
+          await Navigator.of(context).push(
+            PageRouteBuilder(
+              opaque: false,
+              pageBuilder: (_, __, ___) => LevelUpPage(
+                newLevel: newLevel,
+                xpGained: xpGained,
+                totalXP: totalXP,
+              ),
+            ),
+          );
         }
       };
 
       if (mounted) {
         if (isFirstWorkoutOfDay) {
-          // Fetch latest data after update
-          // final currentStreak = await gamificationService.getStreak(StreakType.workout); // REMOVED
           final data = await gamificationService.getCurrentData();
           final streakCount = data.stats.workoutStreak; // Use verified property
 
-          // Navigate to Global Streak Success Page
           await Navigator.of(context).push(
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
                   GlobalStreakSuccessPage(
-                globalStreak: streakCount,
-                themeColor: const Color(0xFFCEF24B), // Lime
-                title: 'Workout Streak!',
-                subtitle: 'Great job keeping up the momentum!',
-              ),
+                    globalStreak: streakCount,
+                    themeColor: const Color(0xFFCEF24B), // Lime
+                    title: 'Workout Streak!',
+                    subtitle: 'Great job keeping up the momentum!',
+                  ),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
+                    return FadeTransition(opacity: animation, child: child);
+                  },
             ),
           );
         } else {
-          // Show simple snackbar for subsequent workouts
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                'Workout completed! 💪',
+                'Workout completed! Ã°Å¸â€™Âª',
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.black,
@@ -299,12 +290,14 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         _remainingSeconds = null;
       });
     } catch (e) {
-       print("Workout completion error: $e");
-       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text("Issues saving workout. Check internet.")),
-         );
-       }
+      print("Workout completion error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Issues saving workout. Check internet."),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -313,7 +306,6 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       }
     }
   }
-
 
   void _pauseTimer() {
     _timer?.cancel();
@@ -355,8 +347,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       setState(() {
         _selectedIndex = _selectedIndex + 1;
         _remainingSeconds = null;
-        _playingIndex = null; // Auto-pause or auto-play? User said "moves to next workout".
-        // Let's just select it. If they want to play, they press play.
+        _playingIndex =
+            null; // Auto-pause or auto-play? User said "moves to next workout".
       });
     }
   }
@@ -394,400 +386,463 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     final primaryText = isDarkMode ? Colors.white : Colors.black;
     final borderColor = isDarkMode ? Colors.white12 : Colors.grey.shade300;
 
-    final currentWorkout = _filteredWorkouts.isNotEmpty &&
+    final currentWorkout =
+        _filteredWorkouts.isNotEmpty &&
             _selectedIndex < _filteredWorkouts.length
         ? _filteredWorkouts[_selectedIndex]
         : null;
-    
-    // Check if there is a next workout available for the "Next" button
-    final hasNextWorkout = _filteredWorkouts.isNotEmpty && _selectedIndex < _filteredWorkouts.length - 1;
+
+    final hasNextWorkout =
+        _filteredWorkouts.isNotEmpty &&
+        _selectedIndex < _filteredWorkouts.length - 1;
 
     return Stack(
       children: [
         Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        leading: GlobalBackButton(
-          isDark: isDarkMode,
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        actions: [
-          // Removed + icon from AppBar
-          SizedBox(width: SizeConfig.w(16)),
-        ],
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        iconTheme: IconThemeData(color: appBarIconColor),
-      ),
-      body: StreakCelebrationOverlay(
-        key: _celebrationKey,
-        child: SafeArea(
-        child: _isLoading
-            ? Center(
-                child: BouncingDotsIndicator(
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-              )
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: SizeConfig.h(8)),
-
-                    // 1. Page Title
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Text(
-                        "Workouts",
-                        style: TextStyle(
-                          fontSize: headerSize,
-                          fontWeight: FontWeight.w300,
-                          color: titleColor,
-                        ),
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            leading: GlobalBackButton(
+              isDark: isDarkMode,
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            actions: [
+              SizedBox(width: SizeConfig.w(16)),
+            ],
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            elevation: 0,
+            iconTheme: IconThemeData(color: appBarIconColor),
+          ),
+          body: StreakCelebrationOverlay(
+            key: _celebrationKey,
+            child: SafeArea(
+              child: _isLoading
+                  ? Center(
+                      child: BouncingDotsIndicator(
+                        color: isDarkMode ? Colors.white : Colors.black,
                       ),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(24)),
-
-                    // 2. Steps Counter (Centered)
-                    Center(
-                      child: StepCounterCard(
-                        steps: 8234,
-                        maxSteps: 10000,
-                        distanceKm: 6.5,
-                        isDarkMode: isDarkMode,
-                      ),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(20)),
-
-                    // 3. Workout Streak
-                    StreamBuilder<GamificationData>(
-                      stream: GamificationService().gamificationStream,
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        final data = snapshot.data!;
-
-                        return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: horizontal),
-                          child: StreakCard(
-                            streakDays: data.stats.workoutStreak,
-                            isDarkMode: isDarkMode,
-                            title: 'Workout Streak',
-                            currentLevel: data.stats.currentLevel,
-                            currentXp: data.stats.currentXp,
-                            nextLevelXp: GamificationService().getXpForNextLevel(data.stats.currentLevel),
-                            // icon: Icons.fitness_center_rounded, // Icon removed in new design or handled internally if needed, but constructor allows it? 
-                            // *Correction*: My new `StreakCard` removed `icon` param?
-                            // Let me check my write_to_file...
-                            // Yes, `StreakCard` constructor doesn't have `icon` anymore.
-                            gradientColors: isDarkMode
-                                ? [
-                                    Colors.black,
-                                    const Color(0xFF1A1A1A), // Dark grey
-                                    const Color(0xFFCEF24B), // Lime accent
-                                  ]
-                                : [
-                                    Colors.white,
-                                    const Color(0xFFF5F5F5), // Light grey
-                                    const Color(0xFFCEF24B), // Lime accent
-                                  ],
-                          ),
-                        );
-                      },
-                    ),
-
-                    SizedBox(height: SizeConfig.h(30)),
-
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Divider(color: borderColor, thickness: 1),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(24)),
-
-                    // 4. Capsule Card
-                    if (currentWorkout != null) ...[
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontal),
-                        child: WorkoutCapsuleCard(
-                          isDarkMode: isDarkMode,
-                          hasOngoing: _playingIndex != null,
-                          workoutName: currentWorkout.title,
-                          minutes: currentWorkout.durationMinutes,
-                          kcal: currentWorkout.caloriesBurned,
-                          isPlaying: _playingIndex != null &&
-                              _playingIndex == _selectedIndex,
-                          heroTag: 'play_button_${currentWorkout.id}',
-                          onToggle: _onCapsuleToggle,
-                          onComplete: _onCapsuleComplete,  // Wire up complete button
-                          onNext: hasNextWorkout ? _onNextWorkout : null, // Pass next callback if available
-                          points: currentWorkout.points,
-                          isCompleted: _completed.contains(currentWorkout.id),
-                          remainingSeconds: _selectedIndex == _playingIndex ||
-                                  (_remainingSeconds != null &&
-                                      _selectedIndex == _selectedIndex)
-                              ? _remainingSeconds
-                              : null,
-                          activeColor: const Color.fromRGBO(206, 242, 75, 1),
-                        ),
-                      ),
-                      SizedBox(height: SizeConfig.h(24)),
-                    ],
-
-                    // Divider before My Plans - MOVED AFTER CAPSULE
-                    // Padding(
-                    //   padding: EdgeInsets.symmetric(horizontal: horizontal),
-                    //   child: Divider(color: borderColor, thickness: 1),
-                    // ),
-                    // SizedBox(height: SizeConfig.h(24)),
-
-                    // 5. Create Plan Capsule
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: _buildCreatePlanCapsule(context),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(24)),
-                    
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Divider(color: borderColor, thickness: 1),
-                    ),
-                    
-                    SizedBox(height: SizeConfig.h(24)),
-
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Text(
-                        "My Plans",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(18),
-                          fontWeight: FontWeight.w600,
-                          color: primaryText,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: SizeConfig.h(12)),
-                    
-                    // Plans list or empty state
-                    _userPlans.isEmpty
-                        ? Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontal),
-                            child: Container(
-                              padding: EdgeInsets.all(SizeConfig.w(24)),
-                              decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isDarkMode ? Colors.white10 : Colors.black12,
-                                ),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.fitness_center_outlined,
-                                      size: SizeConfig.w(48),
-                                      color: isDarkMode ? Colors.white54 : Colors.black38,
-                                    ),
-                                    SizedBox(height: SizeConfig.h(12)),
-                                    Text(
-                                      'Generate a workout plan',
-                                      style: TextStyle(
-                                        fontSize: SizeConfig.sp(16),
-                                        fontWeight: FontWeight.w600,
-                                        color: isDarkMode ? Colors.white70 : Colors.black54,
-                                      ),
-                                    ),
-                                    SizedBox(height: SizeConfig.h(6)),
-                                    Text(
-                                      'Use our AI to create a custom routine',
-                                      style: TextStyle(
-                                        fontSize: SizeConfig.sp(13),
-                                        color: isDarkMode ? Colors.white54 : Colors.black38,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          )
-                        : SizedBox(
-                            height: SizeConfig.h(160),
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: _userPlans.length,
-                              itemBuilder: (context, index) {
-                                final plan = _userPlans[index];
-                                final isFirst = index == 0;
-                                final isLast = index == _userPlans.length - 1;
-
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    left: isFirst ? horizontal : SizeConfig.w(8),
-                                    right: isLast ? horizontal : 0,
-                                  ),
-                                  child: _buildPlanCard(plan, isDarkMode, const Color(0xFFCEF24B), isDarkMode ? const Color(0xFF1E1E1E) : Colors.white, primaryText),
-                                );
-                              },
-                            ),
-                          ),
-                    
-                    SizedBox(height: SizeConfig.h(24)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Divider(color: borderColor, thickness: 1),
-                    ),
-                    SizedBox(height: SizeConfig.h(24)),
-
-                    // 6. Today's Workouts Header (moved up)
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _selectedCategory == WorkoutCategory.all
-                                ? "Today's Workouts"
-                                : "${_selectedCategory.displayName} Workouts",
-                            style: TextStyle(
-                              fontSize: SizeConfig.sp(18),
-                              fontWeight: FontWeight.w600,
-                              color: primaryText,
-                            ),
-                          ),
-                          Text(
-                            "${_filteredWorkouts.length} workouts",
-                            style: TextStyle(
-                              fontSize: SizeConfig.sp(14),
-                              fontWeight: FontWeight.w300,
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                          SizedBox(height: SizeConfig.h(8)),
 
-                    SizedBox(height: SizeConfig.h(12)),
-
-                    // Workout cards
-                    if (_filteredWorkouts.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontal),
-                        child: Container(
-                          padding: EdgeInsets.all(SizeConfig.w(24)),
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDarkMode ? Colors.white10 : Colors.black12,
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Text(
+                              "Workouts",
+                              style: TextStyle(
+                                fontSize: headerSize,
+                                fontWeight: FontWeight.w300,
+                                color: titleColor,
+                              ),
                             ),
                           ),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.fitness_center_outlined,
-                                  size: SizeConfig.w(48),
-                                  color: isDarkMode ? Colors.white54 : Colors.black38,
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Center(
+                            child: StepCounterCard(
+                              steps: 8234,
+                              maxSteps: 10000,
+                              distanceKm: 6.5,
+                              isDarkMode: isDarkMode,
+                            ),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(20)),
+
+                          StreamBuilder<GamificationData>(
+                            stream: GamificationService().gamificationStream,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData)
+                                return const SizedBox.shrink();
+                              final data = snapshot.data!;
+
+                              return Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: horizontal,
                                 ),
-                                SizedBox(height: SizeConfig.h(12)),
-                                Text(
-                                  "It's a rest day or no active plans",
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.sp(16),
-                                    fontWeight: FontWeight.w600,
-                                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                                child: StreakCard(
+                                  streakDays: data.stats.workoutStreak,
+                                  isDarkMode: isDarkMode,
+                                  title: 'Workout Streak',
+                                  currentLevel: data.stats.currentLevel,
+                                  currentXp: data.stats.currentXp,
+                                  nextLevelXp: GamificationService()
+                                      .getXpForNextLevel(
+                                        data.stats.currentLevel,
+                                      ),
+                                  gradientColors: isDarkMode
+                                      ? [
+                                          Colors.black,
+                                          const Color(0xFF1A1A1A), // Dark grey
+                                          const Color(
+                                            0xFFCEF24B,
+                                          ), // Lime accent
+                                        ]
+                                      : [
+                                          Colors.white,
+                                          const Color(0xFFF5F5F5), // Light grey
+                                          const Color(
+                                            0xFFCEF24B,
+                                          ), // Lime accent
+                                        ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          SizedBox(height: SizeConfig.h(30)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Divider(color: borderColor, thickness: 1),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          if (currentWorkout != null) ...[
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontal,
+                              ),
+                              child: WorkoutCapsuleCard(
+                                isDarkMode: isDarkMode,
+                                hasOngoing: _playingIndex != null,
+                                workoutName: currentWorkout.title,
+                                minutes: currentWorkout.durationMinutes,
+                                kcal: currentWorkout.caloriesBurned,
+                                isPlaying:
+                                    _playingIndex != null &&
+                                    _playingIndex == _selectedIndex,
+                                heroTag: 'play_button_${currentWorkout.id}',
+                                onToggle: _onCapsuleToggle,
+                                onComplete:
+                                    _onCapsuleComplete, // Wire up complete button
+                                onNext: hasNextWorkout
+                                    ? _onNextWorkout
+                                    : null, // Pass next callback if available
+                                points: currentWorkout.points,
+                                isCompleted: _completed.contains(
+                                  currentWorkout.id,
+                                ),
+                                remainingSeconds:
+                                    _selectedIndex == _playingIndex ||
+                                        (_remainingSeconds != null &&
+                                            _selectedIndex == _selectedIndex)
+                                    ? _remainingSeconds
+                                    : null,
+                                activeColor: const Color.fromRGBO(
+                                  206,
+                                  242,
+                                  75,
+                                  1,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: SizeConfig.h(24)),
+                          ],
+
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: _buildCreatePlanCapsule(context),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Divider(color: borderColor, thickness: 1),
+                          ),
+
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Text(
+                              "My Plans",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(18),
+                                fontWeight: FontWeight.w600,
+                                color: primaryText,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: SizeConfig.h(12)),
+
+                          _userPlans.isEmpty
+                              ? Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: horizontal,
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.all(SizeConfig.w(24)),
+                                    decoration: BoxDecoration(
+                                      color: isDarkMode
+                                          ? const Color(0xFF1E1E1E)
+                                          : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isDarkMode
+                                            ? Colors.white10
+                                            : Colors.black12,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.fitness_center_outlined,
+                                            size: SizeConfig.w(48),
+                                            color: isDarkMode
+                                                ? Colors.white54
+                                                : Colors.black38,
+                                          ),
+                                          SizedBox(height: SizeConfig.h(12)),
+                                          Text(
+                                            'Generate a workout plan',
+                                            style: TextStyle(
+                                              fontSize: SizeConfig.sp(16),
+                                              fontWeight: FontWeight.w600,
+                                              color: isDarkMode
+                                                  ? Colors.white70
+                                                  : Colors.black54,
+                                            ),
+                                          ),
+                                          SizedBox(height: SizeConfig.h(6)),
+                                          Text(
+                                            'Use our AI to create a custom routine',
+                                            style: TextStyle(
+                                              fontSize: SizeConfig.sp(13),
+                                              color: isDarkMode
+                                                  ? Colors.white54
+                                                  : Colors.black38,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : SizedBox(
+                                  height: SizeConfig.h(160),
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _userPlans.length,
+                                    itemBuilder: (context, index) {
+                                      final plan = _userPlans[index];
+                                      final isFirst = index == 0;
+                                      final isLast =
+                                          index == _userPlans.length - 1;
+
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          left: isFirst
+                                              ? horizontal
+                                              : SizeConfig.w(8),
+                                          right: isLast ? horizontal : 0,
+                                        ),
+                                        child: _buildPlanCard(
+                                          plan,
+                                          isDarkMode,
+                                          const Color(0xFFCEF24B),
+                                          isDarkMode
+                                              ? const Color(0xFF1E1E1E)
+                                              : Colors.white,
+                                          primaryText,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
-                                SizedBox(height: SizeConfig.h(6)),
+
+                          SizedBox(height: SizeConfig.h(24)),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Divider(color: borderColor, thickness: 1),
+                          ),
+                          SizedBox(height: SizeConfig.h(24)),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontal,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
                                 Text(
-                                  "Tap + to add a custom workout",
+                                  _selectedCategory == WorkoutCategory.all
+                                      ? "Today's Workouts"
+                                      : "${_selectedCategory.displayName} Workouts",
                                   style: TextStyle(
-                                    fontSize: SizeConfig.sp(13),
-                                    color: isDarkMode ? Colors.white54 : Colors.black38,
+                                    fontSize: SizeConfig.sp(18),
+                                    fontWeight: FontWeight.w600,
+                                    color: primaryText,
+                                  ),
+                                ),
+                                Text(
+                                  "${_filteredWorkouts.length} workouts",
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(14),
+                                    fontWeight: FontWeight.w300,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.grey.shade600,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      )
-                    else
-                      SizedBox(
-                        height: SizeConfig.h(180),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _filteredWorkouts.length,
-                          itemBuilder: (context, index) {
-                            final workout = _filteredWorkouts[index];
-                            final isPlaying =
-                                _playingIndex != null && _playingIndex == index;
-                            final isCompleted = _completed.contains(workout.id);
-                            final isPaused = _selectedIndex == index && !isPlaying && !isCompleted;
 
-                            return InteractiveWorkoutCard(
-                              key: ValueKey('workout_${workout.id}_$index'),
-                              workout: workout,
-                              index: index,
-                              isPlaying: isPlaying,
-                              isCompleted: isCompleted,
-                              isPaused: isPaused,
-                              isDarkMode: isDarkMode,
-                              onPressed: () {
-                                if (isCompleted) {
-                                  _onCardRestarted(index);
-                                } else if (isPlaying) {
-                                  _pauseTimer();
-                                } else {
-                                  _onCardPressed(index);
-                                }
-                              },
-                              onDelete: () {
-                                _removeWorkoutFromToday(workout);
-                              },
-                            );
-                          },
-                        ),
+                          SizedBox(height: SizeConfig.h(12)),
+
+                          if (_filteredWorkouts.isEmpty)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontal,
+                              ),
+                              child: Container(
+                                padding: EdgeInsets.all(SizeConfig.w(24)),
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? const Color(0xFF1E1E1E)
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isDarkMode
+                                        ? Colors.white10
+                                        : Colors.black12,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.fitness_center_outlined,
+                                        size: SizeConfig.w(48),
+                                        color: isDarkMode
+                                            ? Colors.white54
+                                            : Colors.black38,
+                                      ),
+                                      SizedBox(height: SizeConfig.h(12)),
+                                      Text(
+                                        "It's a rest day or no active plans",
+                                        style: TextStyle(
+                                          fontSize: SizeConfig.sp(16),
+                                          fontWeight: FontWeight.w600,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black54,
+                                        ),
+                                      ),
+                                      SizedBox(height: SizeConfig.h(6)),
+                                      Text(
+                                        "Tap + to add a custom workout",
+                                        style: TextStyle(
+                                          fontSize: SizeConfig.sp(13),
+                                          color: isDarkMode
+                                              ? Colors.white54
+                                              : Colors.black38,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              height: SizeConfig.h(180),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: _filteredWorkouts.length,
+                                itemBuilder: (context, index) {
+                                  final workout = _filteredWorkouts[index];
+                                  final isPlaying =
+                                      _playingIndex != null &&
+                                      _playingIndex == index;
+                                  final isCompleted = _completed.contains(
+                                    workout.id,
+                                  );
+                                  final isPaused =
+                                      _selectedIndex == index &&
+                                      !isPlaying &&
+                                      !isCompleted;
+
+                                  return InteractiveWorkoutCard(
+                                    key: ValueKey(
+                                      'workout_${workout.id}_$index',
+                                    ),
+                                    workout: workout,
+                                    index: index,
+                                    isPlaying: isPlaying,
+                                    isCompleted: isCompleted,
+                                    isPaused: isPaused,
+                                    isDarkMode: isDarkMode,
+                                    onPressed: () {
+                                      if (isCompleted) {
+                                        _onCardRestarted(index);
+                                      } else if (isPlaying) {
+                                        _pauseTimer();
+                                      } else {
+                                        _onCardPressed(index);
+                                      }
+                                    },
+                                    onDelete: () {
+                                      _removeWorkoutFromToday(workout);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+
+                          SizedBox(height: SizeConfig.h(80)),
+                        ],
                       ),
-
-                    SizedBox(height: SizeConfig.h(80)),
-                  ],
-                ),
-              ),
-        ),
-      ),
-    ),
-      
-      // Page-wide Loading Overlay
-      if (_isSubmitting)
-        Positioned.fill(
-          child: Stack(
-            children: [
-              // 1. AbsorbPointer to block ALL input
-              AbsorbPointer(
-                absorbing: true,
-                child: Container(
-                  color: Colors.black.withOpacity(0.3), // Semi-transparent dim
-                ),
-              ),
-              // 2. Centered Bouncing Dots
-              Center(
-                child: BouncingDotsIndicator(
-                  color: isDarkMode ? const Color(0xFFCEF24B) : Colors.white,
-                  size: 12.0,
-                ),
-              ),
-            ],
+                    ),
+            ),
           ),
         ),
+
+        if (_isSubmitting)
+          Positioned.fill(
+            child: Stack(
+              children: [
+                AbsorbPointer(
+                  absorbing: true,
+                  child: Container(
+                    color: Colors.black.withOpacity(
+                      0.3,
+                    ), // Semi-transparent dim
+                  ),
+                ),
+                Center(
+                  child: BouncingDotsIndicator(
+                    color: isDarkMode ? const Color(0xFFCEF24B) : Colors.white,
+                    size: 12.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -800,7 +855,9 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const CreateWorkoutPlanPage()),
+          MaterialPageRoute(
+            builder: (context) => const CreateWorkoutPlanPage(),
+          ),
         );
       },
       child: Container(
@@ -808,86 +865,108 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         height: SizeConfig.h(120),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(SizeConfig.w(24)),
-           gradient: LinearGradient(
-              colors: isDarkMode
-                ? [const Color(0xFF1A1A1A), const Color(0xFF2C2C2C)] // Dark Surface
-                : [const Color(0xFFF9FBE7), const Color(0xFFF0F4C3)], // Light Lime
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-           ),
-           border: Border.all(
-              color: isDarkMode ? limeColor.withOpacity(0.3) : limeColor.withOpacity(0.5),
-              width: 1,
-           ),
-           boxShadow: [
-              BoxShadow(
-                  color: limeColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-              ),
-           ],
+          gradient: LinearGradient(
+            colors: isDarkMode
+                ? [
+                    const Color(0xFF1A1A1A),
+                    const Color(0xFF2C2C2C),
+                  ] // Dark Surface
+                : [
+                    const Color(0xFFF9FBE7),
+                    const Color(0xFFF0F4C3),
+                  ], // Light Lime
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isDarkMode
+                ? limeColor.withOpacity(0.3)
+                : limeColor.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: limeColor.withOpacity(isDarkMode ? 0.15 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Stack(
           children: [
             Positioned(
               right: -30,
               bottom: -20,
-               child: Icon(
+              child: Icon(
                 Icons.fitness_center_rounded,
                 size: SizeConfig.w(140),
-                color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.05),
               ),
             ),
             Padding(
-               padding: EdgeInsets.all(SizeConfig.w(24)),
-               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                            Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                    color: limeColor,
-                                    borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                    "AI POWERED",
-                                    style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
+              padding: EdgeInsets.all(SizeConfig.w(24)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: limeColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            "AI POWERED",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              "Create a workout plan",
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(20), 
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black87
-                              ),
-                            ),
-                            Text(
-                              "Tailored to your fitness goals",
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(12),
-                                color: isDarkMode ? Colors.white70 : Colors.black54,
-                              ),
-                            ),
-                        ],
-                      ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "Create a workout plan",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(20),
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          "Tailored to your fitness goals",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(12),
+                            color: isDarkMode ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.arrow_forward, color: isDarkMode ? Colors.white : Colors.black),
-                    )
-                 ],
-               ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -895,7 +974,13 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     );
   }
 
-  Widget _buildPlanCard(Map<String, dynamic> plan, bool isDark, Color accentColor, Color cardColor, Color textColor) {
+  Widget _buildPlanCard(
+    Map<String, dynamic> plan,
+    bool isDark,
+    Color accentColor,
+    Color cardColor,
+    Color textColor,
+  ) {
     final weeklyPlan = plan['weeklyPlan'] as List? ?? [];
     final daysCount = weeklyPlan.length;
     final isActive = plan['isActive'] == true;
@@ -907,7 +992,9 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isActive ? accentColor : (isDark ? Colors.white10 : Colors.black12),
+          color: isActive
+              ? accentColor
+              : (isDark ? Colors.white10 : Colors.black12),
           width: isActive ? 2 : 1,
         ),
         boxShadow: [
@@ -986,7 +1073,9 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                   backgroundColor: accentColor,
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
                 child: Text(

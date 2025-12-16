@@ -1,6 +1,5 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../utils/size_config.dart';
 
 class EditGoalsBottomSheet {
@@ -67,8 +66,8 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
         decoration: BoxDecoration(
-          color: widget.isDarkMode 
-              ? const Color(0xFF1E1E1E).withOpacity(0.9) 
+          color: widget.isDarkMode
+              ? const Color(0xFF1E1E1E).withOpacity(0.9)
               : Colors.white.withOpacity(0.95),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
@@ -89,7 +88,6 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Center(
                   child: Container(
                     width: SizeConfig.w(40),
@@ -101,7 +99,7 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
                   ),
                 ),
                 SizedBox(height: SizeConfig.h(24)),
-                
+
                 Text(
                   'Adjust Your Goals',
                   style: TextStyle(
@@ -122,8 +120,11 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
 
                 SizedBox(height: SizeConfig.h(32)),
 
-                // Weekly Workouts Slider
-                _buildSectionHeader('WEEKLY WORKOUTS', Icons.fitness_center, const Color(0xFFCEF24B)),
+                _buildSectionHeader(
+                  'WEEKLY WORKOUTS',
+                  Icons.fitness_center,
+                  const Color(0xFFCEF24B),
+                ),
                 SizedBox(height: SizeConfig.h(20)),
                 _buildPremiumSlider(
                   value: _weeklyWorkoutGoal,
@@ -133,14 +134,17 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
                   color: const Color(0xFFCEF24B),
                   label: '${_weeklyWorkoutGoal.toInt()} workouts',
                   onChanged: (val) => setState(() => _weeklyWorkoutGoal = val),
-                 ),
+                ),
 
                 SizedBox(height: SizeConfig.h(32)),
 
-                // Daily Calories Slider
-                _buildSectionHeader('DAILY CALORIES', Icons.local_fire_department, Colors.orange),
+                _buildSectionHeader(
+                  'DAILY CALORIES',
+                  Icons.local_fire_department,
+                  Colors.orange,
+                ),
                 SizedBox(height: SizeConfig.h(20)),
-                 _buildPremiumSlider(
+                _buildPremiumSlider(
                   value: _dailyCalorieGoal,
                   min: 500,
                   max: 5000,
@@ -152,36 +156,37 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
 
                 SizedBox(height: SizeConfig.h(32)),
 
-                // Weight Goal Input
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionHeader('WEIGHT GOAL', Icons.monitor_weight_rounded, Colors.purple),
-                     Switch.adaptive(
-                        value: _hasWeightGoal,
-                        onChanged: (val) {
-                          setState(() {
-                            _hasWeightGoal = val;
-                            if (!val) {
-                              _weightGoal = null;
-                              _weightController.clear();
-                            }
-                          });
-                        },
-                        activeColor: Colors.purple,
-                      ),
+                    _buildSectionHeader(
+                      'WEIGHT GOAL',
+                      Icons.monitor_weight_rounded,
+                      Colors.purple,
+                    ),
+                    Switch.adaptive(
+                      value: _hasWeightGoal,
+                      onChanged: (val) {
+                        setState(() {
+                          _hasWeightGoal = val;
+                          if (!val) {
+                            _weightGoal = null;
+                            _weightController.clear();
+                          }
+                        });
+                      },
+                      activeColor: Colors.purple,
+                    ),
                   ],
                 ),
-                
+
                 if (_hasWeightGoal) ...[
                   SizedBox(height: SizeConfig.h(16)),
                   _buildPremiumTextField(),
                 ],
 
-
                 SizedBox(height: SizeConfig.h(40)),
 
-                // Actions
                 Row(
                   children: [
                     Expanded(
@@ -190,7 +195,9 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
                         child: Text(
                           'Cancel',
                           style: TextStyle(
-                            color: widget.isDarkMode ? Colors.white60 : Colors.black54,
+                            color: widget.isDarkMode
+                                ? Colors.white60
+                                : Colors.black54,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -201,15 +208,19 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
                       flex: 2,
                       child: ElevatedButton(
                         onPressed: () {
-                           Navigator.pop(context, {
+                          Navigator.pop(context, {
                             'weeklyWorkoutGoal': _weeklyWorkoutGoal.toInt(),
                             'dailyCalorieGoal': _dailyCalorieGoal.toInt(),
-                            'weightGoal': _hasWeightGoal ? double.tryParse(_weightController.text) : null,
+                            'weightGoal': _hasWeightGoal
+                                ? double.tryParse(_weightController.text)
+                                : null,
                           });
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
+                          padding: EdgeInsets.symmetric(
+                            vertical: SizeConfig.h(16),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -274,28 +285,28 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-             Text(
-                min.toInt().toString(),
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(12),
-                  color: widget.isDarkMode ? Colors.white38 : Colors.black38,
-                ),
+            Text(
+              min.toInt().toString(),
+              style: TextStyle(
+                fontSize: SizeConfig.sp(12),
+                color: widget.isDarkMode ? Colors.white38 : Colors.black38,
               ),
-               Text(
-                label,
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(24),
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: SizeConfig.sp(24),
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
-              Text(
-                max.toInt().toString(),
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(12),
-                  color: widget.isDarkMode ? Colors.white38 : Colors.black38,
-                ),
+            ),
+            Text(
+              max.toInt().toString(),
+              style: TextStyle(
+                fontSize: SizeConfig.sp(12),
+                color: widget.isDarkMode ? Colors.white38 : Colors.black38,
               ),
+            ),
           ],
         ),
         SizedBox(height: SizeConfig.h(8)),
@@ -306,7 +317,10 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
             thumbColor: Colors.white,
             overlayColor: color.withOpacity(0.1),
             trackHeight: 6,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10, elevation: 4),
+            thumbShape: const RoundSliderThumbShape(
+              enabledThumbRadius: 10,
+              elevation: 4,
+            ),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
           ),
           child: Slider(
@@ -314,14 +328,14 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
             min: min,
             max: max,
             divisions: divisions,
-             onChanged: onChanged,
+            onChanged: onChanged,
           ),
         ),
       ],
     );
   }
 
-   Widget _buildPremiumTextField() {
+  Widget _buildPremiumTextField() {
     return TextField(
       controller: _weightController,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -333,18 +347,20 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
       decoration: InputDecoration(
         labelText: 'Target Weight (kg)',
         labelStyle: TextStyle(
-           color: widget.isDarkMode ? Colors.white60 : Colors.black45,
+          color: widget.isDarkMode ? Colors.white60 : Colors.black45,
         ),
         suffixIcon: const Icon(Icons.edit, size: 18),
         filled: true,
-        fillColor: widget.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+        fillColor: widget.isDarkMode
+            ? Colors.white.withOpacity(0.05)
+            : Colors.grey[100],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         contentPadding: EdgeInsets.symmetric(
-           horizontal: SizeConfig.w(20),
-           vertical: SizeConfig.h(16),
+          horizontal: SizeConfig.w(20),
+          vertical: SizeConfig.h(16),
         ),
       ),
     );

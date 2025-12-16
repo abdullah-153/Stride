@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class WeeklySummaryCard extends StatefulWidget {
   final bool isDarkMode;
   final List<bool> weeklyActivity; // 7 days
   final int currentStreak;
-  final List<int> dailyCalories; 
+  final List<int> dailyCalories;
   final List<int> dailyDuration;
-  // New weekly stats
   final int weeklyWorkouts;
   final int weeklyMeals;
   final int weeklyCaloriesBurned;
@@ -17,7 +16,7 @@ class WeeklySummaryCard extends StatefulWidget {
     required this.isDarkMode,
     required this.weeklyActivity,
     required this.currentStreak,
-    this.dailyCalories = const [2100, 2300, 1800, 2400, 2200, 1900, 2000], 
+    this.dailyCalories = const [2100, 2300, 1800, 2400, 2200, 1900, 2000],
     this.dailyDuration = const [45, 60, 30, 0, 50, 0, 45],
     required this.weeklyWorkouts,
     required this.weeklyMeals,
@@ -44,7 +43,9 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
     final labelColor = widget.isDarkMode ? Colors.white60 : Colors.black54;
 
     final daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final completedDays = widget.weeklyActivity.where((active) => active).length;
+    final completedDays = widget.weeklyActivity
+        .where((active) => active)
+        .length;
 
     return Container(
       padding: EdgeInsets.all(SizeConfig.w(20)),
@@ -75,9 +76,14 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(10), vertical: SizeConfig.h(4)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: SizeConfig.w(10),
+                  vertical: SizeConfig.h(4),
+                ),
                 decoration: BoxDecoration(
-                  color: widget.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                  color: widget.isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -93,7 +99,6 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
           ),
           SizedBox(height: SizeConfig.h(20)),
 
-          // Weekly Stats Section (NEW)
           Text(
             'THIS WEEK',
             style: TextStyle(
@@ -128,7 +133,8 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
                 VerticalDivider(color: borderColor, indent: 4, endIndent: 4),
                 _buildWeeklyStatItem(
                   label: 'Calories',
-                  value: '${(widget.weeklyCaloriesBurned / 1000).toStringAsFixed(1)}k',
+                  value:
+                      '${(widget.weeklyCaloriesBurned / 1000).toStringAsFixed(1)}k',
                   icon: Icons.local_fire_department,
                   iconColor: Colors.orange,
                   textColor: textColor,
@@ -142,15 +148,18 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
           Divider(color: borderColor, thickness: 1),
           SizedBox(height: SizeConfig.h(16)),
 
-          // 7-day activity heatmap with interaction
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              final isActive = index < widget.weeklyActivity.length && widget.weeklyActivity[index];
+              final isActive =
+                  index < widget.weeklyActivity.length &&
+                  widget.weeklyActivity[index];
               final isSelected = _selectedDayIndex == index;
-              
+
               return GestureDetector(
-                onTap: () => setState(() => _selectedDayIndex = isSelected ? null : index),
+                onTap: () => setState(
+                  () => _selectedDayIndex = isSelected ? null : index,
+                ),
                 child: Column(
                   children: [
                     AnimatedContainer(
@@ -159,24 +168,36 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
                       height: SizeConfig.w(36),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? const Color(0xFFCEF24B).withOpacity(isSelected ? 1.0 : 0.8)
+                            ? const Color(
+                                0xFFCEF24B,
+                              ).withOpacity(isSelected ? 1.0 : 0.8)
                             : (widget.isDarkMode
-                                ? Colors.white.withOpacity(isSelected ? 0.2 : 0.05)
-                                : Colors.grey.withOpacity(isSelected ? 0.3 : 0.1)),
+                                  ? Colors.white.withOpacity(
+                                      isSelected ? 0.2 : 0.05,
+                                    )
+                                  : Colors.grey.withOpacity(
+                                      isSelected ? 0.3 : 0.1,
+                                    )),
                         borderRadius: BorderRadius.circular(SizeConfig.w(10)),
                         border: Border.all(
-                          color: isSelected 
-                              ? (isActive ? Colors.white : const Color(0xFFCEF24B)) 
+                          color: isSelected
+                              ? (isActive
+                                    ? Colors.white
+                                    : const Color(0xFFCEF24B))
                               : Colors.transparent,
                           width: 2,
                         ),
-                        boxShadow: isActive && isSelected ? [
-                          BoxShadow(
-                            color: const Color(0xFFCEF24B).withOpacity(0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          )
-                        ] : [],
+                        boxShadow: isActive && isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFCEF24B,
+                                  ).withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
                       ),
                       child: isActive
                           ? Icon(
@@ -191,8 +212,12 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
                       daysOfWeek[index],
                       style: TextStyle(
                         fontSize: SizeConfig.sp(10),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? const Color(0xFFCEF24B) : subTextColor,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFFCEF24B)
+                            : subTextColor,
                       ),
                     ),
                   ],
@@ -200,38 +225,39 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
               );
             }),
           ),
-          
-          // Details Panel (Animated)
+
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            child: _selectedDayIndex != null 
+            child: _selectedDayIndex != null
                 ? Container(
                     margin: EdgeInsets.only(top: SizeConfig.h(20)),
                     padding: EdgeInsets.all(SizeConfig.w(16)),
                     decoration: BoxDecoration(
-                      color: widget.isDarkMode ? Colors.black26 : Colors.grey[50],
+                      color: widget.isDarkMode
+                          ? Colors.black26
+                          : Colors.grey[50],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildDetailItem(
-                          Icons.local_fire_department_rounded, 
-                          "${widget.dailyCalories[_selectedDayIndex!]} kcal", 
-                          "Burnt", 
-                          Colors.orange
+                          Icons.local_fire_department_rounded,
+                          "${widget.dailyCalories[_selectedDayIndex!]} kcal",
+                          "Burnt",
+                          Colors.orange,
                         ),
                         Container(width: 1, height: 30, color: borderColor),
                         _buildDetailItem(
-                          Icons.timer_rounded, 
-                          "${widget.dailyDuration[_selectedDayIndex!]} min", 
-                          "Duration", 
-                          Colors.blue
+                          Icons.timer_rounded,
+                          "${widget.dailyDuration[_selectedDayIndex!]} min",
+                          "Duration",
+                          Colors.blue,
                         ),
                       ],
                     ),
-                  ) 
+                  )
                 : const SizedBox.shrink(),
           ),
 
@@ -239,7 +265,6 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
           Divider(color: borderColor, thickness: 1),
           SizedBox(height: SizeConfig.h(16)),
 
-          // Overall Stats row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -249,25 +274,17 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
                 textColor: textColor,
                 subTextColor: subTextColor,
               ),
-              Container(
-                width: 1,
-                height: SizeConfig.h(30),
-                color: borderColor,
-              ),
+              Container(width: 1, height: SizeConfig.h(30), color: borderColor),
               _buildStatColumn(
                 label: 'Current Streak',
-                value: '${widget.currentStreak} 🔥',
+                value: '${widget.currentStreak} Ã°Å¸â€Â¥',
                 textColor: textColor,
                 subTextColor: subTextColor,
               ),
-              Container(
-                width: 1,
-                height: SizeConfig.h(30),
-                color: borderColor,
-              ),
-             _buildStatColumn(
+              Container(width: 1, height: SizeConfig.h(30), color: borderColor),
+              _buildStatColumn(
                 label: 'Comp. Rate',
-                value: '${(completedDays/7 * 100).toInt()}%',
+                value: '${(completedDays / 7 * 100).toInt()}%',
                 textColor: textColor,
                 subTextColor: subTextColor,
               ),
@@ -295,11 +312,7 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
             color: iconColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(SizeConfig.w(8)),
           ),
-          child: Icon(
-            icon,
-            size: SizeConfig.sp(16),
-            color: iconColor,
-          ),
+          child: Icon(icon, size: SizeConfig.sp(16), color: iconColor),
         ),
         SizedBox(height: SizeConfig.h(6)),
         Text(
@@ -323,7 +336,12 @@ class _WeeklySummaryCardState extends State<WeeklySummaryCard> {
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String value, String label, Color color) {
+  Widget _buildDetailItem(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+  ) {
     return Column(
       children: [
         Row(

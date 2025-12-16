@@ -1,4 +1,4 @@
-enum WorkoutCategory { all, cardio, strength, yoga, hiit, flexibility, sports }
+﻿enum WorkoutCategory { all, cardio, strength, yoga, hiit, flexibility, sports }
 
 extension WorkoutCategoryExtension on WorkoutCategory {
   String get displayName {
@@ -23,19 +23,19 @@ extension WorkoutCategoryExtension on WorkoutCategory {
   String get emoji {
     switch (this) {
       case WorkoutCategory.all:
-        return '🏃';
+        return 'ðŸƒ';
       case WorkoutCategory.cardio:
-        return '❤️';
+        return 'â¤ï¸';
       case WorkoutCategory.strength:
-        return '💪';
+        return 'ðŸ’ª';
       case WorkoutCategory.yoga:
-        return '🧘';
+        return 'ðŸ§˜';
       case WorkoutCategory.hiit:
-        return '⚡';
+        return 'âš¡';
       case WorkoutCategory.flexibility:
-        return '🤸';
+        return 'ðŸ¤¸';
       case WorkoutCategory.sports:
-        return '⚽';
+        return 'âš½';
     }
   }
 }
@@ -100,9 +100,9 @@ class Exercise {
 
   String get displayText {
     if (sets != null && reps != null) {
-      return '$sets sets × $reps reps';
+      return '$sets sets Ã— $reps reps';
     } else if (sets != null && durationSeconds != null) {
-      return '$sets sets × ${durationSeconds}s';
+      return '$sets sets Ã— ${durationSeconds}s';
     } else if (durationSeconds != null) {
       return '${durationSeconds}s';
     } else if (reps != null) {
@@ -177,7 +177,6 @@ class Workout {
 
   int get exerciseCount => exercises.length;
 
-  // Compatibility getters
   String get time => "$durationMinutes min";
   int get kcal => caloriesBurned;
 }

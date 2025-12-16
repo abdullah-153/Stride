@@ -1,11 +1,12 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile_model.dart';
 import 'firestore/user_profile_firestore_service.dart';
 import '../models/diet_plan_model.dart';
 
 class UserProfileService {
-  final UserProfileFirestoreService _firestoreService = UserProfileFirestoreService();
+  final UserProfileFirestoreService _firestoreService =
+      UserProfileFirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? get _currentUserId => _auth.currentUser?.uid;
@@ -17,7 +18,7 @@ class UserProfileService {
       }
 
       final profile = await _firestoreService.getUserProfile(_currentUserId!);
-      
+
       if (profile == null) {
         return UserProfile.defaultProfile();
       }
@@ -44,7 +45,7 @@ class UserProfileService {
 
     try {
       final exists = await _firestoreService.profileExists(_currentUserId!);
-      
+
       if (exists) {
         await _firestoreService.updateUserProfile(_currentUserId!, profile);
       } else {
@@ -85,7 +86,10 @@ class UserProfileService {
     }
 
     try {
-      return await _firestoreService.uploadProfileImage(_currentUserId!, imageFile);
+      return await _firestoreService.uploadProfileImage(
+        _currentUserId!,
+        imageFile,
+      );
     } catch (e) {
       throw Exception('Failed to upload profile image: $e');
     }

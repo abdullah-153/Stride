@@ -1,6 +1,5 @@
-import 'package:flutter/animation.dart';
+﻿import 'package:flutter/animation.dart';
 
-// Centralized animation durations and curves for consistent motion across the app
 const Duration kAnimShort = Duration(milliseconds: 200);
 const Duration kAnimMedium = Duration(milliseconds: 360);
 const Duration kAnimLong = Duration(milliseconds: 420);

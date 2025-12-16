@@ -1,4 +1,4 @@
-class NutritionGoal {
+﻿class NutritionGoal {
   final int dailyCalories;
   final int protein;
   final int carbs;

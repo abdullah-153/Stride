@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/size_config.dart';
@@ -28,7 +28,6 @@ class PlanGenerationErrorScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Fun Illustration / Icon
               Container(
                 width: SizeConfig.w(120),
                 height: SizeConfig.w(120),
@@ -43,7 +42,7 @@ class PlanGenerationErrorScreen extends ConsumerWidget {
                 ),
               ),
               SizedBox(height: SizeConfig.h(32)),
-              
+
               Text(
                 "Trainer Offline",
                 style: TextStyle(
@@ -53,7 +52,7 @@ class PlanGenerationErrorScreen extends ConsumerWidget {
                 ),
               ),
               SizedBox(height: SizeConfig.h(16)),
-              
+
               Text(
                 "Our AI coach needs an internet connection to design your perfect plan. Please check your signal and try again.\n\n(Error: ${errorMessage ?? 'Unknown'})",
                 textAlign: TextAlign.center,
@@ -63,9 +62,9 @@ class PlanGenerationErrorScreen extends ConsumerWidget {
                   height: 1.5,
                 ),
               ),
-              
+
               SizedBox(height: SizeConfig.h(48)),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: SizeConfig.h(56),
@@ -88,9 +87,9 @@ class PlanGenerationErrorScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              
+
               SizedBox(height: SizeConfig.h(16)),
-              
+
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(

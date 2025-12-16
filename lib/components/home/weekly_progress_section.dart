@@ -1,5 +1,4 @@
-// lib/components/weeklyprogresssection.dart
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +23,6 @@ class WeeklyPointsCard extends StatelessWidget {
     final color = isUp ? Colors.green : Colors.red;
 
     return Container(
-      // let parent control width; use full width available
       width: double.infinity,
       margin: EdgeInsets.symmetric(
         horizontal: SizeConfig.w(4),
@@ -111,7 +109,6 @@ class WeeklyPointsCard extends StatelessWidget {
   }
 }
 
-// rest of the file (WeeklyLineChart & LinePainter) unchanged
 class WeeklyLineChart extends StatefulWidget {
   final List<double> data;
   const WeeklyLineChart({super.key, required this.data});

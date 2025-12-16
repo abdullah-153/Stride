@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,46 +16,83 @@ class CreateWorkoutPlanPage extends ConsumerStatefulWidget {
   const CreateWorkoutPlanPage({super.key});
 
   @override
-  ConsumerState<CreateWorkoutPlanPage> createState() => _CreateWorkoutPlanPageState();
+  ConsumerState<CreateWorkoutPlanPage> createState() =>
+      _CreateWorkoutPlanPageState();
 }
 
-class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> with SingleTickerProviderStateMixin {
+class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
+    with SingleTickerProviderStateMixin {
   final WorkoutPlanBuilderService _builderService = WorkoutPlanBuilderService();
-  
-  // State
+
   String _selectedGoal = 'muscle_gain';
   int _daysPerWeek = 4;
   int _durationWeeks = 4;
-  String _fitnessLevel = 'Intermediate'; 
-  String _equipmentLevel = 'gym'; 
+  final String _fitnessLevel = 'Intermediate';
+  String _equipmentLevel = 'gym';
   final Set<String> _selectedMuscles = {};
   bool _isLoading = false;
   Map<String, dynamic>? _generatedPlan;
 
-  // Animations
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
   final List<Map<String, String>> _goals = [
-    {'id': 'muscle_gain', 'label': 'Muscle Gain', 'emoji': '💪', 'desc': 'Build lean mass & strength'},
-    {'id': 'weight_loss', 'label': 'Weight Loss', 'emoji': '🔥', 'desc': 'Burn calories & tone up'},
-    {'id': 'strength', 'label': 'Strength', 'emoji': '🏋️', 'desc': 'Focus on power lifting'},
-    {'id': 'endurance', 'label': 'Endurance', 'emoji': '🏃', 'desc': 'Improve cardio & stamina'},
+    {
+      'id': 'muscle_gain',
+      'label': 'Muscle Gain',
+      'emoji': 'Ã°Å¸â€™Âª',
+      'desc': 'Build lean mass & strength',
+    },
+    {
+      'id': 'weight_loss',
+      'label': 'Weight Loss',
+      'emoji': 'Ã°Å¸â€Â¥',
+      'desc': 'Burn calories & tone up',
+    },
+    {
+      'id': 'strength',
+      'label': 'Strength',
+      'emoji': 'Ã°Å¸Ââ€¹Ã¯Â¸Â',
+      'desc': 'Focus on power lifting',
+    },
+    {
+      'id': 'endurance',
+      'label': 'Endurance',
+      'emoji': 'Ã°Å¸ÂÆ’',
+      'desc': 'Improve cardio & stamina',
+    },
   ];
 
   final List<String> _allMuscles = [
-    'chest', 'back', 'legs', 'shoulders', 'biceps', 'triceps', 'abs', 'cardio'
+    'chest',
+    'back',
+    'legs',
+    'shoulders',
+    'biceps',
+    'triceps',
+    'abs',
+    'cardio',
   ];
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: const Interval(0.0, 0.6, curve: Curves.easeOut));
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animController, curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic)),
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    );
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
     _animController.forward();
   }
 
@@ -69,7 +106,10 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     if (_selectedMuscles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select at least one target muscle', style: TextStyle(color: Colors.white)),
+          content: Text(
+            'Please select at least one target muscle',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -78,8 +118,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     }
 
     setState(() => _isLoading = true);
-    
-    // Haptic feedback for premium feel
+
     HapticFeedback.mediumImpact();
 
     try {
@@ -91,7 +130,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
         fitnessLevel: _fitnessLevel,
         equipment: _getEquipmentList(),
       );
-      
+
       if (mounted) {
         setState(() {
           _generatedPlan = plan;
@@ -109,8 +148,8 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
             builder: (_) => PlanGenerationErrorScreen(
               errorMessage: e.toString(),
               onRetry: () {
-                Navigator.pop(context); 
-                _generatePlan(); 
+                Navigator.pop(context);
+                _generatePlan();
               },
             ),
           ),
@@ -129,8 +168,15 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     HapticFeedback.heavyImpact();
 
     try {
-      final planId = await WorkoutPlanService().createWorkoutPlan(userId, _generatedPlan!);
-      await WorkoutPlanService().setActiveWorkoutPlan(userId, planId, DateTime.now());
+      final planId = await WorkoutPlanService().createWorkoutPlan(
+        userId,
+        _generatedPlan!,
+      );
+      await WorkoutPlanService().setActiveWorkoutPlan(
+        userId,
+        planId,
+        DateTime.now(),
+      );
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -138,8 +184,11 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              '🚀 Plan activated successfully! Let\'s go!',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              'Ã°Å¸Å¡â‚¬ Plan activated successfully! Let\'s go!',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             backgroundColor: Color(0xFFCEF24B),
             behavior: SnackBarBehavior.floating,
@@ -149,9 +198,9 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -162,13 +211,18 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     final isDarkMode = ref.watch(themeProvider);
     final userProfile = ref.watch(userProfileProvider).value;
     final userName = userProfile?.name ?? 'Athlete';
-    
-    // Premium Theme Setup
-    final bgColor = isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAFAFA);
+
+    final bgColor = isDarkMode
+        ? const Color(0xFF0F0F0F)
+        : const Color(0xFFFAFAFA);
     final accentColor = const Color(0xFFCEF24B); // Lime Green
     final textColor = isDarkMode ? Colors.white : const Color(0xFF1A1A1A);
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E).withOpacity(0.6) : Colors.white.withOpacity(0.8);
-    final glassBorder = isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05);
+    final cardColor = isDarkMode
+        ? const Color(0xFF1E1E1E).withOpacity(0.6)
+        : Colors.white.withOpacity(0.8);
+    final glassBorder = isDarkMode
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.05);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -177,7 +231,9 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
         title: null,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        systemOverlayStyle: isDarkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: isDarkMode
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
         leading: Padding(
           padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
           child: ClipRRect(
@@ -186,11 +242,17 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                  color: isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: textColor),
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: textColor,
+                  ),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                 ),
@@ -201,19 +263,25 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
       ),
       body: Stack(
         children: [
-          // 1. Dynamic Background Blobs
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBlurBlob(isDarkMode ? accentColor.withOpacity(0.15) : Colors.blue.withOpacity(0.1)),
+            child: _buildBlurBlob(
+              isDarkMode
+                  ? accentColor.withOpacity(0.15)
+                  : Colors.blue.withOpacity(0.1),
+            ),
           ),
           Positioned(
             top: SizeConfig.h(300),
             left: -50,
-            child: _buildBlurBlob(isDarkMode ? Colors.blue.withOpacity(0.1) : accentColor.withOpacity(0.1)),
+            child: _buildBlurBlob(
+              isDarkMode
+                  ? Colors.blue.withOpacity(0.1)
+                  : accentColor.withOpacity(0.1),
+            ),
           ),
 
-          // 2. Main Content
           SafeArea(
             child: _isLoading
                 ? _buildLoadingState(accentColor, textColor)
@@ -225,8 +293,21 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
                         padding: EdgeInsets.fromLTRB(24, 10, 24, 40),
                         physics: const BouncingScrollPhysics(),
                         child: _generatedPlan == null
-                            ? _buildInputForm(textColor, cardColor, accentColor, glassBorder, isDarkMode, userName)
-                            : _buildPlanPreview(textColor, cardColor, accentColor, glassBorder, isDarkMode),
+                            ? _buildInputForm(
+                                textColor,
+                                cardColor,
+                                accentColor,
+                                glassBorder,
+                                isDarkMode,
+                                userName,
+                              )
+                            : _buildPlanPreview(
+                                textColor,
+                                cardColor,
+                                accentColor,
+                                glassBorder,
+                                isDarkMode,
+                              ),
                       ),
                     ),
                   ),
@@ -242,10 +323,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
       child: Container(
         width: 250,
         height: 250,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
@@ -260,8 +338,8 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
           Text(
             "AI IS CRAFTING YOUR PLAN",
             style: TextStyle(
-              color: textColor, 
-              fontWeight: FontWeight.w900, 
+              color: textColor,
+              fontWeight: FontWeight.w900,
               fontSize: 16,
               letterSpacing: 2.0,
             ),
@@ -276,13 +354,19 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     );
   }
 
-  Widget _buildInputForm(Color textColor, Color cardColor, Color accentColor, Color borderColor, bool isDark, String userName) {
+  Widget _buildInputForm(
+    Color textColor,
+    Color cardColor,
+    Color accentColor,
+    Color borderColor,
+    bool isDark,
+    String userName,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Text(
-          "Ready, $userName? 🚀",
+          "Ready, $userName? Ã°Å¸Å¡â‚¬",
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -297,7 +381,6 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
         ),
         SizedBox(height: 40),
 
-        // 1. Goal Carousel
         _buildSectionTitle("Primary Goal", textColor),
         SizedBox(height: 16),
         SizedBox(
@@ -329,8 +412,19 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
                       width: 1.5,
                     ),
                     boxShadow: isSelected
-                        ? [BoxShadow(color: accentColor.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 8))]
-                        : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+                        ? [
+                            BoxShadow(
+                              color: accentColor.withOpacity(0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 10,
+                            ),
+                          ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -356,38 +450,91 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
 
         SizedBox(height: 40),
 
-        // 2. Frequency & Duration
         _buildSectionTitle("Weekly Schedule", textColor),
         SizedBox(height: 16),
         _buildGlassCard(
-          cardColor, borderColor,
+          cardColor,
+          borderColor,
           child: Column(
             children: [
-              _buildSliderRow("Days / Week", _daysPerWeek, 3.0, 7.0, 7, (v) => setState(() => _daysPerWeek = v.toInt()), "days", accentColor, textColor, isDark),
-              Divider(height: 24, color: isDark ? Colors.white10 : Colors.black12),
-              _buildSliderRow("Program Duration", _durationWeeks, 4.0, 12.0, 8, (v) => setState(() => _durationWeeks = v.toInt()), "weeks", accentColor, textColor, isDark),
+              _buildSliderRow(
+                "Days / Week",
+                _daysPerWeek,
+                3.0,
+                7.0,
+                7,
+                (v) => setState(() => _daysPerWeek = v.toInt()),
+                "days",
+                accentColor,
+                textColor,
+                isDark,
+              ),
+              Divider(
+                height: 24,
+                color: isDark ? Colors.white10 : Colors.black12,
+              ),
+              _buildSliderRow(
+                "Program Duration",
+                _durationWeeks,
+                4.0,
+                12.0,
+                8,
+                (v) => setState(() => _durationWeeks = v.toInt()),
+                "weeks",
+                accentColor,
+                textColor,
+                isDark,
+              ),
             ],
           ),
         ),
 
         SizedBox(height: 40),
 
-        // 3. Equipment
         _buildSectionTitle("Available Equipment", textColor),
         SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildEquipmentCard('none', '🏠', 'Home', accentColor, cardColor, borderColor, textColor)),
+            Expanded(
+              child: _buildEquipmentCard(
+                'none',
+                'Ã°Å¸ÂÂ ',
+                'Home',
+                accentColor,
+                cardColor,
+                borderColor,
+                textColor,
+              ),
+            ),
             SizedBox(width: 12),
-            Expanded(child: _buildEquipmentCard('basic', '🔔', 'Basic', accentColor, cardColor, borderColor, textColor)),
+            Expanded(
+              child: _buildEquipmentCard(
+                'basic',
+                'Ã°Å¸â€â€',
+                'Basic',
+                accentColor,
+                cardColor,
+                borderColor,
+                textColor,
+              ),
+            ),
             SizedBox(width: 12),
-            Expanded(child: _buildEquipmentCard('gym', '⚡', 'Gym', accentColor, cardColor, borderColor, textColor)),
+            Expanded(
+              child: _buildEquipmentCard(
+                'gym',
+                'Ã¢Å¡Â¡',
+                'Gym',
+                accentColor,
+                cardColor,
+                borderColor,
+                textColor,
+              ),
+            ),
           ],
         ),
 
         SizedBox(height: 40),
 
-        // 4. Muscles
         _buildSectionTitle("Target Muscles", textColor),
         SizedBox(height: 16),
         Wrap(
@@ -399,7 +546,9 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
               onTap: () {
                 HapticFeedback.selectionClick();
                 setState(() {
-                  isSelected ? _selectedMuscles.remove(muscle) : _selectedMuscles.add(muscle);
+                  isSelected
+                      ? _selectedMuscles.remove(muscle)
+                      : _selectedMuscles.add(muscle);
                 });
               },
               child: AnimatedContainer(
@@ -409,11 +558,18 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
                   color: isSelected ? accentColor : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: isSelected ? accentColor : (isDark ? Colors.white24 : Colors.black26),
+                    color: isSelected
+                        ? accentColor
+                        : (isDark ? Colors.white24 : Colors.black26),
                     width: 1.5,
                   ),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: accentColor.withOpacity(0.3), blurRadius: 8)]
+                      ? [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.3),
+                            blurRadius: 8,
+                          ),
+                        ]
                       : [],
                 ),
                 child: Text(
@@ -432,7 +588,6 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
 
         SizedBox(height: 50),
 
-        // Generate Button
         SizedBox(
           width: double.infinity,
           height: 60,
@@ -443,7 +598,9 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
               foregroundColor: Colors.black,
               elevation: 4,
               shadowColor: accentColor.withOpacity(0.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -466,7 +623,11 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     );
   }
 
-  Widget _buildGlassCard(Color bgColor, Color borderColor, {required Widget child}) {
+  Widget _buildGlassCard(
+    Color bgColor,
+    Color borderColor, {
+    required Widget child,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
@@ -484,14 +645,28 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     );
   }
 
-  Widget _buildSliderRow(String label, int value, double min, double max, int divisions, Function(double) onChanged, String unit, Color accent, Color textColor, bool isDark) {
+  Widget _buildSliderRow(
+    String label,
+    int value,
+    double min,
+    double max,
+    int divisions,
+    Function(double) onChanged,
+    String unit,
+    Color accent,
+    Color textColor,
+    bool isDark,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -500,7 +675,11 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
               ),
               child: Text(
                 "$value $unit",
-                style: TextStyle(color: isDark ? accent : Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(
+                  color: isDark ? accent : Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],
@@ -527,7 +706,15 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     );
   }
 
-  Widget _buildEquipmentCard(String val, String emoji, String label, Color accent, Color bg, Color border, Color text) {
+  Widget _buildEquipmentCard(
+    String val,
+    String emoji,
+    String label,
+    Color accent,
+    Color bg,
+    Color border,
+    Color text,
+  ) {
     final isSelected = _equipmentLevel == val;
     return GestureDetector(
       onTap: () {
@@ -540,10 +727,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
         decoration: BoxDecoration(
           color: isSelected ? accent : bg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? accent : border,
-            width: 1.5,
-          ),
+          border: Border.all(color: isSelected ? accent : border, width: 1.5),
         ),
         child: Column(
           children: [
@@ -575,11 +759,16 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
     );
   }
 
-  Widget _buildPlanPreview(Color textColor, Color cardColor, Color accentColor, Color borderColor, bool isDark) {
+  Widget _buildPlanPreview(
+    Color textColor,
+    Color cardColor,
+    Color accentColor,
+    Color borderColor,
+    bool isDark,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Success Header
         Center(
           child: Container(
             padding: EdgeInsets.all(16),
@@ -603,25 +792,30 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
           ),
         ),
         SizedBox(height: 24),
-        
+
         Text(
           _generatedPlan!['name'],
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor, height: 1.1),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.1,
+          ),
         ),
         SizedBox(height: 12),
         Text(
-          _generatedPlan!['description'] ?? "Your personalized routine is ready.",
+          _generatedPlan!['description'] ??
+              "Your personalized routine is ready.",
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.4),
         ),
 
         SizedBox(height: 40),
 
-        // Weekly Planner
         WeeklyPlannerView(
           generatedPlan: _generatedPlan!,
-          isDark: isDark, 
+          isDark: isDark,
           onPlanUpdated: (updatedPlan) {
             setState(() {
               _generatedPlan = updatedPlan;
@@ -637,10 +831,13 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
               child: TextButton(
                 onPressed: () => setState(() => _generatedPlan = null),
                 style: TextButton.styleFrom(
-                   padding: EdgeInsets.symmetric(vertical: 18),
-                   foregroundColor: Colors.redAccent,
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  foregroundColor: Colors.redAccent,
                 ),
-                child: Text("Discard Plan", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Discard Plan",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SizedBox(width: 16),
@@ -652,10 +849,18 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
                   backgroundColor: accentColor,
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
-                child: Text("ACTIVATE PLAN", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+                child: Text(
+                  "ACTIVATE PLAN",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                  ),
+                ),
               ),
             ),
           ],
@@ -666,11 +871,14 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage> w
 
   List<String> _getEquipmentList() {
     switch (_equipmentLevel) {
-      case 'none': return ['bodyweight'];
-      case 'basic': return ['dumbbells', 'resistance bands', 'bodyweight'];
-      case 'gym': return ['full gym access'];
-      default: return ['full gym access'];
+      case 'none':
+        return ['bodyweight'];
+      case 'basic':
+        return ['dumbbells', 'resistance bands', 'bodyweight'];
+      case 'gym':
+        return ['full gym access'];
+      default:
+        return ['full gym access'];
     }
   }
 }
-

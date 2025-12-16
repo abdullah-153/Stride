@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/gamification_model.dart';
 import 'firestore/gamification_firestore_service.dart';
@@ -8,10 +8,10 @@ class GamificationService {
   factory GamificationService() => _instance;
   GamificationService._internal();
 
-  final GamificationFirestoreService _firestoreService = GamificationFirestoreService();
+  final GamificationFirestoreService _firestoreService =
+      GamificationFirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Callback for level up events
   Function(int newLevel, int xpGained)? onLevelUp;
 
   String? get _currentUserId => _auth.currentUser?.uid;
@@ -25,7 +25,9 @@ class GamificationService {
     }
 
     try {
-      return await _firestoreService.getGamificationData(_currentUserId!).then((data) {
+      return await _firestoreService.getGamificationData(_currentUserId!).then((
+        data,
+      ) {
         return _mergeWithDefaults(data);
       });
     } catch (e) {
@@ -38,20 +40,22 @@ class GamificationService {
   }
 
   int getXpForNextLevel(int currentLevel) {
-    // Determine XP needed for next level based on current level
-    // Simple formula: Level * 100 or something similar
-    return currentLevel * 100; 
+    return currentLevel * 100;
   }
 
   Stream<GamificationData> get gamificationStream {
     if (_currentUserId == null) {
-      return Stream.value(GamificationData(
-        stats: UserStats.initial(),
-        achievements: _getDefaultAchievements(),
-      ));
+      return Stream.value(
+        GamificationData(
+          stats: UserStats.initial(),
+          achievements: _getDefaultAchievements(),
+        ),
+      );
     }
 
-    return _firestoreService.streamGamificationData(_currentUserId!).map((data) {
+    return _firestoreService.streamGamificationData(_currentUserId!).map((
+      data,
+    ) {
       return _mergeWithDefaults(data);
     });
   }
@@ -61,20 +65,17 @@ class GamificationService {
     final updatedAchievements = <Achievement>[];
 
     for (var defaultAch in defaultAchievements) {
-      // Find matching achievement in data
       final existing = data.achievements.firstWhere(
         (a) => a.id == defaultAch.id,
         orElse: () => defaultAch, // Return default (locked) if not found
       );
 
-      // If existing is found, it might have isUnlocked=true.
-      // Use existing's state, but default's metadata (title, etc) in case DB is missing it.
-      // Or just prefer existing if it has data. 
-      // Safest: Use default structure, override 'isUnlocked' and 'unlockedAt' from existing.
-      updatedAchievements.add(defaultAch.copyWith(
-        isUnlocked: existing.isUnlocked,
-        unlockedAt: existing.unlockedAt,
-      ));
+      updatedAchievements.add(
+        defaultAch.copyWith(
+          isUnlocked: existing.isUnlocked,
+          unlockedAt: existing.unlockedAt,
+        ),
+      );
     }
 
     return GamificationData(
@@ -87,12 +88,16 @@ class GamificationService {
     if (_currentUserId == null) return false;
 
     try {
-      final currentData = await _firestoreService.getGamificationData(_currentUserId!);
+      final currentData = await _firestoreService.getGamificationData(
+        _currentUserId!,
+      );
       final oldLevel = currentData.stats.currentLevel;
 
       await _firestoreService.addXp(_currentUserId!, amount);
 
-      final newData = await _firestoreService.getGamificationData(_currentUserId!);
+      final newData = await _firestoreService.getGamificationData(
+        _currentUserId!,
+      );
       final newLevel = newData.stats.currentLevel;
 
       if (newLevel > oldLevel && onLevelUp != null) {
@@ -113,7 +118,7 @@ class GamificationService {
       await _firestoreService.updateStreak(_currentUserId!, type, logDate);
 
       final data = await _firestoreService.getGamificationData(_currentUserId!);
-      
+
       if (data.stats.currentStreak >= 3) {
         await unlockAchievement('streak_3');
       }
@@ -135,7 +140,7 @@ class GamificationService {
       final lastDate = type == StreakType.diet
           ? data.stats.lastDietLogDate
           : data.stats.lastWorkoutLogDate;
-      
+
       if (lastDate == null) return true;
       return !_isSameDay(lastDate, now);
     } catch (e) {
@@ -160,12 +165,14 @@ class GamificationService {
     try {
       final data = await _firestoreService.getGamificationData(_currentUserId!);
       final now = DateTime.now();
-      
-      final dietDoneToday = data.stats.lastDietLogDate != null &&
+
+      final dietDoneToday =
+          data.stats.lastDietLogDate != null &&
           _isSameDay(data.stats.lastDietLogDate!, now);
-      final workoutDoneToday = data.stats.lastWorkoutLogDate != null &&
+      final workoutDoneToday =
+          data.stats.lastWorkoutLogDate != null &&
           _isSameDay(data.stats.lastWorkoutLogDate!, now);
-      
+
       return dietDoneToday && workoutDoneToday;
     } catch (e) {
       print('Error checking if both streaks completed: $e');

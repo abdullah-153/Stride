@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/workout_model.dart';
 import '../../utils/size_config.dart';
 import 'exercise_list_item.dart';
@@ -56,7 +56,6 @@ class WorkoutDetailSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Handle bar
               Container(
                 margin: EdgeInsets.only(top: SizeConfig.h(12)),
                 width: SizeConfig.w(40),
@@ -67,13 +66,11 @@ class WorkoutDetailSheet extends StatelessWidget {
                 ),
               ),
 
-              // Content
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: EdgeInsets.all(SizeConfig.w(20)),
                   children: [
-                    // Header
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -81,7 +78,6 @@ class WorkoutDetailSheet extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Title
                               Text(
                                 workout.title,
                                 style: TextStyle(
@@ -91,7 +87,6 @@ class WorkoutDetailSheet extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: SizeConfig.h(8)),
-                              // Category and difficulty
                               Row(
                                 children: [
                                   Container(
@@ -148,7 +143,6 @@ class WorkoutDetailSheet extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Close button
                         IconButton(
                           icon: Icon(
                             Icons.close_rounded,
@@ -161,7 +155,6 @@ class WorkoutDetailSheet extends StatelessWidget {
 
                     SizedBox(height: SizeConfig.h(20)),
 
-                    // Stats row
                     Container(
                       padding: EdgeInsets.all(SizeConfig.w(16)),
                       decoration: BoxDecoration(
@@ -208,7 +201,6 @@ class WorkoutDetailSheet extends StatelessWidget {
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // Description
                     Text(
                       workout.description,
                       style: TextStyle(
@@ -220,7 +212,6 @@ class WorkoutDetailSheet extends StatelessWidget {
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // Exercises header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -244,7 +235,6 @@ class WorkoutDetailSheet extends StatelessWidget {
 
                     SizedBox(height: SizeConfig.h(12)),
 
-                    // Exercise list
                     ...workout.exercises.map((exercise) {
                       return ExerciseListItem(
                         exercise: exercise,
@@ -257,7 +247,6 @@ class WorkoutDetailSheet extends StatelessWidget {
                 ),
               ),
 
-              // Start workout button
               Container(
                 padding: EdgeInsets.all(SizeConfig.w(20)),
                 decoration: BoxDecoration(

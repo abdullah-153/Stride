@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/workout_model.dart';
 import 'workout_card.dart';
@@ -31,11 +31,8 @@ class InteractiveWorkoutCard extends StatefulWidget {
 
 class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
     with TickerProviderStateMixin {
-  // Controller for the hold/pulse animation
   late AnimationController _pulseController;
-  // Controller for the blast/fill animation
   late AnimationController _blastController;
-  // Controller for the exit/shrink animation
   late AnimationController _exitController;
 
   Offset _touchPosition = Offset.zero;
@@ -46,7 +43,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   void initState() {
     super.initState();
 
-    // Pulse: 3 pulses over 1.5 seconds, growing in size
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -54,13 +50,11 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
 
     _pulseController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // Hold complete -> Trigger Blast
         HapticFeedback.heavyImpact();
         _startBlast();
       }
     });
 
-    // Blast: Quick expansion to fill the card
     _blastController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -75,7 +69,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
       }
     });
 
-    // Exit: Shrink card to 0 size
     _exitController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -104,7 +97,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   void _onLongPressEnd(LongPressEndDetails details) {
     if (_showDeleteOption) return; // Ignore if delete mode is active
 
-    // If released before completion, cancel
     _isHolding = false;
     _pulseController.reverse();
   }
@@ -130,9 +122,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   }
 
   void _confirmDelete() async {
-    // Animate out
     await _exitController.reverse();
-    // Then trigger actual delete
     widget.onDelete();
   }
 
@@ -140,7 +130,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final borderRadius = BorderRadius.circular(screenWidth * 0.08);
-    // Matches WorkoutCard margin
     final cardMargin = const EdgeInsets.symmetric(horizontal: 10, vertical: 8);
 
     return SizeTransition(
@@ -155,7 +144,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 1. The Workout Card (Base)
             WorkoutCard(
               time: "${widget.workout.durationMinutes}",
               title: widget.workout.title,
@@ -170,7 +158,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
               onPressed: _showDeleteOption ? null : widget.onPressed,
             ),
 
-            // 2. Animations Overlay (Clipped to Card Boundary)
             Positioned.fill(
               child: Padding(
                 padding: cardMargin,
@@ -178,13 +165,11 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
                   borderRadius: borderRadius,
                   child: Stack(
                     children: [
-                      // Pulse Animation
                       if (_isHolding && !_showDeleteOption)
                         Positioned.fill(
                           child: AnimatedBuilder(
                             animation: _pulseController,
                             builder: (context, child) {
-                              // Adjust touch position relative to the clipped area
                               final localTouchPosition =
                                   _touchPosition -
                                   Offset(
@@ -202,7 +187,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
                           ),
                         ),
 
-                      // Blast Animation
                       Positioned.fill(
                         child: AnimatedBuilder(
                           animation: _blastController,
@@ -228,7 +212,6 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
                         ),
                       ),
 
-                      // Delete Icon
                       if (_showDeleteOption)
                         Positioned.fill(
                           child: Center(
@@ -295,15 +278,12 @@ class GrowingPulsePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill; // Changed to fill
 
-    // Base radius grows with progress
     final maxBaseRadius = 60.0;
     final currentBaseRadius = 20.0 + (maxBaseRadius - 20.0) * progress;
 
-    // Draw base circle
     paint.color = color.withOpacity(0.3 * progress);
     canvas.drawCircle(center, currentBaseRadius, paint);
 
-    // Draw pulses
     final pulseCount = 3;
     for (int i = 0; i < pulseCount; i++) {
       final pulseStart = i / pulseCount;
@@ -345,7 +325,6 @@ class BlastFillPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..color = color.withOpacity(0.9 * progress);
 
-    // Calculate radius needed to cover the corners
     final corners = [
       Offset.zero,
       Offset(size.width, 0),

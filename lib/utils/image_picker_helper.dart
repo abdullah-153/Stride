@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImagePickerHelper {
   static final ImagePicker _picker = ImagePicker();
 
-  // Pick image from gallery
   static Future<String?> pickFromGallery() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -20,7 +19,6 @@ class ImagePickerHelper {
     }
   }
 
-  // Pick image from camera
   static Future<String?> pickFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -36,7 +34,6 @@ class ImagePickerHelper {
     }
   }
 
-  // Show dialog to choose image source
   static Future<String?> showImageSourceDialog(BuildContext context) async {
     return showDialog<String>(
       context: context,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../utils/size_config.dart';
 
@@ -24,13 +24,19 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
   late TextEditingController _setsController;
   late TextEditingController _repsController;
   late TextEditingController _restController;
-  
+
   @override
   void initState() {
     super.initState();
-    _setsController = TextEditingController(text: widget.exercise['sets'].toString());
-    _repsController = TextEditingController(text: widget.exercise['reps'].toString());
-    _restController = TextEditingController(text: widget.exercise['restSeconds'].toString());
+    _setsController = TextEditingController(
+      text: widget.exercise['sets'].toString(),
+    );
+    _repsController = TextEditingController(
+      text: widget.exercise['reps'].toString(),
+    );
+    _restController = TextEditingController(
+      text: widget.exercise['restSeconds'].toString(),
+    );
   }
 
   @override
@@ -43,10 +49,13 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
 
   void _save() {
     final updatedExercise = Map<String, dynamic>.from(widget.exercise);
-    updatedExercise['sets'] = int.tryParse(_setsController.text) ?? widget.exercise['sets'];
-    updatedExercise['reps'] = int.tryParse(_repsController.text) ?? widget.exercise['reps'];
-    updatedExercise['restSeconds'] = int.tryParse(_restController.text) ?? widget.exercise['restSeconds'];
-    
+    updatedExercise['sets'] =
+        int.tryParse(_setsController.text) ?? widget.exercise['sets'];
+    updatedExercise['reps'] =
+        int.tryParse(_repsController.text) ?? widget.exercise['reps'];
+    updatedExercise['restSeconds'] =
+        int.tryParse(_restController.text) ?? widget.exercise['restSeconds'];
+
     widget.onSave(updatedExercise);
     Navigator.pop(context);
   }
@@ -84,7 +93,7 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
             ),
           ),
           SizedBox(height: SizeConfig.h(24)),
-          
+
           Text(
             widget.exercise['name'],
             style: TextStyle(
@@ -102,27 +111,42 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
               letterSpacing: 1.0,
             ),
           ),
-          
+
           SizedBox(height: SizeConfig.h(30)),
-          
+
           Row(
             children: [
               Expanded(
-                child: _buildNumberInput('Sets', _setsController, isDark, accentColor),
+                child: _buildNumberInput(
+                  'Sets',
+                  _setsController,
+                  isDark,
+                  accentColor,
+                ),
               ),
               SizedBox(width: SizeConfig.w(16)),
               Expanded(
-                child: _buildNumberInput('Reps', _repsController, isDark, accentColor),
+                child: _buildNumberInput(
+                  'Reps',
+                  _repsController,
+                  isDark,
+                  accentColor,
+                ),
               ),
               SizedBox(width: SizeConfig.w(16)),
               Expanded(
-                child: _buildNumberInput('Rest (s)', _restController, isDark, accentColor),
+                child: _buildNumberInput(
+                  'Rest (s)',
+                  _restController,
+                  isDark,
+                  accentColor,
+                ),
               ),
             ],
           ),
-          
+
           SizedBox(height: SizeConfig.h(40)),
-          
+
           Row(
             children: [
               Expanded(
@@ -138,7 +162,9 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
                     foregroundColor: Colors.redAccent,
                     padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
                     side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
@@ -152,9 +178,14 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
                     foregroundColor: Colors.black,
                     elevation: 0,
                     padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "Save Changes",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -164,7 +195,12 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
     );
   }
 
-  Widget _buildNumberInput(String label, TextEditingController controller, bool isDark, Color accentColor) {
+  Widget _buildNumberInput(
+    String label,
+    TextEditingController controller,
+    bool isDark,
+    Color accentColor,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,7 +216,9 @@ class _ExerciseEditSheetState extends State<ExerciseEditSheet> {
         SizedBox(height: SizeConfig.h(8)),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05),
             borderRadius: BorderRadius.circular(16),
           ),
           child: TextField(

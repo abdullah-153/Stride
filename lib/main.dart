@@ -1,11 +1,11 @@
-import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
+﻿import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pages/home_page.dart';
 import 'components/shared/bouncing_dots_indicator.dart';
-import 'pages/login_page.dart';
+import 'pages/auth/login_page.dart';
 import 'pages/onboarding_page.dart';
-import 'pages/register_page.dart';
+import 'pages/auth/register_page.dart';
 import 'pages/startup_page.dart';
 import 'utils/app_constants.dart';
 
@@ -16,13 +16,9 @@ import 'providers/user_profile_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MyApp()));
 }
-
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -78,27 +74,18 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-    // Also watch profile to determine if onboarding is needed
-    // We only care if auth is data (logged in).
-    
+
     return authState.when(
       data: (user) {
         if (user != null) {
-            // User is logged in, check profile
-            // We use a separate FutureBuilder or watch the provider if it's available globally
-            // Assuming userProfileProvider depends on auth, it should be available.
-            
-            // We need to return a widget that handles the profile check.
-            return const ProfileCheckGate();
+
+          return const ProfileCheckGate();
         }
         return const StartupPage();
       },
-      loading: () => const Scaffold(
-        body: Center(child: BouncingDotsIndicator()),
-      ),
-      error: (e, trace) => Scaffold(
-        body: Center(child: Text('Error: $e')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: BouncingDotsIndicator())),
+      error: (e, trace) => Scaffold(body: Center(child: Text('Error: $e'))),
     );
   }
 }
@@ -112,14 +99,12 @@ class ProfileCheckGate extends ConsumerWidget {
 
     return profileAsync.when(
       data: (profile) {
-        if (profile != null) {
-          return const HomeScreen();
-        } else {
-          return OnboardingPage();
-        }
+        return const HomeScreen();
       },
-      loading: () => const Scaffold(body: Center(child: BouncingDotsIndicator())),
-      error: (e, stack) => const Scaffold(body: Center(child: BouncingDotsIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: BouncingDotsIndicator())),
+      error: (e, stack) =>
+          const Scaffold(body: Center(child: BouncingDotsIndicator())),
     );
   }
 }

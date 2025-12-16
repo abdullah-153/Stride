@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/user_profile_model.dart';
 import '../../models/diet_plan_model.dart';
@@ -8,7 +8,8 @@ import 'base_firestore_service.dart';
 import 'firestore_collections.dart';
 
 class UserProfileFirestoreService extends BaseFirestoreService {
-  static final UserProfileFirestoreService _instance = UserProfileFirestoreService._internal();
+  static final UserProfileFirestoreService _instance =
+      UserProfileFirestoreService._internal();
   factory UserProfileFirestoreService() => _instance;
   UserProfileFirestoreService._internal();
 
@@ -16,44 +17,37 @@ class UserProfileFirestoreService extends BaseFirestoreService {
 
   Future<void> createUserProfile(String userId, UserProfile profile) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final profileData = profile.toJson();
-        final dataWithTimestamps = addTimestamps(profileData);
-        
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .set(dataWithTimestamps);
-      },
-      errorMessage: 'Failed to create user profile',
-    );
+
+    return handleFirestoreOperation(() async {
+      final profileData = profile.toJson();
+      final dataWithTimestamps = addTimestamps(profileData);
+
+      await getUserDocument(userId)
+          .collection(FirestoreCollections.profile)
+          .doc('data')
+          .set(dataWithTimestamps);
+    }, errorMessage: 'Failed to create user profile');
   }
 
   Future<UserProfile?> getUserProfile(String userId) async {
-    return handleFirestoreOperation(
-      () async {
-        final doc = await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .get();
-        
-        if (!doc.exists || doc.data() == null) {
-          return null;
-        }
-        
-        return UserProfile.fromJson(doc.data()!);
-      },
-      errorMessage: 'Failed to fetch user profile',
-    );
+    return handleFirestoreOperation(() async {
+      final doc = await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').get();
+
+      if (!doc.exists || doc.data() == null) {
+        return null;
+      }
+
+      return UserProfile.fromJson(doc.data()!);
+    }, errorMessage: 'Failed to fetch user profile');
   }
 
   Stream<UserProfile?> streamUserProfile(String userId) {
-    final docRef = getUserDocument(userId)
-        .collection(FirestoreCollections.profile)
-        .doc('data');
-    
+    final docRef = getUserDocument(
+      userId,
+    ).collection(FirestoreCollections.profile).doc('data');
+
     return docRef.snapshots().map((snapshot) {
       if (!snapshot.exists || snapshot.data() == null) {
         return null;
@@ -64,138 +58,121 @@ class UserProfileFirestoreService extends BaseFirestoreService {
 
   Future<void> updateUserProfile(String userId, UserProfile profile) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final profileData = profile.toJson();
-        final dataWithTimestamps = addTimestamps(profileData, isUpdate: true);
-        
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update(dataWithTimestamps);
-      },
-      errorMessage: 'Failed to update user profile',
-    );
+
+    return handleFirestoreOperation(() async {
+      final profileData = profile.toJson();
+      final dataWithTimestamps = addTimestamps(profileData, isUpdate: true);
+
+      await getUserDocument(userId)
+          .collection(FirestoreCollections.profile)
+          .doc('data')
+          .update(dataWithTimestamps);
+    }, errorMessage: 'Failed to update user profile');
   }
 
-  Future<void> updateProfileField(String userId, String field, dynamic value) async {
+  Future<void> updateProfileField(
+    String userId,
+    String field,
+    dynamic value,
+  ) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update({
-          field: value,
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-      errorMessage: 'Failed to update profile field',
-    );
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update({
+        field: value,
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to update profile field');
   }
 
-  /// Save profile image locally and store path in Firestore
   Future<String> uploadProfileImage(String userId, File imageFile) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        // Delete old profile image if exists
-        final currentProfile = await getUserProfile(userId);
-        if (currentProfile?.profileImagePath != null) {
-          await _imageStorage.deleteImage(currentProfile!.profileImagePath!);
-        }
-        
-        // Save new image locally
-        final localPath = await _imageStorage.saveImage(imageFile, userId, 'profile');
-        
-        // Update Firestore with local path
-        await updateProfileField(userId, FirestoreFields.profileImagePath, localPath);
-        
-        return localPath;
-      },
-      errorMessage: 'Failed to upload profile image',
-    );
+
+    return handleFirestoreOperation(() async {
+      final currentProfile = await getUserProfile(userId);
+      if (currentProfile?.profileImagePath != null) {
+        await _imageStorage.deleteImage(currentProfile!.profileImagePath!);
+      }
+
+      final localPath = await _imageStorage.saveImage(
+        imageFile,
+        userId,
+        'profile',
+      );
+
+      await updateProfileField(
+        userId,
+        FirestoreFields.profileImagePath,
+        localPath,
+      );
+
+      return localPath;
+    }, errorMessage: 'Failed to upload profile image');
   }
 
-  /// Delete profile image from local storage
   Future<void> deleteProfileImage(String userId) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final profile = await getUserProfile(userId);
-        if (profile?.profileImagePath != null) {
-          await _imageStorage.deleteImage(profile!.profileImagePath!);
-          await updateProfileField(userId, FirestoreFields.profileImagePath, null);
-        }
-      },
-      errorMessage: 'Failed to delete profile image',
-    );
+
+    return handleFirestoreOperation(() async {
+      final profile = await getUserProfile(userId);
+      if (profile?.profileImagePath != null) {
+        await _imageStorage.deleteImage(profile!.profileImagePath!);
+        await updateProfileField(
+          userId,
+          FirestoreFields.profileImagePath,
+          null,
+        );
+      }
+    }, errorMessage: 'Failed to delete profile image');
   }
 
   Future<void> incrementWorkoutsCompleted(String userId) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update({
-          FirestoreFields.totalWorkoutsCompleted: FieldValue.increment(1),
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-      errorMessage: 'Failed to increment workouts completed',
-    );
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update({
+        FirestoreFields.totalWorkoutsCompleted: FieldValue.increment(1),
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to increment workouts completed');
   }
 
   Future<void> incrementMealsLogged(String userId) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update({
-          FirestoreFields.totalMealsLogged: FieldValue.increment(1),
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-      errorMessage: 'Failed to increment meals logged',
-    );
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update({
+        FirestoreFields.totalMealsLogged: FieldValue.increment(1),
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to increment meals logged');
   }
 
   Future<void> incrementDaysActive(String userId) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update({
-          FirestoreFields.daysActive: FieldValue.increment(1),
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-      errorMessage: 'Failed to increment days active',
-    );
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update({
+        FirestoreFields.daysActive: FieldValue.increment(1),
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to increment days active');
   }
 
   Future<void> updateWeight(String userId, double weight) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        await updateProfileField(userId, FirestoreFields.weight, weight);
-      },
-      errorMessage: 'Failed to update weight',
-    );
+
+    return handleFirestoreOperation(() async {
+      await updateProfileField(userId, FirestoreFields.weight, weight);
+    }, errorMessage: 'Failed to update weight');
   }
 
   Future<void> updateGoals(
@@ -205,76 +182,62 @@ class UserProfileFirestoreService extends BaseFirestoreService {
     double? weightGoal,
   }) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final updates = <String, dynamic>{
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        };
-        
-        if (weeklyWorkoutGoal != null) {
-          updates[FirestoreFields.weeklyWorkoutGoal] = weeklyWorkoutGoal;
-        }
-        if (dailyCalorieGoal != null) {
-          updates[FirestoreFields.dailyCalorieGoal] = dailyCalorieGoal;
-        }
-        if (weightGoal != null) {
-          updates[FirestoreFields.weightGoal] = weightGoal;
-        }
-        
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update(updates);
-      },
-      errorMessage: 'Failed to update goals',
-    );
+
+    return handleFirestoreOperation(() async {
+      final updates = <String, dynamic>{
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      if (weeklyWorkoutGoal != null) {
+        updates[FirestoreFields.weeklyWorkoutGoal] = weeklyWorkoutGoal;
+      }
+      if (dailyCalorieGoal != null) {
+        updates[FirestoreFields.dailyCalorieGoal] = dailyCalorieGoal;
+      }
+      if (weightGoal != null) {
+        updates[FirestoreFields.weightGoal] = weightGoal;
+      }
+
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update(updates);
+    }, errorMessage: 'Failed to update goals');
   }
 
   Future<void> updateActiveDietPlan(String userId, DietPlan? plan) async {
     ensureAuthenticated();
-    
-    return handleFirestoreOperation(
-      () async {
-        final updates = <String, dynamic>{
-          'activeDietPlan': plan?.toJson(),
-          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
-        };
 
-        // Also update the top-level goals if a plan is set
-        if (plan != null) {
-          updates['nutritionGoal'] = NutritionGoal(
-            dailyCalories: plan.dailyCalories,
-            protein: plan.macros.protein,
-            carbs: plan.macros.carbs,
-            fats: plan.macros.fats,
-            waterGoal: plan.waterIntakeLiters.round(), 
-          ).toJson();
-          
-          // Legacy support: update dailyCalorieGoal
-          updates[FirestoreFields.dailyCalorieGoal] = plan.dailyCalories;
-        }
+    return handleFirestoreOperation(() async {
+      final updates = <String, dynamic>{
+        'activeDietPlan': plan?.toJson(),
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      };
 
-        await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .update(updates);
-      },
-      errorMessage: 'Failed to update active diet plan',
-    );
+      if (plan != null) {
+        updates['nutritionGoal'] = NutritionGoal(
+          dailyCalories: plan.dailyCalories,
+          protein: plan.macros.protein,
+          carbs: plan.macros.carbs,
+          fats: plan.macros.fats,
+          waterGoal: plan.waterIntakeLiters.round(),
+        ).toJson();
+
+        updates[FirestoreFields.dailyCalorieGoal] = plan.dailyCalories;
+      }
+
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').update(updates);
+    }, errorMessage: 'Failed to update active diet plan');
   }
 
   Future<bool> profileExists(String userId) async {
-    return handleFirestoreOperation(
-      () async {
-        final doc = await getUserDocument(userId)
-            .collection(FirestoreCollections.profile)
-            .doc('data')
-            .get();
-        
-        return doc.exists;
-      },
-      errorMessage: 'Failed to check if profile exists',
-    );
+    return handleFirestoreOperation(() async {
+      final doc = await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.profile).doc('data').get();
+
+      return doc.exists;
+    }, errorMessage: 'Failed to check if profile exists');
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/home/home_page_content.dart';
@@ -11,7 +11,6 @@ import '../services/auth_service.dart';
 import '../utils/app_constants.dart';
 import '../utils/size_config.dart';
 
-/// Main home screen with navigation
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -46,9 +45,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() {
       _currentIndex = index;
 
-      // Remove the current page from history if it exists to prevent circular navigation
-      // This prevents: Workout -> Diet -> Workout (back) -> Diet (back) -> Workout
-      // Instead: Workout -> Diet -> Workout (back) -> goes to Home
       if (_navigationHistory.contains(index)) {
         _navigationHistory.remove(index);
       }
@@ -112,7 +108,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    // Use global theme provider
     final isDarkMode = ref.watch(themeProvider);
 
     final List<Widget> pages = [
@@ -132,9 +127,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+          statusBarIconBrightness: isDarkMode
+              ? Brightness.light
+              : Brightness.dark,
           systemNavigationBarColor: Colors.transparent,
-          systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+          systemNavigationBarIconBrightness: isDarkMode
+              ? Brightness.light
+              : Brightness.dark,
         ),
         child: Scaffold(
           backgroundColor: isDarkMode ? AppColors.darkBackground : Colors.white,

@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_profile_model.dart';
 import '../services/user_profile_service.dart';
 
@@ -9,7 +9,6 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
     loadProfile();
   }
 
-  // Load profile from storage
   Future<void> loadProfile() async {
     state = const AsyncValue.loading();
     try {
@@ -20,7 +19,6 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
     }
   }
 
-  // Update entire profile
   Future<void> updateProfile(UserProfile profile) async {
     try {
       await _service.saveProfile(profile);
@@ -30,7 +28,6 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
     }
   }
 
-  // Update individual fields
   Future<void> updateName(String name) async {
     final currentProfile = state.value;
     if (currentProfile == null) return;
@@ -93,7 +90,9 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
       final currentProfile = state.value;
       if (currentProfile == null) return;
 
-      final updatedProfile = currentProfile.copyWith(profileImagePath: imageUrl);
+      final updatedProfile = currentProfile.copyWith(
+        profileImagePath: imageUrl,
+      );
       state = AsyncValue.data(updatedProfile);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -124,7 +123,6 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
     await updateProfile(updatedProfile);
   }
 
-  // Clear profile data
   Future<void> clearProfile() async {
     try {
       await _service.clearProfile();

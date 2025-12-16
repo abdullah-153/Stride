@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
@@ -41,7 +41,6 @@ class _StepCounterCardState extends State<StepCounterCard>
 
   @override
   Widget build(BuildContext context) {
-    // Premium Aesthetic Colors
     final isDark = widget.isDarkMode;
     final bgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final accentColor = const Color(0xFFCEF24B); // Lime accent
@@ -58,7 +57,9 @@ class _StepCounterCardState extends State<StepCounterCard>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
@@ -67,7 +68,6 @@ class _StepCounterCardState extends State<StepCounterCard>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // 1. Rotating Subtle Background Ring (Continuous Animation)
           AnimatedBuilder(
             animation: _rotationController,
             builder: (context, child) {
@@ -76,7 +76,9 @@ class _StepCounterCardState extends State<StepCounterCard>
                 child: CustomPaint(
                   size: Size(SizeConfig.w(280), SizeConfig.h(280)),
                   painter: _DashedRingPainter(
-                    color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.03)
+                        : Colors.black.withOpacity(0.03),
                     strokeWidth: 15,
                     dashWidth: 4,
                     dashSpace: 8,
@@ -86,37 +88,35 @@ class _StepCounterCardState extends State<StepCounterCard>
             },
           ),
 
-          // 2. Static Progress Ring (Sleek)
           CustomPaint(
             size: Size(SizeConfig.w(240), SizeConfig.h(240)),
             painter: _SleekProgressPainter(
               progress: progress,
-              trackColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08),
+              trackColor: isDark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.grey.withOpacity(0.08),
               progressColor: accentColor,
               strokeWidth: 8,
             ),
           ),
 
-          // 3. Central Content
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon
               Icon(
                 Icons.directions_walk_rounded,
                 color: accentColor,
                 size: SizeConfig.w(28),
               ),
               SizedBox(height: SizeConfig.h(4)),
-              
-              // Steps Count (Monospace/Digital look possible, but keeping standard bold)
+
               Text(
                 '${widget.steps}',
                 style: TextStyle(
                   fontSize: SizeConfig.sp(48),
                   fontWeight: FontWeight.w300, // Thinner, more modern
                   color: textColor,
-                  letterSpacing: -1.0, 
+                  letterSpacing: -1.0,
                   height: 1.0,
                 ),
               ),
@@ -129,17 +129,18 @@ class _StepCounterCardState extends State<StepCounterCard>
                   letterSpacing: 2.0,
                 ),
               ),
-              
+
               SizedBox(height: SizeConfig.h(16)),
-              
-              // Stats Row (Distance | Kcals)
+
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: SizeConfig.w(16), 
-                  vertical: SizeConfig.h(8)
+                  horizontal: SizeConfig.w(16),
+                  vertical: SizeConfig.h(8),
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.grey.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(SizeConfig.w(30)),
                 ),
                 child: IntrinsicHeight(
@@ -157,10 +158,12 @@ class _StepCounterCardState extends State<StepCounterCard>
                         width: 20,
                         thickness: 1,
                       ),
-                       _buildStatItem(
-                        value: (widget.steps * 0.04).toInt().toString(), // Improved Calorie Estimate
+                      _buildStatItem(
+                        value: (widget.steps * 0.04)
+                            .toInt()
+                            .toString(), // Improved Calorie Estimate
                         unit: 'kcal',
-                         color: textColor,
+                        color: textColor,
                         subColor: subTextColor,
                       ),
                     ],
@@ -222,7 +225,6 @@ class _SleekProgressPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Track
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
@@ -230,7 +232,6 @@ class _SleekProgressPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Progress
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke
@@ -255,8 +256,8 @@ class _SleekProgressPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SleekProgressPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-           oldDelegate.trackColor != trackColor ||
-           oldDelegate.progressColor != progressColor;
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.progressColor != progressColor;
   }
 }
 
@@ -277,7 +278,7 @@ class _DashedRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
-    
+
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke

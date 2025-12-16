@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
@@ -6,10 +6,8 @@ import '../providers/theme_provider.dart';
 import '../providers/user_profile_provider.dart';
 import '../models/user_profile_model.dart';
 import '../utils/validators.dart';
-import 'size_config.dart';
 
 class ProfileBottomSheets {
-  // Edit Weight Bottom Sheet
   static Future<void> showEditWeight(
     BuildContext context, {
     required double currentWeight,
@@ -65,7 +63,6 @@ class ProfileBottomSheets {
                   ),
                   const SizedBox(height: 20),
 
-                  // Unit Toggle
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -77,7 +74,6 @@ class ProfileBottomSheets {
                           if (!isKg) {
                             setState(() {
                               isKg = true;
-                              // Convert lbs to kg
                               final currentValue =
                                   double.tryParse(controller.text) ?? 0;
                               displayWeight = currentValue * 0.453592;
@@ -97,7 +93,6 @@ class ProfileBottomSheets {
                           if (isKg) {
                             setState(() {
                               isKg = false;
-                              // Convert kg to lbs
                               final currentValue =
                                   double.tryParse(controller.text) ?? 0;
                               displayWeight = currentValue * 2.20462;
@@ -139,7 +134,6 @@ class ProfileBottomSheets {
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
                           double weight = double.parse(controller.text);
-                          // Convert to kg if currently in lbs
                           if (!isKg) {
                             weight = weight * 0.453592;
                           }
@@ -173,7 +167,6 @@ class ProfileBottomSheets {
     );
   }
 
-  // Edit Height Bottom Sheet
   static Future<void> showEditHeight(
     BuildContext context, {
     required double currentHeight,
@@ -229,7 +222,6 @@ class ProfileBottomSheets {
                   ),
                   const SizedBox(height: 20),
 
-                  // Unit Toggle
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -241,7 +233,6 @@ class ProfileBottomSheets {
                           if (!isCm) {
                             setState(() {
                               isCm = true;
-                              // Convert ft to cm
                               final currentValue =
                                   double.tryParse(controller.text) ?? 0;
                               displayHeight = currentValue * 30.48;
@@ -261,7 +252,6 @@ class ProfileBottomSheets {
                           if (isCm) {
                             setState(() {
                               isCm = false;
-                              // Convert cm to ft
                               final currentValue =
                                   double.tryParse(controller.text) ?? 0;
                               displayHeight = currentValue / 30.48;
@@ -303,7 +293,6 @@ class ProfileBottomSheets {
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
                           double height = double.parse(controller.text);
-                          // Convert to cm if currently in ft
                           if (!isCm) {
                             height = height * 30.48;
                           }
@@ -337,7 +326,6 @@ class ProfileBottomSheets {
     );
   }
 
-  // Edit Date of Birth Bottom Sheet
   static Future<void> showEditDateOfBirth(
     BuildContext context, {
     DateTime? currentDOB,
@@ -386,8 +374,10 @@ class ProfileBottomSheets {
     }
   }
 
-  // Notifications Sheet
-  static Future<void> showNotificationsSheet(BuildContext context, WidgetRef ref) async {
+  static Future<void> showNotificationsSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -396,12 +386,19 @@ class ProfileBottomSheets {
         builder: (context, ref, _) {
           final isDarkMode = ref.watch(themeProvider);
           final settings = ref.watch(appSettingsProvider);
-          
+
           return Container(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom + 24),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              MediaQuery.of(context).padding.bottom + 24,
+            ),
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -427,48 +424,56 @@ class ProfileBottomSheets {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 _buildSwitchTile(
-                    "Enable Notifications", 
-                    "Receive all app notifications", 
-                    settings.notificationsEnabled,
-                    (v) => ref.read(appSettingsProvider.notifier).toggleNotifications(v),
-                    isDarkMode
+                  "Enable Notifications",
+                  "Receive all app notifications",
+                  settings.notificationsEnabled,
+                  (v) => ref
+                      .read(appSettingsProvider.notifier)
+                      .toggleNotifications(v),
+                  isDarkMode,
                 ),
-                
+
                 const SizedBox(height: 16),
                 Divider(color: isDarkMode ? Colors.white10 : Colors.black12),
                 const SizedBox(height: 16),
-                
-                 _buildSwitchTile(
-                    "Workout Reminders", 
-                    "Get reminded to log your workouts", 
-                    settings.workoutReminders,
-                    settings.notificationsEnabled 
-                        ? (v) => ref.read(appSettingsProvider.notifier).toggleWorkoutReminders(v)
-                        : null,
-                    isDarkMode
+
+                _buildSwitchTile(
+                  "Workout Reminders",
+                  "Get reminded to log your workouts",
+                  settings.workoutReminders,
+                  settings.notificationsEnabled
+                      ? (v) => ref
+                            .read(appSettingsProvider.notifier)
+                            .toggleWorkoutReminders(v)
+                      : null,
+                  isDarkMode,
                 ),
-                
-                 _buildSwitchTile(
-                    "Diet Reminders", 
-                    "Get reminded to log your meals", 
-                    settings.dietReminders,
-                    settings.notificationsEnabled 
-                        ? (v) => ref.read(appSettingsProvider.notifier).toggleDietReminders(v)
-                        : null,
-                    isDarkMode
+
+                _buildSwitchTile(
+                  "Diet Reminders",
+                  "Get reminded to log your meals",
+                  settings.dietReminders,
+                  settings.notificationsEnabled
+                      ? (v) => ref
+                            .read(appSettingsProvider.notifier)
+                            .toggleDietReminders(v)
+                      : null,
+                  isDarkMode,
                 ),
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
 
-  // Privacy Sheet
-  static Future<void> showPrivacySheet(BuildContext context, WidgetRef ref) async {
+  static Future<void> showPrivacySheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -476,19 +481,26 @@ class ProfileBottomSheets {
         builder: (context, ref, _) {
           final isDarkMode = ref.watch(themeProvider);
           final settings = ref.watch(appSettingsProvider);
-          
+
           return Container(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom + 24),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              MediaQuery.of(context).padding.bottom + 24,
+            ),
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Center(
+                  Center(
                     child: Container(
                       width: 40,
                       height: 4,
@@ -498,66 +510,114 @@ class ProfileBottomSheets {
                       ),
                     ),
                   ),
-                const SizedBox(height: 24),
-                Text(
-                  "Privacy Level",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
+                  const SizedBox(height: 24),
+                  Text(
+                    "Privacy Level",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Control who can see your fitness data",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  const SizedBox(height: 8),
+                  Text(
+                    "Control who can see your fitness data",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                
-                _buildRadioTile("Public", "Everyone can see your data", "public", settings.privacyLevel, (v) => ref.read(appSettingsProvider.notifier).updatePrivacyLevel(v!), isDarkMode),
-                _buildRadioTile("Friends", "Only friends can see", "friends", settings.privacyLevel, (v) => ref.read(appSettingsProvider.notifier).updatePrivacyLevel(v!), isDarkMode),
-                _buildRadioTile("Private", "Only you can see", "private", settings.privacyLevel, (v) => ref.read(appSettingsProvider.notifier).updatePrivacyLevel(v!), isDarkMode),
-              
-                const SizedBox(height: 16),
-                Divider(color: isDarkMode ? Colors.white10 : Colors.black12),
-                const SizedBox(height: 16),
-                
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: Text("Clear All Data", style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
-                  onTap: () {
+                  const SizedBox(height: 24),
+
+                  _buildRadioTile(
+                    "Public",
+                    "Everyone can see your data",
+                    "public",
+                    settings.privacyLevel,
+                    (v) => ref
+                        .read(appSettingsProvider.notifier)
+                        .updatePrivacyLevel(v!),
+                    isDarkMode,
+                  ),
+                  _buildRadioTile(
+                    "Friends",
+                    "Only friends can see",
+                    "friends",
+                    settings.privacyLevel,
+                    (v) => ref
+                        .read(appSettingsProvider.notifier)
+                        .updatePrivacyLevel(v!),
+                    isDarkMode,
+                  ),
+                  _buildRadioTile(
+                    "Private",
+                    "Only you can see",
+                    "private",
+                    settings.privacyLevel,
+                    (v) => ref
+                        .read(appSettingsProvider.notifier)
+                        .updatePrivacyLevel(v!),
+                    isDarkMode,
+                  ),
+
+                  const SizedBox(height: 16),
+                  Divider(color: isDarkMode ? Colors.white10 : Colors.black12),
+                  const SizedBox(height: 16),
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.red,
+                    ),
+                    title: Text(
+                      "Clear All Data",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    onTap: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Data cleared locally")));
-                  },
-                )
-              ],
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Data cleared locally")),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
           );
-        }
+        },
       ),
     );
   }
-  
-  // Premium Units Sheet
-  static Future<void> showUnitsSheet(BuildContext context, WidgetRef ref) async {
+
+  static Future<void> showUnitsSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Consumer(
         builder: (context, ref, _) {
           final isDarkMode = ref.watch(themeProvider);
-          final currentUnits = ref.watch(userProfileProvider).value?.preferredUnits ?? UnitPreference.metric;
-          
+          final currentUnits =
+              ref.watch(userProfileProvider).value?.preferredUnits ??
+              UnitPreference.metric;
+
           return Container(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom + 24),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              MediaQuery.of(context).padding.bottom + 24,
+            ),
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -582,7 +642,7 @@ class ProfileBottomSheets {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -591,8 +651,10 @@ class ProfileBottomSheets {
                         "kg, cm, ml",
                         UnitPreference.metric,
                         currentUnits,
-                        (v) => ref.read(userProfileProvider.notifier).updateUnitPreference(v),
-                        isDarkMode
+                        (v) => ref
+                            .read(userProfileProvider.notifier)
+                            .updateUnitPreference(v),
+                        isDarkMode,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -602,8 +664,10 @@ class ProfileBottomSheets {
                         "lbs, ft, oz",
                         UnitPreference.imperial,
                         currentUnits,
-                        (v) => ref.read(userProfileProvider.notifier).updateUnitPreference(v),
-                        isDarkMode
+                        (v) => ref
+                            .read(userProfileProvider.notifier)
+                            .updateUnitPreference(v),
+                        isDarkMode,
                       ),
                     ),
                   ],
@@ -612,13 +676,16 @@ class ProfileBottomSheets {
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
 
-  // Info Sheet
-  static void showInfoSheet(BuildContext context, {required String title, required String content}) {
+  static void showInfoSheet(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) {
     final updatedContent = '''Welcome to Stride!
 
 Frequently Asked Questions:
@@ -639,7 +706,7 @@ A: XP points are earned by completing workouts and logging meals. They help you 
       isScrollControlled: true,
       builder: (context) {
         final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-        
+
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           padding: const EdgeInsets.all(24),
@@ -689,117 +756,170 @@ A: XP points are earned by completing workouts and logging meals. They help you 
       },
     );
   }
-  
-  // Helpers
-  static Widget _buildSwitchTile(String title, String subtitle, bool value, Function(bool)? onChanged, bool isDarkMode) {
-      return Row(
+
+  static Widget _buildSwitchTile(
+    String title,
+    String subtitle,
+    bool value,
+    Function(bool)? onChanged,
+    bool isDarkMode,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch.adaptive(
+          value: value,
+          onChanged: onChanged,
+          activeColor: Colors.orange,
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildRadioTile(
+    String title,
+    String subtitle,
+    String value,
+    String groupValue,
+    Function(String?) onChanged,
+    bool isDarkMode,
+  ) {
+    final isSelected = value == groupValue;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.orange.withOpacity(0.1)
+              : (isDarkMode
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? Colors.orange.withOpacity(0.5)
+                : Colors.transparent,
+          ),
+        ),
+        child: Row(
           children: [
-              Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                          Text(title, style: TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.w600,
-                              color: isDarkMode ? Colors.white : Colors.black
-                          )),
-                          const SizedBox(height: 4),
-                          Text(subtitle, style: TextStyle(
-                              fontSize: 12, 
-                              color: isDarkMode ? Colors.white54 : Colors.black54
-                          )),
-                      ],
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: isSelected
+                  ? Colors.orange
+                  : (isDarkMode ? Colors.white38 : Colors.black38),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
-              ),
-              Switch.adaptive(
-                  value: value, 
-                  onChanged: onChanged,
-                  activeColor: Colors.orange,
-              )
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
           ],
-      );
+        ),
+      ),
+    );
   }
-  
-  static Widget _buildRadioTile(String title, String subtitle, String value, String groupValue, Function(String?) onChanged, bool isDarkMode) {
-      final isSelected = value == groupValue;
-      return GestureDetector(
-          onTap: () => onChanged(value),
-          child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                  color: isSelected 
-                      ? Colors.orange.withOpacity(0.1)
-                      : (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: isSelected ? Colors.orange.withOpacity(0.5) : Colors.transparent
-                  )
-              ),
-              child: Row(
-                  children: [
-                      Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          color: isSelected ? Colors.orange : (isDarkMode ? Colors.white38 : Colors.black38)
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                              Text(title, style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : Colors.black
-                              )),
-                              Text(subtitle, style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDarkMode ? Colors.white54 : Colors.black54
-                              )),
-                          ],
-                      )
-                  ],
-              ),
+
+  static Widget _buildUnitCard(
+    String title,
+    String subtitle,
+    UnitPreference value,
+    UnitPreference groupValue,
+    Function(UnitPreference) onTap,
+    bool isDarkMode,
+  ) {
+    final isSelected = value == groupValue;
+    return GestureDetector(
+      onTap: () => onTap(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.blueAccent.withOpacity(0.15)
+              : (isDarkMode
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.blueAccent : Colors.transparent,
+            width: 2,
           ),
-      );
-  }
-  
-  static Widget _buildUnitCard(String title, String subtitle, UnitPreference value, UnitPreference groupValue, Function(UnitPreference) onTap, bool isDarkMode) {
-      final isSelected = value == groupValue;
-      return GestureDetector(
-          onTap: () => onTap(value),
-          child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              decoration: BoxDecoration(
-                  color: isSelected 
-                      ? Colors.blueAccent.withOpacity(0.15) 
-                      : (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: isSelected ? Colors.blueAccent : Colors.transparent,
-                      width: 2
-                  )
+        ),
+        child: Column(
+          children: [
+            Icon(
+              value == UnitPreference.metric
+                  ? Icons.straighten
+                  : Icons.square_foot,
+              size: 32,
+              color: isSelected
+                  ? Colors.blueAccent
+                  : (isDarkMode ? Colors.white54 : Colors.black54),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? Colors.blueAccent
+                    : (isDarkMode ? Colors.white : Colors.black),
               ),
-              child: Column(
-                  children: [
-                      Icon(
-                          value == UnitPreference.metric ? Icons.straighten : Icons.square_foot,
-                          size: 32,
-                          color: isSelected ? Colors.blueAccent : (isDarkMode ? Colors.white54 : Colors.black54)
-                      ),
-                      const SizedBox(height: 16),
-                      Text(title, style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.blueAccent : (isDarkMode ? Colors.white : Colors.black)
-                      )),
-                      const SizedBox(height: 4),
-                      Text(subtitle, style: TextStyle(
-                          fontSize: 12,
-                          color: isDarkMode ? Colors.white54 : Colors.black54
-                      )),
-                  ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? Colors.white54 : Colors.black54,
               ),
-          ),
-      );
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -34,7 +34,9 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
       currentHeight: currentHeight,
       currentAge: currentAge,
       isDarkMode: isDarkMode,
-      preferredUnits: ref.read(userProfileProvider).value?.preferredUnits ?? UnitPreference.metric,
+      preferredUnits:
+          ref.read(userProfileProvider).value?.preferredUnits ??
+          UnitPreference.metric,
     );
 
     if (result != null && mounted) {
@@ -42,18 +44,16 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
       final double newHeight = result['height'];
       final int newAge = result['age'];
 
-      // Update Profile Providers
       final notifier = ref.read(userProfileProvider.notifier);
       if (newWeight != currentWeight) {
         await notifier.updateWeight(newWeight);
-        // Add to history
         await _weightHistoryService.addWeightEntry(_currentUserId, newWeight);
       }
       if (newHeight != currentHeight) await notifier.updateHeight(newHeight);
       if (newAge != currentAge) await notifier.updateAge(newAge);
 
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Body stats updated successfully!')),
+        const SnackBar(content: Text('Body stats updated successfully!')),
       );
     }
   }
@@ -82,13 +82,13 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Weight Tracking',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
         ),
       ),
       body: StreamBuilder<List<WeightEntry>>(
@@ -99,30 +99,34 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           }
 
           final history = snapshot.data ?? [];
-          // Ensure we have at least one entry for current state if history is empty
           final effectiveHistory = List<WeightEntry>.from(history);
           if (effectiveHistory.isEmpty) {
-             effectiveHistory.add(WeightEntry(date: DateTime.now(), weight: currentWeight));
+            effectiveHistory.add(
+              WeightEntry(date: DateTime.now(), weight: currentWeight),
+            );
           } else {
-             // Ensure the very latest visual matches the provider if slightly different due to sync timing
-             if (effectiveHistory.first.weight != currentWeight && effectiveHistory.first.date.day == DateTime.now().day) {
-                // effectiveHistory[0] = WeightEntry(date: DateTime.now(), weight: currentWeight);
-                // Actually, trust history service, but maybe prepend current?
-                // Let's just trust history.
-             }
+            if (effectiveHistory.first.weight != currentWeight &&
+                effectiveHistory.first.date.day == DateTime.now().day) {
+            }
           }
-          
-          // Sort for chart (oldest first)
-          final sortedHistory = List<WeightEntry>.from(effectiveHistory)..sort((a, b) => a.date.compareTo(b.date));
 
-          final startWeight = sortedHistory.isNotEmpty ? sortedHistory.first.weight : currentWeight;
+          final sortedHistory = List<WeightEntry>.from(effectiveHistory)
+            ..sort((a, b) => a.date.compareTo(b.date));
+
+          final startWeight = sortedHistory.isNotEmpty
+              ? sortedHistory.first.weight
+              : currentWeight;
           final totalProgress = startWeight - currentWeight;
           final weightDifference = currentWeight - goalWeight;
-          
-          final currentBMI = WeightEntry(date: DateTime.now(), weight: currentWeight)
-              .calculateBMI(currentHeight);
-          final bmiCategory = WeightEntry(date: DateTime.now(), weight: currentWeight)
-              .getBMICategory(currentBMI);
+
+          final currentBMI = WeightEntry(
+            date: DateTime.now(),
+            weight: currentWeight,
+          ).calculateBMI(currentHeight);
+          final bmiCategory = WeightEntry(
+            date: DateTime.now(),
+            weight: currentWeight,
+          ).getBMICategory(currentBMI);
 
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -130,7 +134,6 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Current Weight Card
                 Container(
                   padding: EdgeInsets.all(SizeConfig.w(24)),
                   decoration: BoxDecoration(
@@ -154,14 +157,14 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                        Text(
-                          'Body Stats',
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(14),
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white70,
+                          Text(
+                            'Body Stats',
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(14),
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70,
+                            ),
                           ),
-                        ),
                           _buildStatChip(
                             'Goal: ${goalWeight.toStringAsFixed(1)} kg',
                             Icons.flag_rounded,
@@ -169,8 +172,7 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                         ],
                       ),
                       SizedBox(height: SizeConfig.h(12)),
-                      
-                      // Weight Display
+
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -195,43 +197,42 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                             ),
                           ),
                           const Spacer(),
-                          // Height & Age Minis
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 "${currentHeight.round()} cm",
-                                 style: TextStyle(
-                                   fontSize: SizeConfig.sp(16),
-                                   fontWeight: FontWeight.w700,
-                                   color: Colors.white,
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(16),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                               ),
                               Text(
                                 "Height",
-                                 style: TextStyle(
-                                   fontSize: SizeConfig.sp(10),
-                                   color: Colors.white60,
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(10),
+                                  color: Colors.white60,
                                 ),
                               ),
                               SizedBox(height: SizeConfig.h(8)),
-                               Text(
+                              Text(
                                 "$currentAge years",
-                                 style: TextStyle(
-                                   fontSize: SizeConfig.sp(16),
-                                   fontWeight: FontWeight.w700,
-                                   color: Colors.white,
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(16),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                               ),
-                               Text(
+                              Text(
                                 "Age",
-                                 style: TextStyle(
-                                   fontSize: SizeConfig.sp(10),
-                                   color: Colors.white60,
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(10),
+                                  color: Colors.white60,
                                 ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                       SizedBox(height: SizeConfig.h(16)),
@@ -239,21 +240,26 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildStatChip(
-                             '${weightDifference > 0 ? '-' : '+'}${weightDifference.abs().toStringAsFixed(1)} kg',
-                            weightDifference > 0 ? Icons.trending_down : Icons.trending_up,
+                            '${weightDifference > 0 ? '-' : '+'}${weightDifference.abs().toStringAsFixed(1)} kg',
+                            weightDifference > 0
+                                ? Icons.trending_down
+                                : Icons.trending_up,
                           ),
-                            // Edit Button
-                            GestureDetector(
-                              onTap: _showUpdateBodyStats,
-                              child: Container(
-                                padding: EdgeInsets.all(SizeConfig.w(8)),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.edit, color: Colors.white, size: SizeConfig.sp(16)),
+                          GestureDetector(
+                            onTap: _showUpdateBodyStats,
+                            child: Container(
+                              padding: EdgeInsets.all(SizeConfig.w(8)),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: SizeConfig.sp(16),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ],
@@ -262,7 +268,6 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
 
                 SizedBox(height: SizeConfig.h(24)),
 
-                // BMI Card
                 Container(
                   padding: EdgeInsets.all(SizeConfig.w(20)),
                   decoration: BoxDecoration(
@@ -333,7 +338,6 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
 
                 SizedBox(height: SizeConfig.h(24)),
 
-                // Progress Stats
                 Container(
                   padding: EdgeInsets.all(SizeConfig.w(20)),
                   decoration: BoxDecoration(
@@ -370,7 +374,6 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
 
                 SizedBox(height: SizeConfig.h(24)),
 
-                // Weight Chart
                 Text(
                   'PROGRESS CHART',
                   style: TextStyle(
@@ -389,12 +392,15 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                     borderRadius: BorderRadius.circular(SizeConfig.w(20)),
                     border: Border.all(color: borderColor),
                   ),
-                  child: _buildWeightChart(sortedHistory, textColor, subTextColor),
+                  child: _buildWeightChart(
+                    sortedHistory,
+                    textColor,
+                    subTextColor,
+                  ),
                 ),
 
                 SizedBox(height: SizeConfig.h(24)),
 
-                // Recent Entries
                 Text(
                   'RECENT ENTRIES',
                   style: TextStyle(
@@ -405,13 +411,17 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
                   ),
                 ),
                 SizedBox(height: SizeConfig.h(16)),
-                ...sortedHistory.reversed.take(5).map((entry) => _buildHistoryItem(
-                  entry,
-                  cardBg,
-                  borderColor,
-                  textColor,
-                  subTextColor,
-                )),
+                ...sortedHistory.reversed
+                    .take(5)
+                    .map(
+                      (entry) => _buildHistoryItem(
+                        entry,
+                        cardBg,
+                        borderColor,
+                        textColor,
+                        subTextColor,
+                      ),
+                    ),
               ],
             ),
           );
@@ -423,10 +433,7 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
         icon: const Icon(Icons.update, color: Colors.white),
         label: const Text(
           'Update Stats',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -459,7 +466,12 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
     );
   }
 
-  Widget _buildProgressStat(String label, String value, Color textColor, Color subTextColor) {
+  Widget _buildProgressStat(
+    String label,
+    String value,
+    Color textColor,
+    Color subTextColor,
+  ) {
     return Column(
       children: [
         Text(
@@ -490,11 +502,17 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
     return Colors.red;
   }
 
-  Widget _buildWeightChart(List<WeightEntry> history, Color textColor, Color subTextColor) {
+  Widget _buildWeightChart(
+    List<WeightEntry> history,
+    Color textColor,
+    Color subTextColor,
+  ) {
     if (history.isEmpty) {
-        return Center(child: Text("No data yet", style: TextStyle(color: subTextColor)));
+      return Center(
+        child: Text("No data yet", style: TextStyle(color: subTextColor)),
+      );
     }
-    
+
     final spots = history.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.weight);
     }).toList();
@@ -506,32 +524,31 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           drawVerticalLine: false,
           horizontalInterval: 1,
           getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: subTextColor.withOpacity(0.1),
-              strokeWidth: 1,
-            );
+            return FlLine(color: subTextColor.withOpacity(0.1), strokeWidth: 1);
           },
         ),
         titlesData: FlTitlesData(
           show: true,
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
               interval: 1,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= history.length || value < 0) return const Text('');
+                if (value.toInt() >= history.length || value < 0)
+                  return const Text('');
                 final date = history[value.toInt()].date;
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
                     '${date.day}/${date.month}',
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: subTextColor, fontSize: 10),
                   ),
                 );
               },
@@ -540,18 +557,12 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 1, // Auto interval? 
-              // reservedSize: 42, // Removed reserved size to let it adjust or keep it? 
-              // Let's rely on Flutter Chart defaults or simplify
+              interval: 1, // Auto interval?
               getTitlesWidget: (value, meta) {
-                 // Optimization: Don't show every single tick
-                 if (value % 5 != 0) return Container();
-                 return Text(
+                if (value % 5 != 0) return Container();
+                return Text(
                   value.toStringAsFixed(0),
-                  style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 10,
-                  ),
+                  style: TextStyle(color: subTextColor, fontSize: 10),
                 );
               },
             ),

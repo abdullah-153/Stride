@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/size_config.dart';
 
@@ -17,7 +17,10 @@ class CustomKeyboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24), vertical: SizeConfig.h(20)),
+      padding: EdgeInsets.symmetric(
+        horizontal: SizeConfig.w(24),
+        vertical: SizeConfig.h(20),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -36,18 +39,20 @@ class CustomKeyboard extends StatelessWidget {
   Widget _buildRow(List<String> values) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: values.map((val) => hasValue(val) ? _buildKey(val) : _buildSpacer()).toList(),
+      children: values
+          .map((val) => hasValue(val) ? _buildKey(val) : _buildSpacer())
+          .toList(),
     );
   }
 
   bool hasValue(String val) => val.isNotEmpty;
 
-  Widget _buildSpacer() => SizedBox(width: SizeConfig.w(80), height: SizeConfig.w(70));
+  Widget _buildSpacer() =>
+      SizedBox(width: SizeConfig.w(80), height: SizeConfig.w(70));
 
   Widget _buildKey(String value) {
     final bool isDelete = value == 'delete';
     final Color textColor = Colors.black87; // Force dark text for glass
-    // Eliminated specific dark/light mode logic for glass uniformity favored by user
 
     return Container(
       width: SizeConfig.w(80),
@@ -61,7 +66,7 @@ class CustomKeyboard extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Material(

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,9 +16,7 @@ class AIWorkoutService {
     return GenerativeModel(
       model: 'gemini-2.5-flash-lite', // Changed model as per instruction
       apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        responseMimeType: 'application/json',
-      ),
+      generationConfig: GenerationConfig(responseMimeType: 'application/json'),
     );
   }
 
@@ -31,8 +29,11 @@ class AIWorkoutService {
     required String fitnessLevel,
     required List<String> equipment,
   }) async {
-    final equipmentDesc = equipment.isEmpty ? 'Full gym access' : equipment.join(', ');
-    final prompt = '''
+    final equipmentDesc = equipment.isEmpty
+        ? 'Full gym access'
+        : equipment.join(', ');
+    final prompt =
+        '''
       Act as an elite fitness coach. Create a customized $daysPerWeek-day workout split for a $fitnessLevel level user.
       
       User Profile:
@@ -81,11 +82,11 @@ class AIWorkoutService {
       VERIFY equipment constraints are followed strictly.
     ''';
 
-
-    // try {  <-- Removed this outer try as we handle per-key errors inside the loop
     final content = [Content.text(prompt)];
 
-    int currentKeyIndex = DateTime.now().millisecondsSinceEpoch % _apiKeys.length; // Start with a random key to distribute load
+    int currentKeyIndex =
+        DateTime.now().millisecondsSinceEpoch %
+        _apiKeys.length; // Start with a random key to distribute load
 
     for (int i = 0; i < _apiKeys.length; i++) {
       final apiKey = _apiKeys[(currentKeyIndex + i) % _apiKeys.length];
@@ -99,22 +100,27 @@ class AIWorkoutService {
 
         print("AI Response ($apiKey): ${response.text}");
 
-        String cleanJson = response.text!.replaceAll('```json', '').replaceAll('```', '').trim();
+        String cleanJson = response.text!
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
         return jsonDecode(cleanJson);
       } catch (e) {
         if (kDebugMode) {
-          print('AI Generation Error with key ${apiKey.substring(0, 5)}...: $e');
+          print(
+            'AI Generation Error with key ${apiKey.substring(0, 5)}...: $e',
+          );
         }
-        // If it's the last key, rethrow the exception
         if (i == _apiKeys.length - 1) {
-             print('All API keys failed.');
-             rethrow;
+          print('All API keys failed.');
+          rethrow;
         }
-        // Otherwise, continue to the next key
         print('Switching to next API key...');
         continue;
       }
     }
-    throw Exception('Failed to generate workout plan after trying all API keys');
+    throw Exception(
+      'Failed to generate workout plan after trying all API keys',
+    );
   }
 }

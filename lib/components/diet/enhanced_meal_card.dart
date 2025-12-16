@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
 import 'package:flutter/services.dart';
@@ -88,7 +88,7 @@ class EnhancedMealCard extends StatelessWidget {
                           ),
                           SizedBox(width: SizeConfig.w(8)),
                           Text(
-                            '•',
+                            'â€¢',
                             style: TextStyle(
                               color: subTextColor,
                               fontSize: SizeConfig.sp(12),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class UserStatCard extends StatelessWidget {
@@ -23,7 +23,6 @@ class UserStatCard extends StatelessWidget {
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final labelColor = isDarkMode ? Colors.white70 : Colors.black54;
 
-    // Standardized Card Decoration
     final cardBg = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
     final borderColor = isDarkMode
         ? Colors.white.withOpacity(0.1)

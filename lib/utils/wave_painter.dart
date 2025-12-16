@@ -1,8 +1,6 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Reusable wave fill painter for animated backgrounds
-/// Extracted from WorkoutCard for use across multiple components
 class WaveFillPainter extends CustomPainter {
   final double progress; // 0..1
   final double phase; // radians for animation
@@ -50,7 +48,6 @@ class WaveFillPainter extends CustomPainter {
         break;
     }
 
-    // Clip to border radius if specified
     if (borderRadius > 0) {
       final rrect = RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, size.width, size.height),
@@ -73,7 +70,6 @@ class WaveFillPainter extends CustomPainter {
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
 
-    // Wave line from right to left at y = currentY
     for (int i = 0; i <= 40; i++) {
       final x = size.width - (i / 40) * size.width;
       final nx = i / 40;
@@ -94,7 +90,6 @@ class WaveFillPainter extends CustomPainter {
     path.moveTo(0, size.height);
     path.lineTo(size.width, size.height);
 
-    // Wave line from right to left at y = currentY
     for (int i = 0; i <= 40; i++) {
       final x = size.width - (i / 40) * size.width;
       final nx = i / 40;
@@ -115,7 +110,6 @@ class WaveFillPainter extends CustomPainter {
     path.moveTo(0, 0);
     path.lineTo(0, size.height);
 
-    // Wave line from bottom to top at x = currentX
     for (int i = 0; i <= 40; i++) {
       final y = size.height - (i / 40) * size.height;
       final ny = i / 40;
@@ -136,7 +130,6 @@ class WaveFillPainter extends CustomPainter {
     path.moveTo(size.width, 0);
     path.lineTo(size.width, size.height);
 
-    // Wave line from bottom to top at x = currentX
     for (int i = 0; i <= 40; i++) {
       final y = size.height - (i / 40) * size.height;
       final ny = i / 40;

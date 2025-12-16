@@ -1,7 +1,7 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
-import '../../pages/water_goal_success_page.dart';
+import '../../pages/gamification/water_goal_success_page.dart';
 
 class WaterIntakeSliderCard extends StatefulWidget {
   final bool isDarkMode;
@@ -66,7 +66,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   void changeIntake(double delta) {
     final newValue = (currentIntake + delta).clamp(0, dailyGoal);
 
-    // Check for goal completion
     if (newValue >= dailyGoal && currentIntake < dailyGoal) {
       _showGoalReached();
     }
@@ -84,7 +83,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   }
 
   void _showGoalReached() {
-    // Navigate to Success Page with Wave Animation
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -104,7 +102,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
     Color textColor,
     double elevation,
   ) {
-    // Minimal modern design
     final bool isLightMode = !widget.isDarkMode;
 
     return Material(
@@ -196,7 +193,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Left info with fixed width
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: SizeConfig.w(140)),
                 child: Column(
@@ -234,7 +230,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
 
               SizedBox(width: SizeConfig.w(16)),
 
-              // Bottle + percent capsule
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -268,10 +263,20 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
                             style: TextStyle(
                               color: capsuleTextColor,
                               fontWeight: FontWeight.bold,
-                              fontSize: (percentage * 100).toInt() >= 100 ? 24 : 30,
+                              fontSize: (percentage * 100).toInt() >= 100
+                                  ? 24
+                                  : 30,
                             ),
                           ),
-                          Text('%', style: TextStyle(color: capsuleTextColor, fontSize: (percentage*100).toInt() >= 100 ? 12 : 14)),
+                          Text(
+                            '%',
+                            style: TextStyle(
+                              color: capsuleTextColor,
+                              fontSize: (percentage * 100).toInt() >= 100
+                                  ? 12
+                                  : 14,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -281,7 +286,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
 
               SizedBox(width: SizeConfig.w(16)),
 
-              // + / - buttons
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -319,7 +323,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
 
           SizedBox(height: SizeConfig.h(12)),
 
-          // Quick add buttons
           Row(
             children: [
               Expanded(
@@ -359,7 +362,6 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   }
 }
 
-// Bubble model
 class Bubble {
   double x;
   double y;
@@ -374,7 +376,6 @@ class Bubble {
   });
 }
 
-// Custom Painter for Wave + Bubbles
 class _WavePainter extends CustomPainter {
   final Animation<double> animation;
   final double percentage;
@@ -405,7 +406,6 @@ class _WavePainter extends CustomPainter {
 
     final double waveHeight = size.height * (1 - percentage);
 
-    // Background wave
     final Path pathBg = Path();
     pathBg.moveTo(0, size.height);
     for (double x = 0; x <= size.width; x++) {
@@ -418,7 +418,6 @@ class _WavePainter extends CustomPainter {
     pathBg.close();
     canvas.drawPath(pathBg, paintBg);
 
-    // Foreground wave
     final Path pathFg = Path();
     pathFg.moveTo(0, size.height);
     for (double x = 0; x <= size.width; x++) {
@@ -431,7 +430,6 @@ class _WavePainter extends CustomPainter {
     pathFg.close();
     canvas.drawPath(pathFg, paintFg);
 
-    // Bubbles
     final Paint bubblePaint = Paint()
       ..color = (darkMode
           ? Colors.white.withOpacity(0.15)

@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../components/auth/auth_scaffold.dart';
-import '../components/auth/animated_input_field.dart';
-import '../components/auth/auth_navigation_buttons.dart';
-import '../utils/size_config.dart';
+import '../../components/auth/auth_scaffold.dart';
+import '../../components/auth/animated_input_field.dart';
+import '../../components/auth/auth_navigation_buttons.dart';
+import '../../utils/size_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -16,7 +16,7 @@ class ForgotPasswordPage extends ConsumerStatefulWidget {
 
 class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final TextEditingController emailController = TextEditingController();
-  
+
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isLoading = false;
@@ -35,7 +35,6 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   }
 
   Future<void> _handleContinue() async {
-    // Step 0: Enter Email and Send Reset
     if (_currentStep == 0) {
       if (emailController.text.trim().isEmpty) {
         _showError("Please enter your email.");
@@ -47,13 +46,14 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         return;
       }
 
-      // Check if account exists
       try {
         setState(() => _isLoading = true);
-        final signInMethods = await ref.read(authServiceProvider).checkEmailExists(emailController.text.trim());
+        final signInMethods = await ref
+            .read(authServiceProvider)
+            .checkEmailExists(emailController.text.trim());
         if (signInMethods.isEmpty) {
-           _showError("No account found with this email.");
-           return;
+          _showError("No account found with this email.");
+          return;
         }
       } catch (e) {
         _showError("An error occurred. Please try again.");
@@ -64,8 +64,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
       await _sendResetEmail();
     }
-    
-    // Step 1: Just a confirmation screen, button goes to Login (Close of flow)
+
     if (_currentStep == 1) {
       Navigator.pop(context);
     }
@@ -74,9 +73,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Future<void> _sendResetEmail() async {
     setState(() => _isLoading = true);
     try {
-      await ref.read(authServiceProvider).sendPasswordResetEmail(emailController.text.trim());
-      
-      // Move to success step
+      await ref
+          .read(authServiceProvider)
+          .sendPasswordResetEmail(emailController.text.trim());
+
       setState(() {
         _currentStep++;
         _pageController.animateToPage(
@@ -85,7 +85,6 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           curve: Curves.easeOutCubic,
         );
       });
-      
     } catch (e) {
       if (mounted) _showError(e.toString());
     } finally {
@@ -113,30 +112,32 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         flow: AuthFlow.forgotPassword,
         title: title,
         subtitle: subtitle,
-        showBackButton: _currentStep == 0, // Hide back button on success step to force "Back to Login" flow
+        showBackButton:
+            _currentStep ==
+            0, // Hide back button on success step to force "Back to Login" flow
         body: Column(
           children: [
             Expanded(
               child: PageView(
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
-                children: [
-                   _buildEmailStep(),
-                   _buildSuccessStep(),
-                ],
+                children: [_buildEmailStep(), _buildSuccessStep()],
               ),
             ),
-            
+
             Padding(
               padding: EdgeInsets.only(
-                 bottom: MediaQuery.of(context).viewInsets.bottom + SizeConfig.h(20),
-                 left: SizeConfig.w(24),
-                 right: SizeConfig.w(24),
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + SizeConfig.h(20),
+                left: SizeConfig.w(24),
+                right: SizeConfig.w(24),
               ),
               child: AuthNavigationButtons(
                 onContinue: _handleContinue,
                 isLoading: _isLoading,
-                continueLabel: _currentStep == 0 ? "Send Instructions" : "Back to Login",
+                continueLabel: _currentStep == 0
+                    ? "Send Instructions"
+                    : "Back to Login",
               ),
             ),
           ],
@@ -151,13 +152,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       child: Column(
         key: const ValueKey('fp_step0'),
         children: [
-           AnimatedInputField(
+          AnimatedInputField(
             controller: emailController,
             label: "Email Address",
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             delayMs: 200,
-           ),
+          ),
         ],
       ),
     );
@@ -176,7 +177,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               color: Colors.green[50], // Light green bg
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.mark_email_read_outlined, size: 50, color: Colors.green),
+            child: const Icon(
+              Icons.mark_email_read_outlined,
+              size: 50,
+              color: Colors.green,
+            ),
           ),
           SizedBox(height: SizeConfig.h(24)),
           Text(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../utils/size_config.dart';
 import 'exercise_edit_sheet.dart';
 
@@ -24,7 +24,11 @@ class DayPlannerCard extends StatelessWidget {
     required this.accentColor,
   });
 
-  void _editExercise(BuildContext context, int index, Map<String, dynamic> exercise) {
+  void _editExercise(
+    BuildContext context,
+    int index,
+    Map<String, dynamic> exercise,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -34,19 +38,23 @@ class DayPlannerCard extends StatelessWidget {
         exercise: exercise,
         onSave: (updatedExercise) {
           final updatedDay = Map<String, dynamic>.from(dayData!);
-          final updatedExercises = List<Map<String, dynamic>>.from(updatedDay['exercises']);
+          final updatedExercises = List<Map<String, dynamic>>.from(
+            updatedDay['exercises'],
+          );
           updatedExercises[index] = updatedExercise;
           updatedDay['exercises'] = updatedExercises;
           onUpdateDay(updatedDay);
         },
         onDelete: () {
           final updatedDay = Map<String, dynamic>.from(dayData!);
-          final updatedExercises = List<Map<String, dynamic>>.from(updatedDay['exercises']);
+          final updatedExercises = List<Map<String, dynamic>>.from(
+            updatedDay['exercises'],
+          );
           updatedExercises.removeAt(index);
           updatedDay['exercises'] = updatedExercises;
-          
+
           if (updatedExercises.isEmpty) {
-            onClearDay(); 
+            onClearDay();
           } else {
             onUpdateDay(updatedDay);
           }
@@ -70,31 +78,35 @@ class DayPlannerCard extends StatelessWidget {
         color: isEmpty ? cardColor.withOpacity(0.5) : cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+          color: isDark
+              ? Colors.white.withOpacity(0.05)
+              : Colors.black.withOpacity(0.05),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-           // Quick Action Row (Clear Day)
-           if (!isEmpty)
-             Container(
-                alignment: Alignment.centerRight,
-                padding: EdgeInsets.only(top: 8, right: 12),
-                child: GestureDetector(
-                  onTap: onClearDay,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white10 : Colors.black12,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.close_rounded, size: 14, color: textColor.withOpacity(0.6)),
+          if (!isEmpty)
+            Container(
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.only(top: 8, right: 12),
+              child: GestureDetector(
+                onTap: onClearDay,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white10 : Colors.black12,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: textColor.withOpacity(0.6),
                   ),
                 ),
-             ),
+              ),
+            ),
 
-          // Content
           Expanded(
             child: isEmpty
                 ? GestureDetector(
@@ -103,22 +115,33 @@ class DayPlannerCard extends StatelessWidget {
                     child: _buildEmptyState(textColor, secondaryText!),
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.fromLTRB(SizeConfig.w(16), 4, SizeConfig.w(16), SizeConfig.w(16)),
-                    physics: const AlwaysScrollableScrollPhysics(), 
-                    itemCount: (dayData!['exercises'] as List).length + 1, // +1 for Add Button
+                    padding: EdgeInsets.fromLTRB(
+                      SizeConfig.w(16),
+                      4,
+                      SizeConfig.w(16),
+                      SizeConfig.w(16),
+                    ),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount:
+                        (dayData!['exercises'] as List).length +
+                        1, // +1 for Add Button
                     itemBuilder: (context, index) {
                       final exercises = dayData!['exercises'] as List;
                       if (index == exercises.length) {
                         return _buildAddButton(isDark, accentColor);
                       }
                       final exercise = exercises[index];
-                      return _buildExerciseItem(context, index, exercise, textColor, secondaryText!);
+                      return _buildExerciseItem(
+                        context,
+                        index,
+                        exercise,
+                        textColor,
+                        secondaryText!,
+                      );
                     },
                   ),
           ),
-          
-          // Drag Handle / Footer
-          // ... 
+
         ],
       ),
     );
@@ -131,9 +154,14 @@ class DayPlannerCard extends StatelessWidget {
         margin: EdgeInsets.only(top: SizeConfig.h(8)),
         padding: EdgeInsets.symmetric(vertical: SizeConfig.h(12)),
         decoration: BoxDecoration(
-          border: Border.all(color: isDark ? Colors.white24 : Colors.black12, style: BorderStyle.solid),
+          border: Border.all(
+            color: isDark ? Colors.white24 : Colors.black12,
+            style: BorderStyle.solid,
+          ),
           borderRadius: BorderRadius.circular(16),
-          color: isDark ? Colors.white.withOpacity(0.02) : Colors.black.withOpacity(0.02),
+          color: isDark
+              ? Colors.white.withOpacity(0.02)
+              : Colors.black.withOpacity(0.02),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -160,8 +188,8 @@ class DayPlannerCard extends StatelessWidget {
       children: [
         Icon(
           Icons.hotel_rounded, // Rest icon
-          size: SizeConfig.sp(32), 
-          color: secondaryText.withOpacity(0.5)
+          size: SizeConfig.sp(32),
+          color: secondaryText.withOpacity(0.5),
         ),
         SizedBox(height: SizeConfig.h(12)),
         Text(
@@ -192,7 +220,13 @@ class DayPlannerCard extends StatelessWidget {
     );
   }
 
-  Widget _buildExerciseItem(BuildContext context, int index, Map<String, dynamic> exercise, Color textColor, Color secondaryText) {
+  Widget _buildExerciseItem(
+    BuildContext context,
+    int index,
+    Map<String, dynamic> exercise,
+    Color textColor,
+    Color secondaryText,
+  ) {
     return Container(
       margin: EdgeInsets.only(bottom: SizeConfig.h(10)),
       decoration: BoxDecoration(
@@ -242,7 +276,7 @@ class DayPlannerCard extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        "${exercise['sets']} sets × ${exercise['reps']} reps${exercise['estimatedMinutes'] != null && exercise['estimatedMinutes'] > 0 ? ' • ${exercise['estimatedMinutes']} min' : ''}",
+                        "${exercise['sets']} sets Ãƒâ€” ${exercise['reps']} reps${exercise['estimatedMinutes'] != null && exercise['estimatedMinutes'] > 0 ? ' Ã¢â‚¬Â¢ ${exercise['estimatedMinutes']} min' : ''}",
                         style: TextStyle(
                           fontSize: SizeConfig.sp(11),
                           color: secondaryText,

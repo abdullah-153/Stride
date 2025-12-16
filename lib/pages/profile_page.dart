@@ -1,12 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/profile/profile_tile_card.dart';
 import '../components/profile/activity_stats_card.dart';
-import '../components/profile/streak_summary_card.dart';
 import '../components/profile/badges_section.dart';
 import '../components/profile/unified_body_stats_card.dart';
-import '../components/profile/fitness_goals_card.dart';
 import '../services/gamification_service.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
 import '../models/gamification_model.dart';
@@ -17,8 +15,6 @@ import '../providers/theme_provider.dart';
 import '../pages/edit_profile_page.dart';
 import '../pages/weight_tracking_page.dart';
 import '../utils/profile_bottom_sheets.dart';
-import '../utils/edit_goals_bottom_sheet.dart';
-import '../utils/body_update_sheet.dart';
 import '../services/auth_service.dart';
 import '../components/profile/streak_heatmap.dart';
 import '../components/common/global_back_button.dart';
@@ -29,6 +25,7 @@ class ProfilePage extends ConsumerStatefulWidget {
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
+
 class _ProfilePageState extends ConsumerState<ProfilePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
@@ -50,8 +47,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -108,17 +105,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
         stream: GamificationService().gamificationStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children: [
-                   Icon(Icons.error_outline, color: Colors.red, size: 48),
-                   SizedBox(height: 16),
-                   Text("Failed to load profile", style: TextStyle(color: textColor)),
-                   Text(snapshot.error.toString(), style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12)),
-                 ],
-               ),
-             );
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    "Failed to load profile",
+                    style: TextStyle(color: textColor),
+                  ),
+                  Text(
+                    snapshot.error.toString(),
+                    style: TextStyle(
+                      color: textColor.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           if (!snapshot.hasData) {
@@ -129,8 +135,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
             );
           }
           final data = snapshot.data!;
-          final nextLevelXp = GamificationService().getXpForNextLevel(data.stats.currentLevel);
-          
+          final nextLevelXp = GamificationService().getXpForNextLevel(
+            data.stats.currentLevel,
+          );
+
           return FadeTransition(
             opacity: _fadeAnimation,
             child: SlideTransition(
@@ -143,9 +151,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                   children: [
                     SizedBox(height: SizeConfig.h(10)),
 
-                    // Page Title
                     Padding(
-                      padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontal,
+                        0,
+                        horizontal,
+                        24,
+                      ),
                       child: Text(
                         "Profile\nSettings",
                         style: TextStyle(
@@ -157,7 +169,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                       ),
                     ),
 
-                    // Unified Header (Profile + Level Progress integration)
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: GestureDetector(
@@ -178,7 +189,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  // Avatar with Level Ring
                                   Stack(
                                     alignment: Alignment.center,
                                     children: [
@@ -186,36 +196,56 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                         width: SizeConfig.w(86),
                                         height: SizeConfig.w(86),
                                         child: CircularProgressIndicator(
-                                          value: data.stats.currentXp / nextLevelXp,
+                                          value:
+                                              data.stats.currentXp /
+                                              nextLevelXp,
                                           strokeWidth: 4,
-                                          backgroundColor: Colors.grey.withOpacity(0.2),
-                                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                                          backgroundColor: Colors.grey
+                                              .withOpacity(0.2),
+                                          valueColor:
+                                              const AlwaysStoppedAnimation<
+                                                Color
+                                              >(Colors.orange),
                                           strokeCap: StrokeCap.round,
                                         ),
                                       ),
                                       CircleAvatar(
                                         radius: SizeConfig.w(38),
                                         backgroundImage:
-                                            ref.watch(profileImageProvider) != null
-                                            ? FileImage(File(ref.watch(profileImageProvider)!))
+                                            ref.watch(profileImageProvider) !=
+                                                null
+                                            ? FileImage(
+                                                File(
+                                                  ref.watch(
+                                                    profileImageProvider,
+                                                  )!,
+                                                ),
+                                              )
                                             : null,
                                         backgroundColor: isDarkMode
                                             ? Colors.grey.shade800
                                             : Colors.grey.shade200,
-                                        child: ref.watch(profileImageProvider) == null
-                                            ? Icon(Icons.person, size: 40, color: Colors.grey)
+                                        child:
+                                            ref.watch(profileImageProvider) ==
+                                                null
+                                            ? Icon(
+                                                Icons.person,
+                                                size: 40,
+                                                color: Colors.grey,
+                                              )
                                             : null,
                                       ),
                                     ],
                                   ),
                                   SizedBox(width: SizeConfig.w(20)),
-                                  // Text Info
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Expanded(
                                               child: Text(
@@ -230,7 +260,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                                 ),
                                               ),
                                             ),
-                                            Icon(Icons.edit_outlined, size: 20, color: sectionTitleColor),
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 20,
+                                              color: sectionTitleColor,
+                                            ),
                                           ],
                                         ),
                                         SizedBox(height: SizeConfig.h(4)),
@@ -246,11 +280,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                         ),
                                         SizedBox(height: SizeConfig.h(8)),
                                         Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.orange.withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(20),
-                                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                                            color: Colors.orange.withOpacity(
+                                              0.15,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.orange.withOpacity(
+                                                0.3,
+                                              ),
+                                            ),
                                           ),
                                           child: Text(
                                             "Level ${data.stats.currentLevel}",
@@ -274,7 +319,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // Unified Body Stats Card
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: UnifiedBodyStatsCard(
@@ -282,7 +326,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                         height: ref.watch(userHeightProvider),
                         age: ref.watch(userAgeProvider),
                         isDarkMode: isDarkMode,
-                        isMetric: ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric,
+                        isMetric:
+                            ref
+                                .watch(userProfileProvider)
+                                .value!
+                                .preferredUnits ==
+                            UnitPreference.metric,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -296,13 +345,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // Activity Overview
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("ACTIVITY", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          Text(
+                            "ACTIVITY",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.bold,
+                              color: sectionTitleColor,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           SizedBox(height: SizeConfig.h(12)),
                           ActivityStatsCard(
                             isDarkMode: isDarkMode,
@@ -322,13 +378,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // Streak Summary
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("STREAK SUMMARY", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          Text(
+                            "STREAK SUMMARY",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.bold,
+                              color: sectionTitleColor,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           SizedBox(height: SizeConfig.h(12)),
                           StreakHeatMap(
                             activityDates: data.stats.activityDates,
@@ -337,15 +400,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(height: SizeConfig.h(24)),
-                    // Badges Section
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("BADGES", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          Text(
+                            "BADGES",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.bold,
+                              color: sectionTitleColor,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           SizedBox(height: SizeConfig.h(16)),
                           BadgesSection(
                             achievements: data.achievements,
@@ -357,13 +427,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(32)),
 
-                    // Settings Section
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("SETTINGS", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          Text(
+                            "SETTINGS",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.bold,
+                              color: sectionTitleColor,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           SizedBox(height: SizeConfig.h(16)),
                           Container(
                             decoration: cardDecoration,
@@ -377,7 +454,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const EditProfilePage(),
+                                        builder: (context) =>
+                                            const EditProfilePage(),
                                       ),
                                     );
                                   },
@@ -393,7 +471,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                   title: "Notifications",
                                   isDarkMode: isDarkMode,
                                   onTap: () {
-                                    ProfileBottomSheets.showNotificationsSheet(context, ref);
+                                    ProfileBottomSheets.showNotificationsSheet(
+                                      context,
+                                      ref,
+                                    );
                                   },
                                 ),
                                 Divider(
@@ -407,7 +488,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                   title: "Privacy & Security",
                                   isDarkMode: isDarkMode,
                                   onTap: () {
-                                    ProfileBottomSheets.showPrivacySheet(context, ref);
+                                    ProfileBottomSheets.showPrivacySheet(
+                                      context,
+                                      ref,
+                                    );
                                   },
                                 ),
                                 Divider(
@@ -424,7 +508,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                     ProfileBottomSheets.showInfoSheet(
                                       context,
                                       title: 'Help & Support',
-                                      content: '', // Content is now internal to the method
+                                      content:
+                                          '', // Content is now internal to the method
                                     );
                                   },
                                 ),
@@ -437,22 +522,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(32)),
 
-                     // Preferences Section (Units)
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("PREFERENCES", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          Text(
+                            "PREFERENCES",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.bold,
+                              color: sectionTitleColor,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                           SizedBox(height: SizeConfig.h(16)),
                           Container(
                             decoration: cardDecoration,
                             child: SettingsOptionCard(
                               icon: Icons.straighten_rounded,
-                              title: "Units: ${ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric ? 'Metric (kg/cm)' : 'Imperial (lbs/ft)'}",
+                              title:
+                                  "Units: ${ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric ? 'Metric (kg/cm)' : 'Imperial (lbs/ft)'}",
                               isDarkMode: isDarkMode,
                               onTap: () {
-                                ProfileBottomSheets.showUnitsSheet(context, ref);
+                                ProfileBottomSheets.showUnitsSheet(
+                                  context,
+                                  ref,
+                                );
                               },
                             ),
                           ),
@@ -462,15 +558,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                     SizedBox(height: SizeConfig.h(32)),
 
-                    // Logout Button
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: SizedBox(
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () async {
-                            await ref.read(authServiceProvider).signOut(); // Updated: Actual Firebase Sign Out
-                            await ref.read(userProfileProvider.notifier).clearProfile();
+                            await ref
+                                .read(authServiceProvider)
+                                .signOut(); // Updated: Actual Firebase Sign Out
+                            await ref
+                                .read(userProfileProvider.notifier)
+                                .clearProfile();
                             GamificationService().reset();
                             if (context.mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
@@ -480,10 +579,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             }
                           },
                           style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
+                            padding: EdgeInsets.symmetric(
+                              vertical: SizeConfig.h(16),
+                            ),
                             backgroundColor: Colors.red.withOpacity(0.1),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(SizeConfig.w(16)),
+                              borderRadius: BorderRadius.circular(
+                                SizeConfig.w(16),
+                              ),
                             ),
                           ),
                           child: Text(

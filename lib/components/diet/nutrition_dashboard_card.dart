@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
 import 'macro_progress_bar.dart';

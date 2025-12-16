@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
-import 'fluid_wave_progress.dart';
 
 class StreakProgress extends StatelessWidget {
   final int currentLevel;
@@ -25,7 +24,6 @@ class StreakProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define colors based on the theme
     final containerBgColor = isDarkMode
         ? const Color(0xFF1E1E1E)
         : Colors.white;
@@ -212,34 +210,37 @@ class StreakProgress extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelProgress(Color primaryColor, Color secondaryColor, bool isDarkMode) {
+  Widget _buildLevelProgress(
+    Color primaryColor,
+    Color secondaryColor,
+    bool isDarkMode,
+  ) {
     final progress = currentXp / nextLevelXp;
-    
+
     return Column(
       children: [
         Row(
-           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-           children: [
-             Text(
-               'LVL $currentLevel',
-               style: TextStyle(
-                 color: primaryColor,
-                 fontSize: SizeConfig.sp(16),
-                 fontWeight: FontWeight.bold,
-               ),
-             ),
-             Text(
-               '$currentXp / $nextLevelXp XP',
-               style: TextStyle(
-                 color: secondaryColor,
-                 fontSize: SizeConfig.sp(14),
-                 fontWeight: FontWeight.w500,
-               ),
-             ),
-           ],
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'LVL $currentLevel',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: SizeConfig.sp(16),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '$currentXp / $nextLevelXp XP',
+              style: TextStyle(
+                color: secondaryColor,
+                fontSize: SizeConfig.sp(14),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: SizeConfig.h(12)),
-        // Progress Bar
         Stack(
           children: [
             Container(
@@ -279,18 +280,17 @@ class StreakProgress extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-             Text(
-               'Next Level: ${currentLevel + 1}',
-               style: TextStyle(
-                 color: secondaryColor,
-                 fontSize: SizeConfig.sp(12),
-                 fontWeight: FontWeight.w500,
-               ),
-             ),
+            Text(
+              'Next Level: ${currentLevel + 1}',
+              style: TextStyle(
+                color: secondaryColor,
+                fontSize: SizeConfig.sp(12),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 }
-

@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/diet_plan_model.dart';
 import '../services/nutrition_service.dart';
-import '../components/auth/auth_glass_card.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
 import '../components/common/global_back_button.dart';
 
@@ -14,10 +13,12 @@ class GeneratedDietPlanPage extends ConsumerStatefulWidget {
   const GeneratedDietPlanPage({super.key, required this.dietPlan});
 
   @override
-  ConsumerState<GeneratedDietPlanPage> createState() => _GeneratedDietPlanPageState();
+  ConsumerState<GeneratedDietPlanPage> createState() =>
+      _GeneratedDietPlanPageState();
 }
 
-class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> with TickerProviderStateMixin {
+class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _animationController;
 
@@ -26,8 +27,8 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
     _animationController = AnimationController(
-       vsync: this,
-       duration: const Duration(milliseconds: 1000),
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
     _animationController.forward();
   }
@@ -44,19 +45,19 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (c) => Center(child: BouncingDotsIndicator(color: Colors.blueAccent)),
+        builder: (c) =>
+            Center(child: BouncingDotsIndicator(color: Colors.blueAccent)),
       );
 
       final service = NutritionService();
       await service.saveDietPlan(widget.dietPlan);
-      
-      // Instantly update user profile goals locally and sync
-      await ref.read(userProfileProvider.notifier).updateGoals(
-        dailyCalorieGoal: widget.dietPlan.dailyCalories,
-        // We could also update weight goal if the plan has one, but it's usually separate
-      );
-      
-      // Force reload to ensure everything is consistent
+
+      await ref
+          .read(userProfileProvider.notifier)
+          .updateGoals(
+            dailyCalorieGoal: widget.dietPlan.dailyCalories,
+          );
+
       await ref.read(userProfileProvider.notifier).loadProfile();
 
       if (!mounted) return;
@@ -69,39 +70,40 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
         ),
       );
 
-      // Navigate back to Diet Page
-      // Navigate back to Diet Page (Pop GeneratedPage and GeneratePage)
-      Navigator.of(context).pop(); 
       Navigator.of(context).pop();
-      
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Pop dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving plan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error saving plan: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
-        leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
-        // title removed
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
+          onPressed: () => Navigator.pop(context),
+        ),
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: isDarkMode ? Colors.white : Colors.black),
+        iconTheme: IconThemeData(
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
         titleTextStyle: TextStyle(
-           color: isDarkMode ? Colors.white : Colors.black,
-           fontSize: 20,
-           fontWeight: FontWeight.bold,
+          color: isDarkMode ? Colors.white : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
         ),
       ),
       body: SingleChildScrollView(
@@ -114,14 +116,17 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
             const SizedBox(height: 24),
             _buildAnimatedItem(1, _buildMacrosSection(isDarkMode)),
             const SizedBox(height: 30),
-            _buildAnimatedItem(2, Text(
-              "Weekly Meal Plan",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black87,
+            _buildAnimatedItem(
+              2,
+              Text(
+                "Weekly Meal Plan",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
               ),
-            )),
+            ),
             const SizedBox(height: 16),
             _buildAnimatedItem(3, _buildDaySelector(isDarkMode)),
             const SizedBox(height: 24),
@@ -135,37 +140,48 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
   }
 
   Widget _buildAnimatedItem(int index, Widget child) {
-      return FadeTransition(
-          opacity: Tween<double>(begin: 0, end: 1).animate(
-              CurvedAnimation(parent: _animationController, curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut)),
-          ),
-          child: SlideTransition(
-              position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-                  CurvedAnimation(parent: _animationController, curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut)),
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(
+          parent: _animationController,
+          curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
+        ),
+      ),
+      child: SlideTransition(
+        position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
               ),
-              child: child,
-          ),
-      );
+            ),
+        child: child,
+      ),
+    );
   }
 
   Widget _buildBottomBar(bool isDarkMode) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDarkMode ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.95),
-          border: Border(top: BorderSide(color: isDarkMode ? Colors.white10 : Colors.black12)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.black.withOpacity(0.95)
+            : Colors.white.withOpacity(0.95),
+        border: Border(
+          top: BorderSide(color: isDarkMode ? Colors.white10 : Colors.black12),
         ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 60,
-            child: Row(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 60,
+          child: Row(
             children: [
               Expanded(
                 child: OutlinedButton(
@@ -173,8 +189,12 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 0),
                     alignment: Alignment.center,
-                    side: BorderSide(color: isDarkMode ? Colors.white30 : Colors.black26),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    side: BorderSide(
+                      color: isDarkMode ? Colors.white30 : Colors.black26,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                   child: Text(
                     "DISCARD",
@@ -195,41 +215,50 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                   child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                           colors: [Colors.blueAccent.shade400, Colors.blueAccent.shade700],
-                           begin: Alignment.topLeft,
-                           end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                            BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.blueAccent.shade400,
+                          Colors.blueAccent.shade700,
                         ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 0),
-                        alignment: Alignment.center,
-                        child: const Text(
-                            "ACCEPT PLAN",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                letterSpacing: 1.2,
-                            ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blueAccent.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 0),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        "ACCEPT PLAN",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: 1.2,
                         ),
                       ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildSummaryCard(bool isDarkMode) {
@@ -238,9 +267,9 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDarkMode 
-             ? [const Color(0xFF2C2C2E), const Color(0xFF1E1E1E)] 
-             : [Colors.white, Colors.grey.shade50],
+          colors: isDarkMode
+              ? [const Color(0xFF2C2C2E), const Color(0xFF1E1E1E)]
+              : [Colors.white, Colors.grey.shade50],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -252,7 +281,9 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white),
+        border: Border.all(
+          color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +317,7 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                           ),
                         ),
                         const SizedBox(width: 4),
-                         Text(
+                        Text(
                           "kcal",
                           style: TextStyle(
                             color: isDarkMode ? Colors.white38 : Colors.black38,
@@ -305,61 +336,105 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                   color: Colors.blueAccent.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.water_drop_rounded, color: Colors.blueAccent, size: 30),
+                child: Icon(
+                  Icons.water_drop_rounded,
+                  color: Colors.blueAccent,
+                  size: 30,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
           Wrap(
-             spacing: 12,
-             runSpacing: 10,
-             children: [
-                 _buildInfoChip(Icons.emoji_food_beverage_rounded, "${widget.dietPlan.waterIntakeLiters}L Water", isDarkMode),
-                 _buildInfoChip(Icons.restaurant_menu_rounded, widget.dietPlan.dietType, isDarkMode),
-             ],
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              _buildInfoChip(
+                Icons.emoji_food_beverage_rounded,
+                "${widget.dietPlan.waterIntakeLiters}L Water",
+                isDarkMode,
+              ),
+              _buildInfoChip(
+                Icons.restaurant_menu_rounded,
+                widget.dietPlan.dietType,
+                isDarkMode,
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildInfoChip(IconData icon, String label, bool isDarkMode) {
-      return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withOpacity(0.05)
+            : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: isDarkMode ? Colors.white70 : Colors.black54,
           ),
-          child: Row(
-              children: [
-                  Icon(icon, size: 16, color: isDarkMode ? Colors.white70 : Colors.black54),
-                  const SizedBox(width: 6),
-                  Text(
-                      label,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
-                          fontWeight: FontWeight.w600,
-                      ),
-                  ),
-              ],
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-      );
+        ],
+      ),
+    );
   }
 
   Widget _buildMacrosSection(bool isDarkMode) {
     return Row(
       children: [
-        Expanded(child: _buildMacroCard("Protein", "${widget.dietPlan.macros.protein}g", Colors.redAccent, isDarkMode)),
+        Expanded(
+          child: _buildMacroCard(
+            "Protein",
+            "${widget.dietPlan.macros.protein}g",
+            Colors.redAccent,
+            isDarkMode,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: _buildMacroCard("Carbs", "${widget.dietPlan.macros.carbs}g", Colors.orangeAccent, isDarkMode)),
+        Expanded(
+          child: _buildMacroCard(
+            "Carbs",
+            "${widget.dietPlan.macros.carbs}g",
+            Colors.orangeAccent,
+            isDarkMode,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: _buildMacroCard("Fats", "${widget.dietPlan.macros.fats}g", Colors.amberAccent, isDarkMode)),
+        Expanded(
+          child: _buildMacroCard(
+            "Fats",
+            "${widget.dietPlan.macros.fats}g",
+            Colors.amberAccent,
+            isDarkMode,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildMacroCard(String label, String value, Color color, bool isDarkMode) {
+  Widget _buildMacroCard(
+    String label,
+    String value,
+    Color color,
+    bool isDarkMode,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
@@ -379,8 +454,8 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
             child: Icon(Icons.circle, size: 12, color: color),
           ),
@@ -427,17 +502,25 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               decoration: BoxDecoration(
-                 color: isSelected 
-                    ? Colors.blueAccent.shade700 
-                    : (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.transparent),
-                 borderRadius: BorderRadius.circular(30),
-                 border: Border.all(color: isSelected ? Colors.transparent : (isDarkMode ? Colors.white12 : Colors.grey.shade300)),
+                color: isSelected
+                    ? Colors.blueAccent.shade700
+                    : (isDarkMode
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.transparent),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.transparent
+                      : (isDarkMode ? Colors.white12 : Colors.grey.shade300),
+                ),
               ),
               child: Center(
                 child: Text(
                   "Day ${index + 1}",
                   style: TextStyle(
-                    color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black54),
+                    color: isSelected
+                        ? Colors.white
+                        : (isDarkMode ? Colors.white70 : Colors.black54),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -450,16 +533,18 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
   }
 
   Widget _buildDayContent(bool isDarkMode) {
-    if (_tabController.index >= widget.dietPlan.weeklyPlan.length) return const SizedBox();
-    
+    if (_tabController.index >= widget.dietPlan.weeklyPlan.length)
+      return const SizedBox();
+
     final dailyPlan = widget.dietPlan.weeklyPlan[_tabController.index];
-    
-    // Animate the list content when tab changes
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       child: Column(
         key: ValueKey(_tabController.index),
-        children: dailyPlan.meals.map((meal) => _buildMealCard(meal, isDarkMode)).toList(),
+        children: dailyPlan.meals
+            .map((meal) => _buildMealCard(meal, isDarkMode))
+            .toList(),
       ),
     );
   }
@@ -471,7 +556,11 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
         color: isDarkMode ? const Color(0xFF2C2C2E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: ClipRRect(
@@ -479,7 +568,10 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
             childrenPadding: EdgeInsets.zero,
             leading: _getMealIcon(meal.type),
             title: Text(
@@ -501,25 +593,25 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
               ),
             ),
             trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                    Text(
-                      "${meal.calories}",
-                      style: TextStyle(
-                         color: isDarkMode ? Colors.white : Colors.black87,
-                         fontWeight: FontWeight.bold,
-                         fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      "kcal",
-                      style: TextStyle(
-                         color: isDarkMode ? Colors.white38 : Colors.black38,
-                         fontSize: 12,
-                      ),
-                    ),
-                ],
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "${meal.calories}",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  "kcal",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white38 : Colors.black38,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
             children: [
               Container(
@@ -550,9 +642,24 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildMacroPill("Protein", "${meal.macros.protein}g", Colors.redAccent, isDarkMode),
-                        _buildMacroPill("Carbs", "${meal.macros.carbs}g", Colors.orangeAccent, isDarkMode),
-                        _buildMacroPill("Fats", "${meal.macros.fats}g", Colors.amberAccent, isDarkMode),
+                        _buildMacroPill(
+                          "Protein",
+                          "${meal.macros.protein}g",
+                          Colors.redAccent,
+                          isDarkMode,
+                        ),
+                        _buildMacroPill(
+                          "Carbs",
+                          "${meal.macros.carbs}g",
+                          Colors.orangeAccent,
+                          isDarkMode,
+                        ),
+                        _buildMacroPill(
+                          "Fats",
+                          "${meal.macros.fats}g",
+                          Colors.amberAccent,
+                          isDarkMode,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -571,7 +678,7 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
                       style: TextStyle(
                         color: isDarkMode ? Colors.white70 : Colors.black54,
                         fontSize: 14,
-                        height: 1.5
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -615,35 +722,40 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage> w
       child: Icon(icon, color: color, size: 24),
     );
   }
-  
-  Widget _buildMacroPill(String label, String value, Color color, bool isDarkMode) {
-      return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: color.withOpacity(0.2)),
+
+  Widget _buildMacroPill(
+    String label,
+    String value,
+    Color color,
+    bool isDarkMode,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black87,
+              fontSize: 14,
+            ),
           ),
-          child: Column(
-              children: [
-                  Text(
-                      value,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontSize: 14,
-                      ),
-                  ),
-                  Text(
-                      label,
-                      style: TextStyle(
-                          color: color,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                      ),
-                  )
-              ],
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-      );
+        ],
+      ),
+    );
   }
 }

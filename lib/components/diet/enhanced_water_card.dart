@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
 import 'package:flutter/services.dart';
@@ -254,7 +254,7 @@ class _QuickAddButton extends StatelessWidget {
               color: buttonBg,
               borderRadius: BorderRadius.circular(SizeConfig.w(16)),
               border: Border.all(color: borderColor, width: 1),
-              boxShadow: isDarkMode 
+              boxShadow: isDarkMode
                   ? []
                   : [
                       BoxShadow(

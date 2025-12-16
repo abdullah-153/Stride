@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +18,8 @@ class StreakCelebrationOverlay extends StatefulWidget {
   }
 
   @override
-  State<StreakCelebrationOverlay> createState() => StreakCelebrationOverlayState();
+  State<StreakCelebrationOverlay> createState() =>
+      StreakCelebrationOverlayState();
 }
 
 class StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
@@ -30,25 +31,24 @@ class StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..addListener(() {
-        setState(() {
-          for (var particle in _particles) {
-            particle.update(_controller.value);
-          }
-        });
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          setState(() {
-            _isAnimating = false;
-            _particles.clear();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..addListener(() {
+            setState(() {
+              for (var particle in _particles) {
+                particle.update(_controller.value);
+              }
+            });
+          })
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              setState(() {
+                _isAnimating = false;
+                _particles.clear();
+              });
+              widget.onAnimationComplete?.call();
+            }
           });
-          widget.onAnimationComplete?.call();
-        }
-      });
   }
 
   @override
@@ -60,22 +60,22 @@ class StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
   void celebrate() {
     if (_isAnimating) return;
 
-    // Heavy haptic feedback for streak increase
     HapticFeedback.heavyImpact();
 
     final random = Random();
     _particles.clear();
-    
-    // Generate particles
+
     for (int i = 0; i < 50; i++) {
-      _particles.add(_Particle(
-        x: random.nextDouble() * SizeConfig.screenWidth,
-        y: SizeConfig.screenHeight + 20, // Start below screen
-        color: Colors.primaries[random.nextInt(Colors.primaries.length)],
-        size: random.nextDouble() * 10 + 5,
-        speed: random.nextDouble() * 5 + 5,
-        angle: (random.nextDouble() - 0.5) * 0.5, // Slight spread
-      ));
+      _particles.add(
+        _Particle(
+          x: random.nextDouble() * SizeConfig.screenWidth,
+          y: SizeConfig.screenHeight + 20, // Start below screen
+          color: Colors.primaries[random.nextInt(Colors.primaries.length)],
+          size: random.nextDouble() * 10 + 5,
+          speed: random.nextDouble() * 5 + 5,
+          angle: (random.nextDouble() - 0.5) * 0.5, // Slight spread
+        ),
+      );
     }
 
     setState(() {
@@ -138,11 +138,7 @@ class _CelebrationPainter extends CustomPainter {
         ..color = particle.color.withOpacity(particle.opacity)
         ..style = PaintingStyle.fill;
 
-      canvas.drawCircle(
-        Offset(particle.x, particle.y),
-        particle.size,
-        paint,
-      );
+      canvas.drawCircle(Offset(particle.x, particle.y), particle.size, paint);
     }
   }
 

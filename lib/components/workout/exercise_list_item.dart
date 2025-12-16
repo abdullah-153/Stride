@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/workout_model.dart';
 import '../../utils/workout_colors.dart';
 import '../../utils/size_config.dart';
@@ -36,7 +36,6 @@ class ExerciseListItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Checkbox (if onToggle provided)
           if (onToggle != null) ...[
             GestureDetector(
               onTap: onToggle,
@@ -67,7 +66,6 @@ class ExerciseListItem extends StatelessWidget {
             SizedBox(width: SizeConfig.w(12)),
           ],
 
-          // Exercise info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +82,6 @@ class ExerciseListItem extends StatelessWidget {
                 SizedBox(height: SizeConfig.h(4)),
                 Row(
                   children: [
-                    // Reps/Sets/Duration info
                     if (exercise.displayText.isNotEmpty) ...[
                       Icon(
                         _getExerciseIcon(),
@@ -100,7 +97,6 @@ class ExerciseListItem extends StatelessWidget {
                         ),
                       ),
                     ],
-                    // Muscle groups
                     if (exercise.muscleGroups.isNotEmpty) ...[
                       if (exercise.displayText.isNotEmpty)
                         Padding(
@@ -108,7 +104,7 @@ class ExerciseListItem extends StatelessWidget {
                             horizontal: SizeConfig.w(6),
                           ),
                           child: Text(
-                            '•',
+                            'â€¢',
                             style: TextStyle(color: subTextColor),
                           ),
                         ),

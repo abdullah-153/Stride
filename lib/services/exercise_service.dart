@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'api/exercisedb_api_service.dart';
 import 'firestore/exercise_database_service.dart';
 
@@ -13,12 +13,16 @@ class ExerciseService {
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
-  /// Get exercises with caching
-  Future<List<Map<String, dynamic>>> getExercises({int limit = 10, int offset = 0}) async {
+  Future<List<Map<String, dynamic>>> getExercises({
+    int limit = 10,
+    int offset = 0,
+  }) async {
     try {
-      final exercises = await _apiService.getAllExercises(limit: limit, offset: offset);
-      
-      // Cache exercises
+      final exercises = await _apiService.getAllExercises(
+        limit: limit,
+        offset: offset,
+      );
+
       for (final exercise in exercises) {
         await _dbService.cacheExercise(exercise);
       }
@@ -30,18 +34,15 @@ class ExerciseService {
     }
   }
 
-  /// Get exercise by ID (checks cache first)
   Future<Map<String, dynamic>?> getExerciseById(String id) async {
     try {
-      // Try cache first
       final cachedExercise = await _dbService.getExerciseFromCache(id);
       if (cachedExercise != null) {
         return cachedExercise;
       }
 
-      // Fetch from API
       final apiExercise = await _apiService.getExerciseById(id);
-      
+
       if (apiExercise != null) {
         await _dbService.cacheExercise(apiExercise);
       }
@@ -53,19 +54,21 @@ class ExerciseService {
     }
   }
 
-  /// Get exercises by body part
-  Future<List<Map<String, dynamic>>> getExercisesByBodyPart(String bodyPart, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByBodyPart(
+    String bodyPart, {
+    int limit = 10,
+  }) async {
     try {
-      // Try cache first
       final cachedExercises = await _dbService.getExercisesByBodyPart(bodyPart);
       if (cachedExercises.isNotEmpty) {
         return cachedExercises;
       }
 
-      // Fetch from API
-      final apiExercises = await _apiService.getExercisesByBodyPart(bodyPart, limit: limit);
-      
-      // Cache exercises
+      final apiExercises = await _apiService.getExercisesByBodyPart(
+        bodyPart,
+        limit: limit,
+      );
+
       for (final exercise in apiExercises) {
         await _dbService.cacheExercise(exercise);
       }
@@ -77,19 +80,23 @@ class ExerciseService {
     }
   }
 
-  /// Get exercises by equipment
-  Future<List<Map<String, dynamic>>> getExercisesByEquipment(String equipment, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByEquipment(
+    String equipment, {
+    int limit = 10,
+  }) async {
     try {
-      // Try cache first
-      final cachedExercises = await _dbService.getExercisesByEquipment(equipment);
+      final cachedExercises = await _dbService.getExercisesByEquipment(
+        equipment,
+      );
       if (cachedExercises.isNotEmpty) {
         return cachedExercises;
       }
 
-      // Fetch from API
-      final apiExercises = await _apiService.getExercisesByEquipment(equipment, limit: limit);
-      
-      // Cache exercises
+      final apiExercises = await _apiService.getExercisesByEquipment(
+        equipment,
+        limit: limit,
+      );
+
       for (final exercise in apiExercises) {
         await _dbService.cacheExercise(exercise);
       }
@@ -101,12 +108,16 @@ class ExerciseService {
     }
   }
 
-  /// Get exercises by target muscle
-  Future<List<Map<String, dynamic>>> getExercisesByTarget(String target, {int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getExercisesByTarget(
+    String target, {
+    int limit = 10,
+  }) async {
     try {
-      final exercises = await _apiService.getExercisesByTarget(target, limit: limit);
-      
-      // Cache exercises
+      final exercises = await _apiService.getExercisesByTarget(
+        target,
+        limit: limit,
+      );
+
       for (final exercise in exercises) {
         await _dbService.cacheExercise(exercise);
       }
@@ -118,7 +129,6 @@ class ExerciseService {
     }
   }
 
-  /// Get available body parts
   Future<List<String>> getBodyPartList() async {
     try {
       return await _apiService.getBodyPartList();
@@ -128,7 +138,6 @@ class ExerciseService {
     }
   }
 
-  /// Get available equipment types
   Future<List<String>> getEquipmentList() async {
     try {
       return await _apiService.getEquipmentList();
@@ -138,7 +147,6 @@ class ExerciseService {
     }
   }
 
-  /// Get available target muscles
   Future<List<String>> getTargetList() async {
     try {
       return await _apiService.getTargetList();
@@ -148,7 +156,6 @@ class ExerciseService {
     }
   }
 
-  /// Save exercise to user's favorites
   Future<void> saveExercise(String exerciseId) async {
     if (_currentUserId == null) {
       throw Exception('User must be authenticated to save exercises');
@@ -162,7 +169,6 @@ class ExerciseService {
     }
   }
 
-  /// Remove exercise from user's favorites
   Future<void> removeSavedExercise(String exerciseId) async {
     if (_currentUserId == null) return;
 
@@ -173,21 +179,28 @@ class ExerciseService {
     }
   }
 
-  /// Update personal best for an exercise
-  Future<void> updatePersonalBest(String exerciseId, double weight, int reps) async {
+  Future<void> updatePersonalBest(
+    String exerciseId,
+    double weight,
+    int reps,
+  ) async {
     if (_currentUserId == null) {
       throw Exception('User must be authenticated to update personal best');
     }
 
     try {
-      await _dbService.updatePersonalBest(_currentUserId!, exerciseId, weight, reps);
+      await _dbService.updatePersonalBest(
+        _currentUserId!,
+        exerciseId,
+        weight,
+        reps,
+      );
     } catch (e) {
       print('Error updating personal best: $e');
       rethrow;
     }
   }
 
-  /// Get user's saved exercise IDs
   Future<List<String>> getSavedExerciseIds() async {
     if (_currentUserId == null) return [];
 
@@ -199,7 +212,6 @@ class ExerciseService {
     }
   }
 
-  /// Get user's saved exercises with full details
   Future<List<Map<String, dynamic>>> getSavedExercises() async {
     if (_currentUserId == null) return [];
 

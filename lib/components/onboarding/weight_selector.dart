@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class WeightSelector extends StatefulWidget {
@@ -28,14 +28,19 @@ class _WeightSelectorState extends State<WeightSelector> {
   void initState() {
     super.initState();
     _itemCount = (_maxWeightKg - _minWeightKg + 1).toInt();
-    
-    // Calculate initial index based on input weight
-    double weightInKg = widget.isKg ? widget.initialWeight : widget.initialWeight / 2.20462;
-    _selectedIndex = (weightInKg - _minWeightKg).round().clamp(0, _itemCount - 1);
-    
+
+    double weightInKg = widget.isKg
+        ? widget.initialWeight
+        : widget.initialWeight / 2.20462;
+    _selectedIndex = (weightInKg - _minWeightKg).round().clamp(
+      0,
+      _itemCount - 1,
+    );
+
     _pageController = PageController(
       initialPage: _selectedIndex,
-      viewportFraction: 0.15, // Slightly larger fraction for better visibility in modal
+      viewportFraction:
+          0.15, // Slightly larger fraction for better visibility in modal
     );
   }
 
@@ -64,15 +69,16 @@ class _WeightSelectorState extends State<WeightSelector> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Display Value
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              widget.isKg 
+              widget.isKg
                   ? (_minWeightKg + _selectedIndex).toInt().toString()
-                  : ((_minWeightKg + _selectedIndex) * 2.20462).round().toString(),
+                  : ((_minWeightKg + _selectedIndex) * 2.20462)
+                        .round()
+                        .toString(),
               style: TextStyle(
                 fontSize: SizeConfig.sp(48),
                 fontWeight: FontWeight.bold,
@@ -96,25 +102,26 @@ class _WeightSelectorState extends State<WeightSelector> {
 
         SizedBox(height: SizeConfig.h(20)),
 
-        // Unit Label (Fixed)
         Container(
-          padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(16), vertical: SizeConfig.h(8)),
+          padding: EdgeInsets.symmetric(
+            horizontal: SizeConfig.w(16),
+            vertical: SizeConfig.h(8),
+          ),
           decoration: BoxDecoration(
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(SizeConfig.w(20)),
           ),
           child: Text(
             widget.isKg ? "Metric (kg)" : "Imperial (lbs)",
-             style: TextStyle(
-               fontWeight: FontWeight.w600,
-               color: Colors.black54,
-             ),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
           ),
         ),
 
         SizedBox(height: SizeConfig.h(40)),
 
-        // Ruler Scroll
         SizedBox(
           height: SizeConfig.h(150),
           child: PageView.builder(
@@ -124,7 +131,9 @@ class _WeightSelectorState extends State<WeightSelector> {
             onPageChanged: (index) {
               setState(() => _selectedIndex = index);
               double weightKg = _minWeightKg + index;
-              widget.onWeightChanged(widget.isKg ? weightKg : weightKg * 2.20462);
+              widget.onWeightChanged(
+                widget.isKg ? weightKg : weightKg * 2.20462,
+              );
             },
             itemBuilder: (context, index) {
               final rawValue = (_minWeightKg + index).toInt();
@@ -137,11 +146,15 @@ class _WeightSelectorState extends State<WeightSelector> {
                     Padding(
                       padding: EdgeInsets.only(bottom: SizeConfig.h(8)),
                       child: Text(
-                        widget.isKg ? "$rawValue" : "${(rawValue * 2.20462).round()}",
+                        widget.isKg
+                            ? "$rawValue"
+                            : "${(rawValue * 2.20462).round()}",
                         style: TextStyle(
                           fontSize: SizeConfig.sp(12),
                           color: isSelected ? Colors.orange : Colors.grey[400],
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -162,6 +175,4 @@ class _WeightSelectorState extends State<WeightSelector> {
       ],
     );
   }
-
-
 }

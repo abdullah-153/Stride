@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_profile_provider.dart';
@@ -94,7 +94,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: GlobalBackButton(isDark: isDarkMode, onPressed: () => Navigator.pop(context)),
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Edit Profile',
           style: TextStyle(
@@ -136,7 +139,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             children: [
               SizedBox(height: SizeConfig.h(20)),
 
-              // Profile Image
               GestureDetector(
                 onTap: _pickImage,
                 child: Stack(
@@ -199,7 +201,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
               SizedBox(height: SizeConfig.h(40)),
 
-              // Name Field
               TextFormField(
                 controller: _nameController,
                 validator: Validators.validateName,
@@ -233,7 +234,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
               SizedBox(height: SizeConfig.h(20)),
 
-              // Bio Field
               TextFormField(
                 controller: _bioController,
                 validator: Validators.validateBio,

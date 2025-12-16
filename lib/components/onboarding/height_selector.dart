@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class HeightSelector extends StatefulWidget {
@@ -28,14 +28,15 @@ class _HeightSelectorState extends State<HeightSelector> {
   void initState() {
     super.initState();
     _itemCount = (_maxCm - _minCm + 1).toInt();
-    
-    // Calculate initial index
-    double heightCm = widget.isCm ? widget.initialHeight : widget.initialHeight * 2.54;
+
+    double heightCm = widget.isCm
+        ? widget.initialHeight
+        : widget.initialHeight * 2.54;
     _selectedIndex = (heightCm - _minCm).round().clamp(0, _itemCount - 1);
-    
+
     _pageController = PageController(
       initialPage: _selectedIndex,
-      viewportFraction: 0.12, 
+      viewportFraction: 0.12,
     );
   }
 
@@ -54,7 +55,6 @@ class _HeightSelectorState extends State<HeightSelector> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Display Value
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -126,9 +126,11 @@ class _HeightSelectorState extends State<HeightSelector> {
 
         SizedBox(height: SizeConfig.h(20)),
 
-        // Unit Label (Fixed)
         Container(
-          padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(16), vertical: SizeConfig.h(8)),
+          padding: EdgeInsets.symmetric(
+            horizontal: SizeConfig.w(16),
+            vertical: SizeConfig.h(8),
+          ),
           decoration: BoxDecoration(
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(SizeConfig.w(20)),
@@ -144,11 +146,6 @@ class _HeightSelectorState extends State<HeightSelector> {
 
         SizedBox(height: SizeConfig.h(40)),
 
-        // Ruler (Vertical scrolling rotated to horizontal in onboarding, here kept simpler or matching style)
-        // Onboarding used a rotated vertical PageView. Let's try to replicate the horizontal feel or just use standard horizontal
-        // The onboarding code used RotatedBox with PageView inside. We can simplify to horizontal list logic if possible, 
-        // but to match onboarding exactly, we'll use the same structure.
-        
         SizedBox(
           height: SizeConfig.h(150),
           child: RotatedBox(
@@ -159,23 +156,20 @@ class _HeightSelectorState extends State<HeightSelector> {
               onPageChanged: (index) {
                 setState(() => _selectedIndex = index);
                 double heightCm = _minCm + index;
-                widget.onHeightChanged(widget.isCm ? heightCm : heightCm / 2.54); // Should return in requested unit? 
-                // Wait, typically we want to store in standardized unit (cm) or return what is displayed.
-                // Let's standard on returning CM always to parent, parent handles display/storage logic.
-                // Re-reading code: `widget.onHeightChanged` likely expects the value in the standard unit 
-                // OR we just use it for display update.
-                // Let's pass back CM for consistency.
+                widget.onHeightChanged(
+                  widget.isCm ? heightCm : heightCm / 2.54,
+                ); // Should return in requested unit?
                 widget.onHeightChanged(_minCm + index);
               },
               itemBuilder: (context, index) {
                 final value = _minCm.toInt() + index;
                 final isSelected = index == _selectedIndex;
-                
+
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (value % 10 == 0)
-                    Padding(
+                      Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: RotatedBox(
                           quarterTurns: 1,
@@ -183,8 +177,12 @@ class _HeightSelectorState extends State<HeightSelector> {
                             "$value",
                             style: TextStyle(
                               fontSize: isSelected ? 14 : 10,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Colors.green : Colors.grey[600],
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? Colors.green
+                                  : Colors.grey[600],
                             ),
                           ),
                         ),
@@ -192,7 +190,9 @@ class _HeightSelectorState extends State<HeightSelector> {
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: isSelected ? 14 : 6,
-                      height: value % 10 == 0 ? (isSelected ? 100 : 80) : (isSelected ? 60 : 40),
+                      height: value % 10 == 0
+                          ? (isSelected ? 100 : 80)
+                          : (isSelected ? 60 : 40),
                       decoration: BoxDecoration(
                         color: isSelected ? Colors.green : Colors.grey[400],
                         borderRadius: BorderRadius.circular(4),
@@ -207,6 +207,4 @@ class _HeightSelectorState extends State<HeightSelector> {
       ],
     );
   }
-
-
 }

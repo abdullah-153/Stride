@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/workout_model.dart';
 import '../../utils/size_config.dart';
 
@@ -28,12 +28,13 @@ class WorkoutDiscoveryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: EdgeInsets.only(right: SizeConfig.w(12)),
-        // Increased width to match WorkoutCard visual weight
-        width: SizeConfig.w(320), 
+        width: SizeConfig.w(320),
         padding: EdgeInsets.all(SizeConfig.w(20)), // Increased padding
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(SizeConfig.w(22)), // Match rounded corners
+          borderRadius: BorderRadius.circular(
+            SizeConfig.w(22),
+          ), // Match rounded corners
           border: Border.all(color: borderColor, width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -49,11 +50,9 @@ class WorkoutDiscoveryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Category badge
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: SizeConfig.w(12),
@@ -77,7 +76,6 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Difficulty
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: SizeConfig.w(10),
@@ -101,7 +99,6 @@ class WorkoutDiscoveryCard extends StatelessWidget {
 
             SizedBox(height: SizeConfig.h(16)),
 
-            // Title
             Text(
               workout.title,
               style: TextStyle(
@@ -116,7 +113,6 @@ class WorkoutDiscoveryCard extends StatelessWidget {
 
             SizedBox(height: SizeConfig.h(12)),
 
-            // Stats row
             Row(
               children: [
                 Flexible(
@@ -133,7 +129,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     icon: Icons.local_fire_department_outlined,
                     text: '${workout.caloriesBurned}',
                     isDarkMode: isDarkMode,
-                     fontSize: 14,
+                    fontSize: 14,
                   ),
                 ),
                 SizedBox(width: SizeConfig.w(10)),
@@ -142,7 +138,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     icon: Icons.fitness_center_outlined,
                     text: '${workout.exerciseCount}',
                     isDarkMode: isDarkMode,
-                     fontSize: 14,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -150,7 +146,6 @@ class WorkoutDiscoveryCard extends StatelessWidget {
 
             SizedBox(height: SizeConfig.h(12)),
 
-            // Action buttons
             Row(
               children: [
                 Expanded(
