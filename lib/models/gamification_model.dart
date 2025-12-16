@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 enum StreakType { diet, workout }
 
 class UserStats {
@@ -81,15 +82,21 @@ class UserStats {
       currentStreak: json['currentStreak'] as int,
       longestStreak: json['longestStreak'] as int,
       lastLogDate: json['lastLogDate'] != null
-          ? DateTime.parse(json['lastLogDate'] as String)
+          ? (json['lastLogDate'] is Timestamp
+              ? (json['lastLogDate'] as Timestamp).toDate()
+              : DateTime.parse(json['lastLogDate'] as String))
           : null,
       dietStreak: json['dietStreak'] as int? ?? 0,
       workoutStreak: json['workoutStreak'] as int? ?? 0,
       lastDietLogDate: json['lastDietLogDate'] != null
-          ? DateTime.parse(json['lastDietLogDate'] as String)
+          ? (json['lastDietLogDate'] is Timestamp
+              ? (json['lastDietLogDate'] as Timestamp).toDate()
+              : DateTime.parse(json['lastDietLogDate'] as String))
           : null,
       lastWorkoutLogDate: json['lastWorkoutLogDate'] != null
-          ? DateTime.parse(json['lastWorkoutLogDate'] as String)
+          ? (json['lastWorkoutLogDate'] is Timestamp
+              ? (json['lastWorkoutLogDate'] as Timestamp).toDate()
+              : DateTime.parse(json['lastWorkoutLogDate'] as String))
           : null,
     );
   }

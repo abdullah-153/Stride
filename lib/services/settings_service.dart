@@ -1,51 +1,83 @@
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_settings_model.dart';
-import '../utils/shared_preferences_manager.dart';
+import 'firestore/settings_firestore_service.dart';
 
-/// Service for managing app settings persistence
 class SettingsService {
-  // Load app settings from shared preferences
-  Future<AppSettings> loadSettings() async {
-    try {
-      final prefsManager = await SharedPreferencesManager.getInstance();
-      final settingsJson = prefsManager.getString(
-        SharedPreferencesManager.keyAppSettings,
-      );
+  static final SettingsService _instance = SettingsService._internal();
+  factory SettingsService() => _instance;
+  SettingsService._internal();
 
-      if (settingsJson != null) {
-        final Map<String, dynamic> json = jsonDecode(settingsJson);
-        return AppSettings.fromJson(json);
-      }
+  final SettingsFirestoreService _firestoreService = SettingsFirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-      // Return default settings if none exist
+  String? get _currentUserId => _auth.currentUser?.uid;
+
+  Future<AppSettings> getSettings() async {
+    if (_currentUserId == null) {
       return AppSettings.defaultSettings();
+    }
+
+    try {
+      return await _firestoreService.getSettings(_currentUserId!);
     } catch (e) {
-      // On error, return default settings
+      print('Error getting settings: $e');
       return AppSettings.defaultSettings();
     }
   }
 
-  // Save app settings to shared preferences
-  Future<void> saveSettings(AppSettings settings) async {
+  // Alias for getSettings to match expected interface
+  Future<AppSettings> loadSettings() => getSettings();
+
+  Stream<AppSettings> streamSettings() {
+    if (_currentUserId == null) {
+      return Stream.value(AppSettings.defaultSettings());
+    }
+
+    return _firestoreService.streamSettings(_currentUserId!);
+  }
+
+  Future<void> updateSettings(AppSettings settings) async {
+    if (_currentUserId == null) return;
+
     try {
-      final prefsManager = await SharedPreferencesManager.getInstance();
-      final settingsJson = jsonEncode(settings.toJson());
-      await prefsManager.setString(
-        SharedPreferencesManager.keyAppSettings,
-        settingsJson,
-      );
+      await _firestoreService.updateSettings(_currentUserId!, settings);
     } catch (e) {
-      throw Exception('Failed to save settings: $e');
+      print('Error updating settings: $e');
+      rethrow;
     }
   }
 
-  // Reset to default settings
+  // Alias for updateSettings to match expected interface
+  Future<void> saveSettings(AppSettings settings) => updateSettings(settings);
+
+  Future<void> updateNotificationPreferences({
+    bool? notificationsEnabled,
+    bool? workoutReminders,
+    bool? dietReminders,
+  }) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.updateNotificationPreferences(
+        _currentUserId!,
+        notificationsEnabled: notificationsEnabled,
+        workoutReminders: workoutReminders,
+        dietReminders: dietReminders,
+      );
+    } catch (e) {
+      print('Error updating notification preferences: $e');
+      rethrow;
+    }
+  }
+
   Future<void> resetToDefaults() async {
+    if (_currentUserId == null) return;
+    
     try {
-      final prefsManager = await SharedPreferencesManager.getInstance();
-      await prefsManager.remove(SharedPreferencesManager.keyAppSettings);
+      await updateSettings(AppSettings.defaultSettings());
     } catch (e) {
-      throw Exception('Failed to reset settings: $e');
+      print('Error resetting settings to defaults: $e');
+      rethrow;
     }
   }
 }

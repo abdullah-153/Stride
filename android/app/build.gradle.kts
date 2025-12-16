@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -34,7 +37,7 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -59,6 +62,4 @@ dependencies {
     // 1.8.20 is a common stable version for modern Flutter projects.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20") 
     
-    // 2. Resolve R8 Missing Class error (com.google.android.play.core)
-    implementation("com.google.android.play:core:1.10.3") 
 }

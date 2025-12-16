@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../services/nutrition_service.dart';
+import '../../services/meal_service.dart';
+import '../../services/user_profile_service.dart';
 import '../../utils/size_config.dart';
+import '../shared/bouncing_dots_indicator.dart';
 
 class QuickAddMealSheet extends StatefulWidget {
   final Function(Meal) onMealSelected;
@@ -21,34 +24,152 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final NutritionService _nutritionService = NutritionService();
+  final MealService _mealService = MealService();
+  final UserProfileService _userProfileService = UserProfileService();
 
+  List<Meal> _recommendedMeals = [];
   List<Meal> _recentMeals = [];
   List<Meal> _favoriteMeals = [];
+  List<Meal> _searchResults = [];
+  List<String> _suggestions = []; // Autocomplete suggestions
   bool _isLoading = true;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadMeals();
+    _tabController = TabController(length: 4, vsync: this); // Increased to 4
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    await Future.wait([
+      _loadMeals(),
+      _loadRecommendedMeals(),
+    ]);
+  }
+
+  Future<void> _loadRecommendedMeals() async {
+    try {
+      final profile = await _userProfileService.loadProfile();
+      if (profile.activeDietPlan != null && profile.activeDietPlan!.weeklyPlan.isNotEmpty) {
+        // Calculate day index (0 for Monday, etc.) based on week of plan
+        // Simply cycling through plan days based on actual weekday
+        // Weekday 1 (Mon) -> Index 0
+        final dayIndex = (DateTime.now().weekday - 1) % profile.activeDietPlan!.weeklyPlan.length;
+        final dailyPlan = profile.activeDietPlan!.weeklyPlan[dayIndex];
+        
+        final meals = dailyPlan.meals.map((item) {
+          return Meal(
+            id: 'rec_${DateTime.now().millisecondsSinceEpoch}_${item.name.hashCode}',
+            name: item.name,
+            type: _mapMealType(item.type),
+            calories: item.calories,
+            macros: MacroNutrients(
+              protein: item.macros.protein,
+              carbs: item.macros.carbs,
+              fats: item.macros.fats,
+            ),
+            timestamp: DateTime.now(),
+          );
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _recommendedMeals = meals;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading recommended meals: $e');
+    }
+  }
+
+  MealType _mapMealType(String typeStr) {
+    switch (typeStr.toLowerCase()) {
+      case 'breakfast': return MealType.breakfast;
+      case 'lunch': return MealType.lunch;
+      case 'dinner': return MealType.dinner;
+      case 'snack': return MealType.snack;
+      default: return MealType.snack;
+    }
   }
 
   Future<void> _loadMeals() async {
-    final recent = await _nutritionService.getRecentMeals();
-    final favorites = await _nutritionService.getFavoriteMeals();
+    final recentMaps = await _mealService.getRecentMeals();
+    final favoriteMaps = await _mealService.getSavedMeals();
 
     if (mounted) {
       setState(() {
-        _recentMeals = recent;
-        _favoriteMeals = favorites;
+        _recentMeals = recentMaps.map((data) => Meal.fromJson(data)).toList();
+        _favoriteMeals = favoriteMaps.map((data) => Meal.fromJson(data)).toList();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchSuggestions(String query) async {
+    if (query.trim().isEmpty) {
+      if (mounted) setState(() => _suggestions = []);
+      return;
+    }
+
+    try {
+      final suggestions = await _mealService.getAutocompleteSuggestions(query);
+      if (mounted) {
+        setState(() {
+          _suggestions = suggestions;
+        });
+      }
+    } catch (e) {
+      print('Error fetching suggestions: $e');
+    }
+  }
+
+  Future<void> _searchMeals(String query) async {
+    if (query.trim().isEmpty) {
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+          _suggestions = [];
+        });
+      }
+      return;
+    }
+
+    // Clear suggestions when starting a real search
+    if (mounted) {
+      setState(() {
+        _isSearching = true;
+        _suggestions = []; 
+      });
+    }
+
+    try {
+      final results = await _mealService.searchMeals(query);
+      if (mounted) {
+        setState(() {
+          _searchResults = results.map((data) => Meal.fromJson(data)).toList();
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      print('Error searching meals: $e');
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+        });
+      }
     }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -82,20 +203,28 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
             labelColor: indicatorColor,
             unselectedLabelColor: Colors.grey,
             indicatorColor: indicatorColor,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: EdgeInsets.zero,
+            labelPadding: EdgeInsets.only(left: SizeConfig.w(16), right: SizeConfig.w(16)),
             tabs: const [
+              Tab(text: 'Recommended'),
               Tab(text: 'Recent'),
               Tab(text: 'Favorites'),
+              Tab(text: 'Search'),
             ],
           ),
 
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: BouncingDotsIndicator())
                 : TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildMealList(_recentMeals),
-                      _buildMealList(_favoriteMeals, isFavorites: true),
+                      _buildMealList(_recommendedMeals, emptyMessage: "No plan active. Generate one!"),
+                      _buildMealList(_recentMeals, emptyMessage: "No recent meals"),
+                      _buildMealList(_favoriteMeals, emptyMessage: "No favorites yet"),
+                      _buildSearchTab(textColor),
                     ],
                   ),
           ),
@@ -104,11 +233,93 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
     );
   }
 
-  Widget _buildMealList(List<Meal> meals, {bool isFavorites = false}) {
+  Widget _buildSearchTab(Color textColor) {
+    return Padding(
+      padding: EdgeInsets.all(SizeConfig.w(16)),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchController,
+            style: TextStyle(color: textColor),
+            textInputAction: TextInputAction.search,
+            onSubmitted: (value) => _searchMeals(value),
+            onChanged: (value) {
+              // Debounce suggestions
+              Future.delayed(const Duration(milliseconds: 300), () {
+                if (!mounted) return;
+                if (_searchController.text == value) {
+                   if (value.isEmpty) {
+                     setState(() => _suggestions = []);
+                   } else {
+                     _fetchSuggestions(value);
+                   }
+                }
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Search for food...',
+              hintStyle: TextStyle(color: Colors.grey),
+              prefixIcon: Icon(Icons.search, color: Colors.grey),
+              filled: true,
+              fillColor: widget.isDarkMode ? Colors.black12 : Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: EdgeInsets.symmetric(vertical: 0),
+            ),
+          ),
+          SizedBox(height: SizeConfig.h(20)),
+          
+          Expanded(
+            child: _suggestions.isNotEmpty
+                ? ListView.separated(
+                    itemCount: _suggestions.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final suggestion = _suggestions[index];
+                      return ListTile(
+                        leading: const Icon(Icons.search, color: Colors.grey, size: 20),
+                        title: Text(
+                          suggestion,
+                          style: TextStyle(color: textColor, fontSize: 16),
+                        ),
+                        onTap: () {
+                          _searchController.text = suggestion;
+                          _searchMeals(suggestion);
+                          FocusScope.of(context).unfocus();
+                        },
+                      );
+                    },
+                  )
+                : _isSearching
+                    ? const Center(child: BouncingDotsIndicator())
+                    : _searchResults.isEmpty
+                        ? Center(
+                            child: Text(
+                              _searchController.text.isEmpty
+                                  ? "Start typing to search..."
+                                  : "No results found",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _searchResults.length,
+                            itemBuilder: (context, index) {
+                              return _buildMealItem(_searchResults[index]);
+                            },
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealList(List<Meal> meals, {String emptyMessage = 'No meals found'}) {
     if (meals.isEmpty) {
       return Center(
         child: Text(
-          isFavorites ? 'No favorites yet' : 'No recent meals',
+          emptyMessage,
           style: TextStyle(color: Colors.grey, fontSize: SizeConfig.sp(16)),
         ),
       );
@@ -165,10 +376,12 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                     Text(
                       meal.name,
                       style: TextStyle(
-                        fontSize: SizeConfig.sp(16),
+                        fontSize: SizeConfig.sp(15),
                         fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: SizeConfig.h(4)),
                     Text(

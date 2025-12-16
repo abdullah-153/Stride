@@ -2,38 +2,79 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/profile/profile_tile_card.dart';
-import '../components/profile/user_stat_card.dart';
-import '../components/gamification/level_progress_card.dart';
+import '../components/profile/activity_stats_card.dart';
+import '../components/profile/streak_summary_card.dart';
 import '../components/profile/badges_section.dart';
+import '../components/profile/unified_body_stats_card.dart';
+import '../components/profile/fitness_goals_card.dart';
 import '../services/gamification_service.dart';
+import '../components/shared/bouncing_dots_indicator.dart';
 import '../models/gamification_model.dart';
+import '../models/user_profile_model.dart';
 import '../utils/size_config.dart';
 import '../providers/user_profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../pages/edit_profile_page.dart';
 import '../pages/notifications_settings_page.dart';
 import '../pages/privacy_security_page.dart';
+import '../pages/weight_tracking_page.dart';
 import '../utils/profile_bottom_sheets.dart';
+import '../utils/edit_goals_bottom_sheet.dart';
+import '../utils/body_update_sheet.dart';
+import '../services/auth_service.dart';
+import '../components/common/global_back_button.dart';
 
-class ProfilePage extends ConsumerWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+class _ProfilePageState extends ConsumerState<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     SizeConfig.init(context);
     final horizontal = SizeConfig.w(20);
     final headerSize = SizeConfig.sp(48);
 
-    // Use global theme provider
     final isDarkMode = ref.watch(themeProvider);
-    final bgColor = isDarkMode
-        ? const Color(0xFF121212)
-        : Colors.white; // Changed to pure white
+    final bgColor = isDarkMode ? const Color(0xFF121212) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final titleColor = isDarkMode ? Colors.white : Colors.black87;
     final sectionTitleColor = isDarkMode ? Colors.white70 : Colors.black54;
 
-    // Standardized Card Decoration
     final cardDecoration = BoxDecoration(
       color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
       borderRadius: BorderRadius.circular(SizeConfig.w(24)),
@@ -58,388 +99,429 @@ class ProfilePage extends ConsumerWidget {
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: isDarkMode ? Colors.white : Colors.black,
-          ),
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
           onPressed: () => Navigator.maybePop(context),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white : Colors.black,
-            ),
-            onPressed: () {
-              ref.read(themeProvider.notifier).toggleTheme();
-            },
-          ),
-        ],
+        actions: [],
       ),
       body: StreamBuilder<GamificationData>(
         stream: GamificationService().gamificationStream,
-        initialData: GamificationService().getCurrentData(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   Icon(Icons.error_outline, color: Colors.red, size: 48),
+                   SizedBox(height: 16),
+                   Text("Failed to load profile", style: TextStyle(color: textColor)),
+                   Text(snapshot.error.toString(), style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12)),
+                 ],
+               ),
+             );
+          }
+
+          if (!snapshot.hasData) {
+            return Center(
+              child: BouncingDotsIndicator(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            );
+          }
           final data = snapshot.data!;
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: SizeConfig.h(10)),
+          final nextLevelXp = GamificationService().getXpForNextLevel(data.stats.currentLevel);
+          
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(bottom: SizeConfig.h(100)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: SizeConfig.h(10)),
 
-                // Page Title
-                Padding(
-                  padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 24),
-                  child: Text(
-                    "Profile\nSettings",
-                    style: TextStyle(
-                      fontSize: headerSize,
-                      fontWeight: FontWeight.w300,
-                      color: titleColor,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: SizeConfig.h(10)),
-
-                // Profile Header (Avatar & Name)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontal),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EditProfilePage(),
+                    // Page Title
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 24),
+                      child: Text(
+                        "Profile\nSettings",
+                        style: TextStyle(
+                          fontSize: headerSize,
+                          fontWeight: FontWeight.w300,
+                          color: titleColor,
+                          height: 1.2,
                         ),
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(SizeConfig.w(20)),
-                      decoration: cardDecoration,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.orange,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.orange.withOpacity(0.3),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
+                      ),
+                    ),
+
+                    // Unified Header (Profile + Level Progress integration)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfilePage(),
                             ),
-                            child: CircleAvatar(
-                              radius: SizeConfig.w(35),
-                              backgroundImage:
-                                  ref.watch(profileImageProvider) != null
-                                  ? FileImage(
-                                          File(
-                                            ref.watch(profileImageProvider)!,
-                                          ),
-                                        )
-                                        as ImageProvider
-                                  : null,
-                              backgroundColor: isDarkMode
-                                  ? Colors.grey.shade800
-                                  : Colors.grey.shade200,
-                              child: ref.watch(profileImageProvider) == null
-                                  ? const Icon(
-                                      Icons.person,
-                                      size: 35,
-                                      color: Colors.grey,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          SizedBox(width: SizeConfig.w(20)),
-                          Column(
+                          );
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(SizeConfig.w(24)),
+                          decoration: cardDecoration,
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                ref.watch(userNameProvider),
-                                style: TextStyle(
-                                  fontSize: SizeConfig.sp(22),
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              SizedBox(height: SizeConfig.h(4)),
-                              Text(
-                                ref.watch(userBioProvider),
-                                style: TextStyle(
-                                  fontSize: SizeConfig.sp(14),
-                                  color: sectionTitleColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Avatar with Level Ring
+                                  Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: SizeConfig.w(86),
+                                        height: SizeConfig.w(86),
+                                        child: CircularProgressIndicator(
+                                          value: data.stats.currentXp / nextLevelXp,
+                                          strokeWidth: 4,
+                                          backgroundColor: Colors.grey.withOpacity(0.2),
+                                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                                          strokeCap: StrokeCap.round,
+                                        ),
+                                      ),
+                                      CircleAvatar(
+                                        radius: SizeConfig.w(38),
+                                        backgroundImage:
+                                            ref.watch(profileImageProvider) != null
+                                            ? FileImage(File(ref.watch(profileImageProvider)!))
+                                            : null,
+                                        backgroundColor: isDarkMode
+                                            ? Colors.grey.shade800
+                                            : Colors.grey.shade200,
+                                        child: ref.watch(profileImageProvider) == null
+                                            ? Icon(Icons.person, size: 40, color: Colors.grey)
+                                            : null,
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(width: SizeConfig.w(20)),
+                                  // Text Info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                ref.watch(userNameProvider),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: SizeConfig.sp(22),
+                                                  fontWeight: FontWeight.bold,
+                                                  color: textColor,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                            Icon(Icons.edit_outlined, size: 20, color: sectionTitleColor),
+                                          ],
+                                        ),
+                                        SizedBox(height: SizeConfig.h(4)),
+                                        Text(
+                                          ref.watch(userBioProvider),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: SizeConfig.sp(14),
+                                            color: sectionTitleColor,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        SizedBox(height: SizeConfig.h(8)),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                                          ),
+                                          child: Text(
+                                            "Level ${data.stats.currentLevel}",
+                                            style: TextStyle(
+                                              fontSize: SizeConfig.sp(11),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.orange,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(24)),
+
+                    // Unified Body Stats Card
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: UnifiedBodyStatsCard(
+                        weight: ref.watch(userWeightProvider),
+                        height: ref.watch(userHeightProvider),
+                        age: ref.watch(userAgeProvider),
+                        isDarkMode: isDarkMode,
+                        isMetric: ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WeightTrackingPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(24)),
+
+                    // Activity Overview
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("ACTIVITY", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          SizedBox(height: SizeConfig.h(12)),
+                          ActivityStatsCard(
+                            isDarkMode: isDarkMode,
+                            weeklyWorkouts: 0,
+                            weeklyMeals: 0,
+                            weeklyCaloriesBurned: 0,
+                            monthlyWorkouts: 0,
+                            monthlyMeals: 0,
+                            monthlyCaloriesBurned: 0,
+                            totalWorkouts: 0,
+                            totalMeals: 0,
+                            totalXP: data.stats.currentXp,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
 
-                SizedBox(height: SizeConfig.h(30)),
+                    SizedBox(height: SizeConfig.h(24)),
 
-                // User Stats
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontal),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          ProfileBottomSheets.showEditWeight(
-                            context,
-                            currentWeight: ref.read(userWeightProvider),
-                            onSave: (weight) async {
-                              await ref
-                                  .read(userProfileProvider.notifier)
-                                  .updateWeight(weight);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Weight updated!'),
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                        child: UserStatCard(
-                          label: 'Weight',
-                          value:
-                              '${ref.watch(userWeightProvider).toStringAsFixed(1)} kg',
-                          icon: Icons.monitor_weight_rounded,
-                          isDarkMode: isDarkMode,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          ProfileBottomSheets.showEditHeight(
-                            context,
-                            currentHeight: ref.read(userHeightProvider),
-                            onSave: (height) async {
-                              await ref
-                                  .read(userProfileProvider.notifier)
-                                  .updateHeight(height);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Height updated!'),
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                        child: UserStatCard(
-                          label: 'Height',
-                          value:
-                              '${ref.watch(userHeightProvider).toStringAsFixed(0)} cm',
-                          icon: Icons.height_rounded,
-                          isDarkMode: isDarkMode,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          final currentProfile = ref
-                              .read(userProfileProvider)
-                              .value;
-                          ProfileBottomSheets.showEditDateOfBirth(
-                            context,
-                            currentDOB: currentProfile?.dateOfBirth,
-                            onSave: (dob) async {
-                              await ref
-                                  .read(userProfileProvider.notifier)
-                                  .updateDateOfBirth(dob);
-                              // Calculate age from DOB
-                              final age = DateTime.now().year - dob.year;
-                              await ref
-                                  .read(userProfileProvider.notifier)
-                                  .updateAge(age);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Date of birth updated!'),
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                        child: UserStatCard(
-                          label: 'Age',
-                          value: '${ref.watch(userAgeProvider)}',
-                          icon: Icons.cake_rounded,
-                          isDarkMode: isDarkMode,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: SizeConfig.h(32)),
-
-                // Gamification Section
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontal),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "PROGRESS",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(13),
-                          fontWeight: FontWeight.w700,
-                          color: sectionTitleColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: SizeConfig.h(16)),
-                      LevelProgressCard(
-                        currentLevel: data.stats.currentLevel,
-                        currentXp: data.stats.currentXp,
-                        nextLevelXp: GamificationService().getXpForNextLevel(
-                          data.stats.currentLevel,
-                        ),
-                        isDarkMode: isDarkMode,
-                      ),
-
-                      SizedBox(height: SizeConfig.h(24)),
-
-                      Text(
-                        "BADGES",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(13),
-                          fontWeight: FontWeight.w700,
-                          color: sectionTitleColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: SizeConfig.h(16)),
-
-                      BadgesSection(
-                        achievements: data.achievements,
-                        isDarkMode: isDarkMode,
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: SizeConfig.h(32)),
-
-                // Settings Section
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontal),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "SETTINGS",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(13),
-                          fontWeight: FontWeight.w700,
-                          color: sectionTitleColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: SizeConfig.h(16)),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF1E1E1E)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(SizeConfig.w(16)),
-                          border: Border.all(
-                            color: isDarkMode
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.grey.withOpacity(0.2),
+                    // Streak Summary
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("STREAK SUMMARY", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          SizedBox(height: SizeConfig.h(12)),
+                          StreakSummaryCard(
+                            isDarkMode: isDarkMode,
+                            weeklyActivity: const [true, true, false, true, true, false, true], // Mock
+                            dailyCalories: const [300, 450, 0, 500, 320, 0, 600],
+                            dailyDuration: const [30, 45, 0, 50, 32, 0, 60],
+                            currentStreak: data.stats.currentStreak,
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            SettingsOptionCard(
-                              icon: Icons.person_outline_rounded,
-                              title: "Personal Details",
-                              isDarkMode: isDarkMode,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const EditProfilePage(),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(24)),
+
+                    // Fitness Goals Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("FITNESS GOALS", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                              GestureDetector(
+                                onTap: () async {
+                                  final result = await EditGoalsBottomSheet.show(
+                                    context,
+                                    isDarkMode: isDarkMode,
+                                    currentWeeklyWorkoutGoal: ref.read(userProfileProvider).value?.weeklyWorkoutGoal ?? 3,
+                                    currentDailyCalorieGoal: ref.read(userProfileProvider).value?.dailyCalorieGoal ?? 2000,
+                                    currentWeightGoal: ref.read(userProfileProvider).value?.weightGoal,
+                                  );
+                                  
+                                  if (result != null && mounted) {
+                                    final notifier = ref.read(userProfileProvider.notifier);
+                                    await notifier.updateGoals(
+                                      weeklyWorkoutGoal: result['weeklyWorkoutGoal'] as int,
+                                      dailyCalorieGoal: result['dailyCalorieGoal'] as int,
+                                      weightGoal: result['weightGoal'] as double?,
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: SizeConfig.w(12),
+                                    vertical: SizeConfig.h(6),
                                   ),
-                                );
-                              },
-                            ),
-                            Divider(
-                              height: 1,
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.2),
-                            ),
-                            SettingsOptionCard(
-                              icon: Icons.notifications_outlined,
-                              title: "Notifications",
-                              isDarkMode: isDarkMode,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const NotificationsSettingsPage(),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFCEF24B).withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFFCEF24B).withOpacity(0.3),
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
-                            Divider(
-                              height: 1,
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.2),
-                            ),
-                            SettingsOptionCard(
-                              icon: Icons.privacy_tip_outlined,
-                              title: "Privacy & Security",
-                              isDarkMode: isDarkMode,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PrivacySecurityPage(),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.edit_rounded,
+                                        size: SizeConfig.sp(14),
+                                        color: const Color(0xFFCEF24B),
+                                      ),
+                                      SizedBox(width: SizeConfig.w(4)),
+                                      Text(
+                                        "Edit",
+                                        style: TextStyle(
+                                          fontSize: SizeConfig.sp(12),
+                                          fontWeight: FontWeight.w600,
+                                          color: isDarkMode ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
-                            ),
-                            Divider(
-                              height: 1,
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.2),
-                            ),
-                            SettingsOptionCard(
-                              icon: Icons.help_outline_rounded,
-                              title: "Help & Support",
-                              isDarkMode: isDarkMode,
-                              onTap: () {
-                                ProfileBottomSheets.showInfoSheet(
-                                  context,
-                                  title: 'Help & Support',
-                                  content: '''Welcome to Fitness Tracker!
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: SizeConfig.h(16)),
+                          FitnessGoalsCard(
+                            isDarkMode: isDarkMode,
+                            weeklyWorkoutGoal: ref.watch(userProfileProvider).value?.weeklyWorkoutGoal ?? 3,
+                            currentWeeklyWorkouts: 0, // TODO: Implement real tracking
+                            dailyCalorieGoal: ref.watch(userProfileProvider).value?.dailyCalorieGoal ?? 2000,
+                            currentCalories: 0, // TODO: Implement real tracking
+                            weightGoal: ref.watch(userProfileProvider).value?.weightGoal,
+                            currentWeight: ref.watch(userWeightProvider),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(24)),
+                    
+                    // Badges Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("BADGES", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          SizedBox(height: SizeConfig.h(16)),
+                          BadgesSection(
+                            achievements: data.achievements,
+                            isDarkMode: isDarkMode,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: SizeConfig.h(32)),
+
+                    // Settings Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("SETTINGS", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          SizedBox(height: SizeConfig.h(16)),
+                          Container(
+                            decoration: cardDecoration,
+                            child: Column(
+                              children: [
+                                SettingsOptionCard(
+                                  icon: Icons.person_outline_rounded,
+                                  title: "Personal Details",
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const EditProfilePage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: isDarkMode
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.grey.withOpacity(0.2),
+                                ),
+                                SettingsOptionCard(
+                                  icon: Icons.notifications_none_rounded,
+                                  title: "Notifications",
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NotificationsSettingsPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: isDarkMode
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.grey.withOpacity(0.2),
+                                ),
+                                SettingsOptionCard(
+                                  icon: Icons.lock_outline_rounded,
+                                  title: "Privacy & Security",
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PrivacySecurityPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: isDarkMode
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.grey.withOpacity(0.2),
+                                ),
+                                SettingsOptionCard(
+                                  icon: Icons.help_outline_rounded,
+                                  title: "Help & Support",
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    ProfileBottomSheets.showInfoSheet(
+                                      context,
+                                      title: 'Help & Support',
+                                      content: '''Welcome to Fitness Tracker!
 
 Frequently Asked Questions:
 
@@ -451,74 +533,85 @@ A: Go to the Diet page and add meals throughout the day.
 
 Q: What are XP points?
 A: XP points are earned by completing workouts and logging meals. They help you level up!
+''',
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-Q: How does the streak system work?
-A: Your streak increases when you log both a workout AND a meal on the same day.
+                    SizedBox(height: SizeConfig.h(32)),
 
-Need more help?
-Contact us at: support@fitnesstracker.com
-
-Version: 1.0.0''',
+                     // Preferences Section (Units)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("PREFERENCES", style: TextStyle(fontSize: SizeConfig.sp(12), fontWeight: FontWeight.bold, color: sectionTitleColor, letterSpacing: 1.2)),
+                          SizedBox(height: SizeConfig.h(16)),
+                          Container(
+                            decoration: cardDecoration,
+                            child: SettingsOptionCard(
+                              icon: Icons.straighten_rounded,
+                              title: "Units: ${ref.watch(userProfileProvider).value!.preferredUnits == UnitPreference.metric ? 'Metric (kg/cm)' : 'Imperial (lbs/ft)'}",
+                              isDarkMode: isDarkMode,
+                              onTap: () {
+                                final isMetric = ref.read(userProfileProvider).value!.preferredUnits == UnitPreference.metric;
+                                ref.read(userProfileProvider.notifier).updateUnitPreference(
+                                  isMetric ? UnitPreference.imperial : UnitPreference.metric
                                 );
                               },
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                SizedBox(height: SizeConfig.h(32)),
+                    SizedBox(height: SizeConfig.h(32)),
 
-                // Logout Button
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontal),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () async {
-                        // Clear user profile data
-                        await ref
-                            .read(userProfileProvider.notifier)
-                            .clearProfile();
-
-                        // Reset gamification data
-                        GamificationService().reset();
-
-                        if (context.mounted) {
-                          // Navigate to startup page and remove all previous routes
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/startup',
-                            (route) => false,
-                          );
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          vertical: SizeConfig.h(16),
-                        ),
-                        backgroundColor: Colors.red.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(SizeConfig.w(16)),
-                        ),
-                      ),
-                      child: Text(
-                        "Log Out",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(16),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
+                    // Logout Button
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () async {
+                            await ref.read(authServiceProvider).signOut(); // Updated: Actual Firebase Sign Out
+                            await ref.read(userProfileProvider.notifier).clearProfile();
+                            GamificationService().reset();
+                            if (context.mounted) {
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/startup',
+                                (route) => false,
+                              );
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: SizeConfig.h(16)),
+                            backgroundColor: Colors.red.withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(SizeConfig.w(16)),
+                            ),
+                          ),
+                          child: Text(
+                            "Log Out",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(16),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-
-                SizedBox(
-                  height: SizeConfig.h(100),
-                ), // Increased spacing to prevent navbar overlap
-              ],
+              ),
             ),
           );
         },

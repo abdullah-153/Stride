@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import '../../utils/app_constants.dart';
 
-class GoalPage extends StatelessWidget {
+class GoalPage extends StatefulWidget {
   final int selectedAge;
   final String selectedGender;
   final double selectedHeight;
@@ -19,70 +19,323 @@ class GoalPage extends StatelessWidget {
   });
 
   @override
+  State<GoalPage> createState() => _GoalPageState();
+}
+
+class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    SizeConfig.init(context);
+    final isMale = widget.selectedGender.toLowerCase() == 'male';
+
+    return Scaffold(
+      backgroundColor: Colors.black, // Premium Dark Background
+      body: Stack(
+        children: [
+          // Background Elements (Subtle Glow)
+          Positioned(
+            top: -SizeConfig.screenHeight * 0.1,
+            right: -SizeConfig.screenWidth * 0.2,
+            child: Container(
+              width: SizeConfig.screenWidth * 0.8,
+              height: SizeConfig.screenWidth * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accentGreen.withOpacity(0.15),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentGreen.withOpacity(0.15),
+                    blurRadius: 100,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: SizeConfig.h(40)),
+                  
+                  // Header
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         Text(
+                          "YOU'RE ALL SET!",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(14),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.accentGreen,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                        SizedBox(height: SizeConfig.h(10)),
+                        Text(
+                          "Your Personalized\nPlan is Ready",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(32),
+                            fontWeight: FontWeight.w300,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: SizeConfig.h(40)),
+
+                  // Summary Card
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(SizeConfig.w(24)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "PROFILE SUMMARY",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white54,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          SizedBox(height: SizeConfig.h(20)),
+                          
+                          // Stats Grid
+                          Row(
+                            children: [
+                              _buildStatItem(
+                                icon: isMale ? Icons.male : Icons.female,
+                                value: widget.selectedGender,
+                                label: "Gender",
+                              ),
+                              _buildDivider(),
+                              _buildStatItem(
+                                icon: Icons.cake_outlined,
+                                value: "${widget.selectedAge}",
+                                label: "Age",
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: SizeConfig.h(20)),
+                          Row(
+                            children: [
+                              _buildStatItem(
+                                icon: Icons.height,
+                                value: "${widget.selectedHeight.toInt()} cm",
+                                label: "Height",
+                              ),
+                              _buildDivider(),
+                              _buildStatItem(
+                                icon: Icons.monitor_weight_outlined,
+                                value: "${widget.selectedWeight.toInt()} kg",
+                                label: "Weight",
+                              ),
+                            ],
+                          ),
+                          
+                          SizedBox(height: SizeConfig.h(24)),
+                          Container(
+                            height: 1,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                          SizedBox(height: SizeConfig.h(24)),
+                          
+                          Text(
+                            "FITNESS LEVEL",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white54,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          SizedBox(height: SizeConfig.h(12)),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.w(16), 
+                              vertical: SizeConfig.h(12)
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentGreen.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.accentGreen.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.fitness_center, 
+                                  color: AppColors.accentGreen,
+                                  size: SizeConfig.sp(18),
+                                ),
+                                SizedBox(width: SizeConfig.w(8)),
+                                Text(
+                                  widget.selectedFitnessLevel,
+                                  style: TextStyle(
+                                    fontSize: SizeConfig.sp(16),
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.accentGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // Continue Button
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: SizeConfig.h(56),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentGreen,
+                          foregroundColor: Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                        ),
+                        child: Text(
+                          "Let's Get Started",
+                          style: TextStyle(
+                            fontSize: SizeConfig.sp(16),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: SizeConfig.h(40)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Expanded(
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(SizeConfig.w(10)),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white70, size: SizeConfig.sp(20)),
+          ),
+          SizedBox(width: SizeConfig.w(12)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: SizeConfig.sp(16),
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: SizeConfig.sp(12),
+                  color: Colors.white54,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.black, Colors.grey],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: SizeConfig.screenWidth * 0.08,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "You're all set!",
-              style: TextStyle(
-                fontSize: SizeConfig.screenWidth * 0.12,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: SizeConfig.screenHeight * 0.015),
-            Text(
-              "Let's head to your home page.",
-              style: TextStyle(
-                fontSize: SizeConfig.screenWidth * 0.05,
-                color: Colors.white70,
-              ),
-            ),
-            SizedBox(height: SizeConfig.screenHeight * 0.07),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    vertical: SizeConfig.screenHeight * 0.02,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  "Continue",
-                  style: TextStyle(
-                    fontSize: SizeConfig.screenWidth * 0.06,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      width: 1,
+      height: SizeConfig.h(40),
+      color: Colors.white.withOpacity(0.1),
+      margin: EdgeInsets.symmetric(horizontal: SizeConfig.w(8)),
     );
   }
 }

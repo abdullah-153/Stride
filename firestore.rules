@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Workout Library (shared/public workouts)
+    match /workoutLibrary/{workoutId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // User-specific data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // User profile subcollections
+      match /{subcollection}/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Gamification data
+    match /gamification/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Allow all authenticated users (for development - tighten in production)
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

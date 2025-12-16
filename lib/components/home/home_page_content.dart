@@ -9,6 +9,7 @@ import 'home_menu.dart';
 import 'streak_progress.dart';
 import 'today_progress_section.dart';
 import 'weekdays_bar.dart';
+import '../gamification/streak_card.dart';
 
 /// Main content widget for the home page
 class HomePageContent extends ConsumerWidget {
@@ -69,28 +70,38 @@ class HomePageContent extends ConsumerWidget {
               ),
             ),
             SizedBox(height: SizeConfig.h(10)),
+            // Streak Card
+            StreamBuilder<GamificationData>(
+              stream: GamificationService().gamificationStream,
+              builder: (context, snapshot) {
+                // Default data while loading
+                final currentStreak = snapshot.hasData ? snapshot.data!.stats.currentStreak : 0;
+                final currentLevel = snapshot.hasData ? snapshot.data!.stats.currentLevel : 1;
+                final currentXp = snapshot.hasData ? snapshot.data!.stats.currentXp : 0;
+                final nextLevelXp = GamificationService().getXpForNextLevel(currentLevel);
+                
+                final lastDietDate = snapshot.hasData ? snapshot.data!.stats.lastDietLogDate : null;
+                final lastWorkoutDate = snapshot.hasData ? snapshot.data!.stats.lastWorkoutLogDate : null;
+
+                return StreakProgress(
+                  streakDays: currentStreak,
+                  isDarkMode: isDarkMode,
+                  currentLevel: currentLevel,
+                  currentXp: currentXp,
+                  nextLevelXp: nextLevelXp,
+                  lastDietLogDate: lastDietDate,
+                  lastWorkoutLogDate: lastWorkoutDate,
+                );
+              },
+            ),
+            SizedBox(height: SizeConfig.h(10)),
             // Main content
             TodayActivitySection(
               isDarkMode: isDarkMode,
               onNavigate: onNavigate,
             ),
             const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.topCenter,
-              child: StreamBuilder<GamificationData>(
-                stream: GamificationService().gamificationStream,
-                initialData: GamificationService().getCurrentData(),
-                builder: (context, snapshot) {
-                  final data = snapshot.data!;
-                  return StreakProgress(
-                    isDarkMode: isDarkMode,
-                    streakDays: data.stats.currentStreak,
-                    lastDietLogDate: data.stats.lastDietLogDate,
-                    lastWorkoutLogDate: data.stats.lastWorkoutLogDate,
-                  );
-                },
-              ),
-            ),
+
             SizedBox(height: SizeConfig.h(100)),
           ],
         ),

@@ -8,10 +8,12 @@ class WorkoutCard extends StatefulWidget {
   final String time;
   final String title;
   final int points;
-  final int kcal;
+  final String metricValue; // Was kcal, now generic value
+  final String metricLabel; // e.g. "kcal", "reps", "mins"
   final bool isDarkMode;
   final bool isPlaying;
   final bool isCompleted;
+  final bool isPaused; // New property
   final String heroTag;
   final VoidCallback? onPressed;
 
@@ -20,10 +22,12 @@ class WorkoutCard extends StatefulWidget {
     required this.time,
     required this.title,
     required this.points,
-    required this.kcal,
+    required this.metricValue,
+    this.metricLabel = "kcal",
     this.isDarkMode = false,
     this.isPlaying = false,
     this.isCompleted = false,
+    this.isPaused = false,
     this.heroTag = '',
     this.onPressed,
   });
@@ -41,6 +45,7 @@ class _WorkoutCardState extends State<WorkoutCard>
 
   late final AnimationController _fillCtrl;
   late final AnimationController _waveCtrl;
+  late final AnimationController _pulseCtrl; // New controller for paused state
 
   @override
   void initState() {
@@ -53,6 +58,11 @@ class _WorkoutCardState extends State<WorkoutCard>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
+    
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
 
     if (widget.isCompleted) {
       _rotateCtrl.value = 1.0;
@@ -65,19 +75,36 @@ class _WorkoutCardState extends State<WorkoutCard>
   @override
   void didUpdateWidget(covariant WorkoutCard oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
+    if (widget.isPaused && !oldWidget.isPaused) {
+       _pulseCtrl.repeat(reverse: true);
+    } else if (!widget.isPaused && oldWidget.isPaused) {
+       _pulseCtrl.stop();
+       _pulseCtrl.reset();
+    }
+
     if (oldWidget.isCompleted != widget.isCompleted) {
       if (widget.isCompleted) {
         _rotateCtrl.forward(from: 0.0);
         _fillCtrl.forward();
       } else {
+        // Restarting from completed state
         _rotateCtrl.reverse();
-        _fillCtrl.reverse();
+        if (widget.isPlaying) {
+          // If playing when restarting, ensure fill is forward
+          _fillCtrl.forward();
+        } else {
+          _fillCtrl.reverse();
+        }
       }
     } else if (oldWidget.isPlaying != widget.isPlaying) {
       if (widget.isPlaying) {
         _fillCtrl.forward();
       } else {
-        _fillCtrl.reverse();
+        // Only reverse if not completed
+        if (!widget.isCompleted) {
+          _fillCtrl.reverse();
+        }
       }
     }
   }
@@ -87,6 +114,7 @@ class _WorkoutCardState extends State<WorkoutCard>
     _rotateCtrl.dispose();
     _fillCtrl.dispose();
     _waveCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -95,6 +123,8 @@ class _WorkoutCardState extends State<WorkoutCard>
     final width = MediaQuery.of(context).size.width;
     final bool dark = widget.isDarkMode;
 
+    // --- Color Palette (Lime / Black / Grey) ---
+    // IDLE
     final idleBg = dark ? const Color(0xFF1E1E1E) : Colors.grey.shade100;
     final idleText = dark ? Colors.white : Colors.black87;
     final idleSubText = dark ? Colors.white70 : Colors.grey.shade700;
@@ -103,56 +133,99 @@ class _WorkoutCardState extends State<WorkoutCard>
         ? const Color.fromRGBO(0, 0, 0, 0.7)
         : const Color.fromRGBO(0, 0, 0, 0.05);
 
-    final activeText = dark ? Colors.black : Colors.white;
-    final activeSubText = dark ? Colors.black54 : Colors.white70;
-    final activeBorder = const Color.fromRGBO(206, 242, 75, 0.3);
-    final waveColor = dark
-        ? const Color.fromRGBO(206, 235, 75, 0.8)
-        : Colors.black87;
+    // ACTIVE (Playing) - Black/White with Lime hints
+    // Completed state - Requested Black background
+    // Completed state - Subtle Minimal Premium
+    final completedBg = dark
+        ? const Color(0xFF2C2C2E) 
+        : const Color(0xFF2C2C2E); 
+    
+    final completedText = Colors.white; // Clean white text
+    final completedBorder = Colors.transparent; 
+    final completedShadow = Colors.black.withOpacity(0.2);
+
+    final idleTitle = dark ? Colors.white : Colors.black87;
+    // When playing (wave fills), text should contrast with the wave color (Lime) -> Black text
+    // BUT user said "colors should be subtle". If wave is lime, black text is correct for contrast.
+    final playTitle = Colors.black; 
+    
+    final idleSubtitle = dark ? Colors.white70 : Colors.grey.shade700;
+    final playSubtitle = Colors.black87;
+
+    final waveColor = const Color(0xFFCEF24B); 
+    final waveOpacity = 1.0; 
 
     final cardWidth = width * 0.42;
     final cardHeight = width * 0.58;
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_fillCtrl, _rotateCtrl]),
+      animation: Listenable.merge([_fillCtrl, _waveCtrl, _pulseCtrl]),
       builder: (context, _) {
         final t = _fillCtrl.value.clamp(0.0, 1.0);
+        final phase = _waveCtrl.value * 2 * pi;
 
-        final textColor = Color.lerp(idleText, activeText, t)!;
-        final subTextColor = Color.lerp(idleSubText, activeSubText, t)!;
+        // NO FADE ANIMATION for background
+        final bgColor = widget.isCompleted ? completedBg : idleBg;
 
-        final borderColor = widget.isCompleted
-            ? Colors.transparent
-            : Color.lerp(idleBorder, activeBorder, t)!;
-        final borderWidth = 1.0 + (t * 3.0);
+        Color textColor;
+        Color subTextColor;
+
+        if (widget.isCompleted) {
+           textColor = completedText;
+           subTextColor = completedText.withOpacity(0.7);
+        } else {
+           // As wave fills (t goes 0->1), text turns black to be visible on Lime
+           textColor = Color.lerp(idleTitle, playTitle, t)!;
+           subTextColor = Color.lerp(idleSubtitle, playSubtitle, t)!;
+        }
+
+        // Border Color
+        final idleBorder = dark ? Colors.white12 : Colors.grey.shade300;
+        final activeBorder = const Color(0xFFB5D93B);
+        final pausedBorderColor = const Color(0xFFCEF24B); // Lime
+
+        Color borderColor;
+        double borderWidth;
+
+        if (widget.isCompleted) {
+          borderColor = completedBorder;
+          borderWidth = 1.5;
+        } else if (widget.isPaused) {
+          // Pulse Animation
+          final pulse = _pulseCtrl.value; // 0..1..0
+          // Pulse width from 1.5 to 3.5? Or Opacity?
+          // User said "moving border or other animation".
+          // Let's do a glowing border effect (opacity + width)
+          borderColor = pausedBorderColor.withOpacity(0.4 + (0.6 * pulse));
+          borderWidth = 1.0 + (pulse * 2.5); // 1.0 to 3.5
+        } else {
+          borderColor = Color.lerp(idleBorder, activeBorder, t)!;
+          borderWidth = 1.0 + (t * 1.5);
+        }
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           width: cardWidth,
-          height: cardHeight,
+          height: cardHeight, // Fixed height for consistency
           decoration: BoxDecoration(
-            color: idleBg,
-            borderRadius: BorderRadius.circular(width * 0.08),
+            color: bgColor, // Static background (unless completed)
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: borderColor, width: borderWidth),
             boxShadow: [
-              if (t > 0.5)
-                const BoxShadow(
-                  color: Color.fromRGBO(206, 242, 75, 0.6),
-                  blurRadius: 9,
-                  spreadRadius: 1,
-                )
-              else
-                BoxShadow(
-                  color: idleShadow,
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
+              BoxShadow(
+                color: widget.isCompleted 
+                    ? completedShadow
+                    : (dark ? Colors.black26 : Colors.black12),
+                blurRadius: widget.isCompleted ? 8 : 8,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(width * 0.06),
-            child: Stack(
-              children: [
+          clipBehavior: Clip.antiAlias, // Clip the wave
+          child: Stack(
+            children: [
+              // 1. Wave Background (Handles the "Fill")
+              if (!widget.isCompleted && t > 0)
                 Positioned.fill(
                   child: CustomPaint(
                     painter: WaveFillPainter(
@@ -213,37 +286,29 @@ class _WorkoutCardState extends State<WorkoutCard>
                               AnimatedBuilder(
                                 animation: _rotateCtrl,
                                 builder: (context, child) {
-                                  final accent = const Color.fromRGBO(
-                                    206,
-                                    242,
-                                    75,
-                                    1,
-                                  );
+                                  // Button Colors logic
+                                  // Active (Playing) button should contrast with Lime BG -> Black
+                                  // Idle button -> Theme dependent
+                                  // Completed -> Theme dependent
+
                                   final circleBg = widget.isCompleted
-                                      ? Colors.grey.shade800
+                                      ? (dark ? Colors.yellow.withOpacity(0.1) : Colors.white)
                                       : widget.isPlaying
-                                      ? dark
-                                            ? Colors.white
-                                            : accent
-                                      : (dark
-                                            ? const Color(0xFF121212)
-                                            : Colors.white);
-                                  final circleBorder =
-                                      (!widget.isPlaying && !widget.isCompleted)
+                                          ? Colors.black // Black button on Lime
+                                          : (dark ? const Color(0xFF2C2C2E) : Colors.white);
+
+                                  final circleBorder = (!widget.isPlaying && !widget.isCompleted)
                                       ? Border.all(
-                                          color: dark
-                                              ? Colors.white12
-                                              : Colors.grey.shade300,
+                                          color: dark ? Colors.white12 : Colors.grey.shade300,
                                           width: 1,
                                         )
                                       : null;
+
                                   final iconColor = widget.isCompleted
-                                      ? Colors.grey.shade500
-                                      : (widget.isPlaying
-                                            ? Colors.black
-                                            : (dark
-                                                  ? Colors.white
-                                                  : Colors.black));
+                                      ? (dark ? const Color(0xFFCEF24B) : const Color(0xFF5A701E))
+                                      : widget.isPlaying
+                                          ? const Color(0xFFCEF24B) // Lime icon on Black
+                                          : (dark ? Colors.white : Colors.black);
 
                                   return Transform.rotate(
                                     angle: _rotateCtrl.value * pi,
@@ -319,7 +384,7 @@ class _WorkoutCardState extends State<WorkoutCard>
                               ),
                               SizedBox(height: 2 * fontScale),
                               Text(
-                                "${widget.points} pts  •  ~${widget.kcal} kcal",
+                                "${widget.points} pts  •  ~${widget.metricValue} ${widget.metricLabel}",
                                 style: TextStyle(
                                   color: subTextColor,
                                   fontSize: 16 * fontScale,
@@ -336,7 +401,6 @@ class _WorkoutCardState extends State<WorkoutCard>
                 ),
               ],
             ),
-          ),
         );
       },
     );

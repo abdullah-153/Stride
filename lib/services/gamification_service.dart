@@ -1,48 +1,157 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/gamification_model.dart';
+import 'firestore/gamification_firestore_service.dart';
 
-/// Service for managing gamification features.
-///
-/// Handles XP tracking, level progression, streaks (diet, workout, and global),
-/// and achievement unlocking. Provides a broadcast stream for real-time updates.
-/// Uses singleton pattern to ensure single instance across the app.
-///
-/// **Streak Logic:**
-/// - Diet/Workout streaks: Track consecutive days of logging
-/// - Global streak: Requires BOTH diet AND workout logged on the same day
-/// - Streaks reset if a day is missed
-///
-/// **Level System:**
-/// - Level N requires N * 100 XP to advance to Level N+1
-/// - Example: Level 1→2 needs 100 XP, Level 2→3 needs 200 XP
 class GamificationService {
   static final GamificationService _instance = GamificationService._internal();
   factory GamificationService() => _instance;
-  GamificationService._internal() {
-    _initializeData();
+  GamificationService._internal();
+
+  final GamificationFirestoreService _firestoreService = GamificationFirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String? get _currentUserId => _auth.currentUser?.uid;
+
+  void Function(int newLevel, int xpGained)? onLevelUp;
+
+  static const int XP_PER_LEVEL = 100;
+
+  int getXpForNextLevel(int currentLevel) => XP_PER_LEVEL;
+
+  Stream<GamificationData> get gamificationStream {
+    if (_currentUserId == null) {
+      return Stream.value(GamificationData(
+        stats: UserStats.initial(),
+        achievements: _getDefaultAchievements(),
+      ));
+    }
+
+    return _firestoreService.streamGamificationData(_currentUserId!);
   }
 
-  late GamificationData _data;
-  final _controller = StreamController<GamificationData>.broadcast();
-  Stream<GamificationData> get gamificationStream => _controller.stream;
+  Future<GamificationData> getCurrentData() async {
+    if (_currentUserId == null) {
+      return GamificationData(
+        stats: UserStats.initial(),
+        achievements: _getDefaultAchievements(),
+      );
+    }
 
-  // XP Thresholds: Level N requires N * 100 XP (simplified)
-  // Level 1 -> 2: 100 XP
-  // Level 2 -> 3: 200 XP
-  // etc.
-  int getXpForNextLevel(int currentLevel) => currentLevel * 100;
-
-  void _initializeData() {
-    // Initialize with default/mock data
-    _data = GamificationData(
-      stats: UserStats.initial(),
-      achievements: _getDefaultAchievements(),
-    );
-    _controller.add(_data);
+    try {
+      return await _firestoreService.getGamificationData(_currentUserId!);
+    } catch (e) {
+      print('Error getting gamification data: $e');
+      return GamificationData(
+        stats: UserStats.initial(),
+        achievements: _getDefaultAchievements(),
+      );
+    }
   }
 
-  void reset() {
-    _initializeData();
+  Future<bool> addXp(int amount) async {
+    if (_currentUserId == null) return false;
+
+    try {
+      final currentData = await _firestoreService.getGamificationData(_currentUserId!);
+      final oldLevel = currentData.stats.currentLevel;
+
+      await _firestoreService.addXp(_currentUserId!, amount);
+
+      final newData = await _firestoreService.getGamificationData(_currentUserId!);
+      final newLevel = newData.stats.currentLevel;
+
+      if (newLevel > oldLevel && onLevelUp != null) {
+        onLevelUp!(newLevel, amount);
+      }
+
+      return newLevel > oldLevel;
+    } catch (e) {
+      print('Error adding XP: $e');
+      return false;
+    }
+  }
+
+  Future<void> checkStreak(StreakType type, DateTime logDate) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.updateStreak(_currentUserId!, type, logDate);
+
+      final data = await _firestoreService.getGamificationData(_currentUserId!);
+      
+      if (data.stats.currentStreak >= 3) {
+        await unlockAchievement('streak_3');
+      }
+
+      if (type == StreakType.diet) {
+        await unlockAchievement('first_meal');
+      }
+    } catch (e) {
+      print('Error checking streak: $e');
+    }
+  }
+
+  Future<bool> isFirstOfDayForType(StreakType type) async {
+    if (_currentUserId == null) return true;
+
+    try {
+      final data = await _firestoreService.getGamificationData(_currentUserId!);
+      final now = DateTime.now();
+      final lastDate = type == StreakType.diet
+          ? data.stats.lastDietLogDate
+          : data.stats.lastWorkoutLogDate;
+      
+      if (lastDate == null) return true;
+      return !_isSameDay(lastDate, now);
+    } catch (e) {
+      print('Error checking if first of day: $e');
+      return true;
+    }
+  }
+
+  Future<void> unlockAchievement(String achievementId) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.unlockAchievement(_currentUserId!, achievementId);
+    } catch (e) {
+      print('Error unlocking achievement: $e');
+    }
+  }
+
+  Future<bool> areBothStreaksCompletedToday() async {
+    if (_currentUserId == null) return false;
+
+    try {
+      final data = await _firestoreService.getGamificationData(_currentUserId!);
+      final now = DateTime.now();
+      
+      final dietDoneToday = data.stats.lastDietLogDate != null &&
+          _isSameDay(data.stats.lastDietLogDate!, now);
+      final workoutDoneToday = data.stats.lastWorkoutLogDate != null &&
+          _isSameDay(data.stats.lastWorkoutLogDate!, now);
+      
+      return dietDoneToday && workoutDoneToday;
+    } catch (e) {
+      print('Error checking if both streaks completed: $e');
+      return false;
+    }
+  }
+
+  Future<void> reset() async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.resetStreak(_currentUserId!, StreakType.diet);
+      await _firestoreService.resetStreak(_currentUserId!, StreakType.workout);
+    } catch (e) {
+      print('Error resetting gamification data: $e');
+    }
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   List<Achievement> _getDefaultAchievements() {
@@ -51,7 +160,7 @@ class GamificationService {
         id: 'first_meal',
         title: 'First Bite',
         description: 'Log your first meal',
-        iconAsset: 'assets/icons/apple.png', // Placeholder
+        iconAsset: 'assets/icons/apple.png',
       ),
       Achievement(
         id: 'hydration_hero',
@@ -72,159 +181,5 @@ class GamificationService {
         iconAsset: 'assets/icons/muscle.png',
       ),
     ];
-  }
-
-  GamificationData getCurrentData() => _data;
-
-  void addXp(int amount) {
-    final currentStats = _data.stats;
-    int newXp = currentStats.currentXp + amount;
-    int newLevel = currentStats.currentLevel;
-
-    // Check for level up
-    int xpRequired = getXpForNextLevel(newLevel);
-    while (newXp >= xpRequired) {
-      newXp -= xpRequired;
-      newLevel++;
-      xpRequired = getXpForNextLevel(newLevel);
-      // TODO: Notify level up event
-    }
-
-    _updateStats(
-      currentStats.copyWith(currentXp: newXp, currentLevel: newLevel),
-    );
-  }
-
-  void checkStreak(StreakType type, DateTime logDate) {
-    final currentStats = _data.stats;
-
-    // 1. Update Specific Streak (Diet or Workout)
-    UserStats updatedStats = _updateSpecificStreak(currentStats, type, logDate);
-
-    // 2. Update Global Streak (Any activity counts)
-    updatedStats = _updateGlobalStreak(updatedStats, logDate);
-
-    _updateStats(updatedStats);
-  }
-
-  UserStats _updateSpecificStreak(
-    UserStats stats,
-    StreakType type,
-    DateTime logDate,
-  ) {
-    final lastDate = type == StreakType.diet
-        ? stats.lastDietLogDate
-        : stats.lastWorkoutLogDate;
-    final currentStreak = type == StreakType.diet
-        ? stats.dietStreak
-        : stats.workoutStreak;
-
-    if (lastDate == null) {
-      return type == StreakType.diet
-          ? stats.copyWith(dietStreak: 1, lastDietLogDate: logDate)
-          : stats.copyWith(workoutStreak: 1, lastWorkoutLogDate: logDate);
-    }
-
-    if (_isSameDay(lastDate, logDate)) return stats; // Already logged today
-
-    final isYesterday = _isSameDay(
-      lastDate,
-      logDate.subtract(const Duration(days: 1)),
-    );
-    final newStreak = isYesterday ? currentStreak + 1 : 1;
-
-    return type == StreakType.diet
-        ? stats.copyWith(dietStreak: newStreak, lastDietLogDate: logDate)
-        : stats.copyWith(workoutStreak: newStreak, lastWorkoutLogDate: logDate);
-  }
-
-  UserStats _updateGlobalStreak(UserStats stats, DateTime logDate) {
-    // Strict Mode: Global Streak only updates if BOTH Diet and Workout are done today
-    final dietDoneToday =
-        stats.lastDietLogDate != null &&
-        _isSameDay(stats.lastDietLogDate!, logDate);
-    final workoutDoneToday =
-        stats.lastWorkoutLogDate != null &&
-        _isSameDay(stats.lastWorkoutLogDate!, logDate);
-
-    if (!dietDoneToday || !workoutDoneToday) {
-      return stats; // Not eligible for global streak update yet
-    }
-
-    final lastDate = stats.lastLogDate;
-
-    if (lastDate == null) {
-      _unlockIfFirstMeal(stats);
-      return stats.copyWith(
-        currentStreak: 1,
-        longestStreak: 1,
-        lastLogDate: logDate,
-      );
-    }
-
-    if (_isSameDay(lastDate, logDate)) {
-      return stats; // Already logged global streak today
-    }
-
-    final isYesterday = _isSameDay(
-      lastDate,
-      logDate.subtract(const Duration(days: 1)),
-    );
-    final newStreak = isYesterday ? stats.currentStreak + 1 : 1;
-    final newLongest = newStreak > stats.longestStreak
-        ? newStreak
-        : stats.longestStreak;
-
-    if (newStreak >= 3) {
-      unlockAchievement('streak_3');
-    }
-
-    return stats.copyWith(
-      currentStreak: newStreak,
-      longestStreak: newLongest,
-      lastLogDate: logDate,
-    );
-  }
-
-  void _unlockIfFirstMeal(UserStats stats) {
-    // Logic moved here or handled by specific achievement check
-    unlockAchievement('first_meal');
-  }
-
-  void unlockAchievement(String achievementId) {
-    final index = _data.achievements.indexWhere((a) => a.id == achievementId);
-    if (index != -1 && !_data.achievements[index].isUnlocked) {
-      final updatedAchievements = List<Achievement>.from(_data.achievements);
-      updatedAchievements[index] = updatedAchievements[index].copyWith(
-        isUnlocked: true,
-        unlockedAt: DateTime.now(),
-      );
-
-      _data = _data.copyWith(achievements: updatedAchievements);
-      _controller.add(_data);
-    }
-  }
-
-  void _updateStats(UserStats newStats) {
-    _data = _data.copyWith(stats: newStats);
-    _controller.add(_data);
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  /// Checks if both diet and workout activities were completed today
-  /// Returns true only if BOTH streaks have been logged on the same day (today)
-  bool areBothStreaksCompletedToday() {
-    final stats = _data.stats;
-    final now = DateTime.now();
-    
-    final dietDoneToday = stats.lastDietLogDate != null &&
-        _isSameDay(stats.lastDietLogDate!, now);
-    final workoutDoneToday = stats.lastWorkoutLogDate != null &&
-        _isSameDay(stats.lastWorkoutLogDate!, now);
-    
-    return dietDoneToday && workoutDoneToday;
   }
 }

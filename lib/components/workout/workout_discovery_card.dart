@@ -28,11 +28,12 @@ class WorkoutDiscoveryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: EdgeInsets.only(right: SizeConfig.w(12)),
-        width: SizeConfig.w(280),
-        padding: EdgeInsets.all(SizeConfig.w(16)),
+        // Increased width to match WorkoutCard visual weight
+        width: SizeConfig.w(320), 
+        padding: EdgeInsets.all(SizeConfig.w(20)), // Increased padding
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(SizeConfig.w(16)),
+          borderRadius: BorderRadius.circular(SizeConfig.w(22)), // Match rounded corners
           border: Border.all(color: borderColor, width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -55,12 +56,12 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                 // Category badge
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: SizeConfig.w(8),
-                    vertical: SizeConfig.h(4),
+                    horizontal: SizeConfig.w(12),
+                    vertical: SizeConfig.h(6),
                   ),
                   decoration: BoxDecoration(
                     color: accentColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(SizeConfig.w(8)),
+                    borderRadius: BorderRadius.circular(SizeConfig.w(10)),
                     border: Border.all(
                       color: accentColor.withOpacity(0.3),
                       width: 1,
@@ -70,7 +71,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     workout.category.displayName.toUpperCase(),
                     style: TextStyle(
                       color: accentColor,
-                      fontSize: SizeConfig.sp(10),
+                      fontSize: SizeConfig.sp(11), // Increased font
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
                     ),
@@ -79,18 +80,18 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                 // Difficulty
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: SizeConfig.w(8),
-                    vertical: SizeConfig.h(4),
+                    horizontal: SizeConfig.w(10),
+                    vertical: SizeConfig.h(6),
                   ),
                   decoration: BoxDecoration(
                     color: isDarkMode ? Colors.white12 : Colors.black12,
-                    borderRadius: BorderRadius.circular(SizeConfig.w(8)),
+                    borderRadius: BorderRadius.circular(SizeConfig.w(10)),
                   ),
                   child: Text(
                     workout.difficulty.displayName,
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: SizeConfig.sp(10),
+                      fontSize: SizeConfig.sp(11), // Increased font
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -98,22 +99,22 @@ class WorkoutDiscoveryCard extends StatelessWidget {
               ],
             ),
 
-            SizedBox(height: SizeConfig.h(12)),
+            SizedBox(height: SizeConfig.h(16)),
 
             // Title
             Text(
               workout.title,
               style: TextStyle(
                 color: textColor,
-                fontSize: SizeConfig.sp(18),
-                fontWeight: FontWeight.w700,
+                fontSize: SizeConfig.sp(22), // Increased from 18 to 22
+                fontWeight: FontWeight.w800, // Bolder
                 letterSpacing: 0.3,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
 
-            SizedBox(height: SizeConfig.h(8)),
+            SizedBox(height: SizeConfig.h(12)),
 
             // Stats row
             Row(
@@ -123,22 +124,25 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     icon: Icons.timer_outlined,
                     text: '${workout.durationMinutes}m',
                     isDarkMode: isDarkMode,
+                    fontSize: 14, // Explicit font size pass
                   ),
                 ),
-                SizedBox(width: SizeConfig.w(8)),
+                SizedBox(width: SizeConfig.w(10)),
                 Flexible(
                   child: _StatItem(
                     icon: Icons.local_fire_department_outlined,
                     text: '${workout.caloriesBurned}',
                     isDarkMode: isDarkMode,
+                     fontSize: 14,
                   ),
                 ),
-                SizedBox(width: SizeConfig.w(8)),
+                SizedBox(width: SizeConfig.w(10)),
                 Flexible(
                   child: _StatItem(
                     icon: Icons.fitness_center_outlined,
                     text: '${workout.exerciseCount}',
                     isDarkMode: isDarkMode,
+                     fontSize: 14,
                   ),
                 ),
               ],
@@ -199,11 +203,13 @@ class _StatItem extends StatelessWidget {
   final IconData icon;
   final String text;
   final bool isDarkMode;
+  final double fontSize;
 
   const _StatItem({
     required this.icon,
     required this.text,
     this.isDarkMode = false,
+    this.fontSize = 12,
   });
 
   @override
@@ -213,13 +219,13 @@ class _StatItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: subTextColor, size: SizeConfig.w(14)),
+        Icon(icon, color: subTextColor, size: SizeConfig.w(fontSize + 2)),
         SizedBox(width: SizeConfig.w(4)),
         Text(
           text,
           style: TextStyle(
             color: subTextColor,
-            fontSize: SizeConfig.sp(12),
+            fontSize: SizeConfig.sp(fontSize),
             fontWeight: FontWeight.w500,
           ),
         ),

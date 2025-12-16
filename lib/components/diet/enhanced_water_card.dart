@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
+import 'package:flutter/services.dart';
 
 class EnhancedWaterCard extends StatelessWidget {
   final DailyNutrition dailyNutrition;
@@ -242,24 +243,36 @@ class _QuickAddButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(SizeConfig.w(12)),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(SizeConfig.w(16)),
           child: Ink(
-            padding: EdgeInsets.symmetric(vertical: SizeConfig.h(12)),
+            padding: EdgeInsets.symmetric(vertical: SizeConfig.h(14)),
             decoration: BoxDecoration(
               color: buttonBg,
-              borderRadius: BorderRadius.circular(SizeConfig.w(12)),
+              borderRadius: BorderRadius.circular(SizeConfig.w(16)),
               border: Border.all(color: borderColor, width: 1),
+              boxShadow: isDarkMode 
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
-            child: Row(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.add,
-                  size: SizeConfig.w(16),
+                  Icons.add_circle_outline_rounded,
+                  size: SizeConfig.w(20),
                   color: const Color(0xFF4A90E2),
                 ),
-                SizedBox(width: SizeConfig.w(4)),
+                SizedBox(height: SizeConfig.h(6)),
                 Text(
                   label,
                   style: TextStyle(

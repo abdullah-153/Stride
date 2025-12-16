@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../utils/app_constants.dart';
 
-class StartupPage extends StatelessWidget {
+class StartupPage extends StatefulWidget {
   const StartupPage({super.key});
+
+  @override
+  State<StartupPage> createState() => _StartupPageState();
+}
+
+class _StartupPageState extends State<StartupPage> {
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Precache the image to avoid pop-in delay
+    precacheImage(const AssetImage('lib/assets/images/startup_page_vector.jpg'), context);
+  }
 
   void signInButtonAction(context) =>
       Navigator.pushNamed(context, AppRoutes.login);
@@ -11,7 +25,14 @@ class StartupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: LayoutBuilder(
@@ -46,6 +67,7 @@ class StartupPage extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: width * 0.09,
+                            color: Colors.black,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -59,6 +81,7 @@ class StartupPage extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w300,
                               fontSize: width * 0.04,
+                              color: Colors.black,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -131,6 +154,7 @@ class StartupPage extends StatelessWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

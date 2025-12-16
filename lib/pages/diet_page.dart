@@ -14,8 +14,14 @@ import '../models/gamification_model.dart';
 import '../components/gamification/streak_card.dart';
 import '../components/gamification/streak_celebration_overlay.dart';
 import 'global_streak_success_page.dart';
+import '../components/common/global_back_button.dart'; // Added import
+import 'level_up_page.dart';
 import '../utils/size_config.dart';
 import '../providers/theme_provider.dart';
+import 'package:flutter/services.dart';
+import '../components/shared/bouncing_dots_indicator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'generate_diet_page.dart'; // Import the generator page
 
 class DietPage extends ConsumerStatefulWidget {
   const DietPage({super.key});
@@ -73,7 +79,19 @@ class _DietPageState extends ConsumerState<DietPage>
       final nutrition = await _nutritionService.getDailyNutrition(date);
       if (mounted) {
         setState(() {
-          _dailyNutrition = nutrition;
+          // If null (no data for today), show empty state instead of "No data" text
+          _dailyNutrition = nutrition ?? DailyNutrition(
+            date: date,
+            meals: [],
+            waterIntake: 0,
+            goal: NutritionGoal(
+              dailyCalories: 2000,
+              protein: 150,
+              carbs: 200,
+              fats: 65,
+              waterGoal: 2500,
+            ),
+          );
           _isLoading = false;
         });
         _animationController.forward(from: 0);
@@ -82,12 +100,26 @@ class _DietPageState extends ConsumerState<DietPage>
       if (mounted) {
         setState(() {
           _isLoading = false;
+          // Fallback to empty state on error too, so UI doesn't break
+             _dailyNutrition = DailyNutrition(
+            date: date,
+            meals: [],
+            waterIntake: 0,
+            goal: NutritionGoal(
+              dailyCalories: 2000,
+              protein: 150,
+              carbs: 200,
+              fats: 65,
+              waterGoal: 2500,
+            ),
+          );
         });
       }
     }
   }
 
   Future<void> _addWater(int amount) async {
+    HapticFeedback.lightImpact();
     await _nutritionService.logWater(amount);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +136,8 @@ class _DietPageState extends ConsumerState<DietPage>
   }
 
   Future<void> _deleteMeal(String mealId) async {
-    await _nutritionService.deleteMeal(mealId);
+    HapticFeedback.mediumImpact();
+    await _nutritionService.deleteMeal(_currentDate, mealId);
     _loadData(_currentDate);
   }
 
@@ -115,22 +148,70 @@ class _DietPageState extends ConsumerState<DietPage>
       timestamp: DateTime.now(),
     );
 
-    await _nutritionService.logMeal(newMeal);
+    // Check if this is the first meal of the day BEFORE logging
+    final gamificationService = GamificationService();
+    final isFirstMealOfDay = await gamificationService.isFirstOfDayForType(StreakType.diet);
 
-    if (mounted) {
-      // Check if both streaks are completed today
-      final gamificationService = GamificationService();
-      final bothCompleted = gamificationService.areBothStreaksCompletedToday();
-      
-      if (bothCompleted) {
-        // Show global streak success page
-        final globalStreak = gamificationService.getCurrentData().stats.currentStreak;
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: BouncingDotsIndicator(color: Colors.white),
+      ),
+    );
+
+    await _nutritionService.logMeal(newMeal);
+    
+    if (mounted) Navigator.pop(context); // Dismiss loading
+
+    // Set up level up callback
+    gamificationService.onLevelUp = (newLevel, xpGained) async {
+      if (mounted) {
+        final currentData = await gamificationService.getCurrentData();
+        final totalXP = currentData.stats.currentXp;
+
+        if (mounted) {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  LevelUpPage(
+                newLevel: newLevel,
+                xpGained: xpGained,
+                totalXP: totalXP,
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            ),
+          );
+        }
+      }
+    };
+
+    // Add XP for meal logging
+    final leveledUp = await gamificationService.addXp(25);
+
+    if (mounted && !leveledUp) {
+      if (isFirstMealOfDay) {
+        final bothCompleted = await gamificationService.areBothStreaksCompletedToday();
+        final data = await gamificationService.getCurrentData();
+        final stats = data.stats;
+        
+        // Show streak page for either Global or just Diet streak
         Navigator.push(
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) => GlobalStreakSuccessPage(
-              globalStreak: globalStreak,
-              themeColor: const Color(0xFF0EA5E9), // Blue for diet
+              // If both completed, show global streak, otherwise show diet streak
+              globalStreak: bothCompleted ? stats.currentStreak : stats.dietStreak,
+              themeColor: const Color(0xFF0EA5E9),
+              title: bothCompleted ? 'Perfect Day!' : 'Nutrition Streak!',
+              subtitle: bothCompleted 
+                  ? 'You completed both workout and diet goals today'
+                  : 'Healthy eating streak kept alive! Great job!',
             ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
@@ -138,7 +219,7 @@ class _DietPageState extends ConsumerState<DietPage>
           ),
         );
       } else {
-        // Show simple snackbar
+        // Show simple snackbar for subsequent meals
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -187,32 +268,21 @@ class _DietPageState extends ConsumerState<DietPage>
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_outlined, color: textColor),
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
           onPressed: () => Navigator.maybePop(context),
         ),
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: textColor,
-            ),
-            onPressed: () {
-              ref.read(themeProvider.notifier).toggleTheme();
-            },
-          ),
-        ],
       ),
       body: StreakCelebrationOverlay(
         key: _celebrationKey,
         child: SafeArea(
         child: _isLoading
             ? Center(
-                child: CircularProgressIndicator(
+                child: BouncingDotsIndicator(
                   color: isDarkMode ? Colors.white : Colors.black,
                 ),
               )
@@ -255,8 +325,8 @@ class _DietPageState extends ConsumerState<DietPage>
                         // Gamification Section
                         StreamBuilder<GamificationData>(
                           stream: GamificationService().gamificationStream,
-                          initialData: GamificationService().getCurrentData(),
                           builder: (context, snapshot) {
+                            if (!snapshot.hasData) return const SizedBox.shrink();
                             final data = snapshot.data!;
                             return Padding(
                               padding: EdgeInsets.symmetric(
@@ -271,15 +341,19 @@ class _DietPageState extends ConsumerState<DietPage>
                                           streakDays: data.stats.dietStreak,
                                           isDarkMode: isDarkMode,
                                           title: 'Diet Streak',
-                                          icon: Icons.restaurant_menu_rounded,
+                                          currentLevel: data.stats.currentLevel,
+                                          currentXp: data.stats.currentXp,
+                                          nextLevelXp: GamificationService().getXpForNextLevel(data.stats.currentLevel),
                                           gradientColors: isDarkMode
                                               ? [
-                                                  const Color(0xFF11998E),
-                                                  const Color(0xFF38EF7D)
+                                                  Colors.black,
+                                                  const Color(0xFF1A1A1A), // Dark grey
+                                                  const Color(0xFF0EA5E9), // Blue accent
                                                 ]
                                               : [
-                                                  const Color(0xFF56AB2F),
-                                                  const Color(0xFFA8E063)
+                                                  Colors.white,
+                                                  const Color(0xFFF5F5F5), // Light grey
+                                                  const Color(0xFF0EA5E9), // Blue accent
                                                 ],
                                         ),
                                       ),
@@ -290,6 +364,16 @@ class _DietPageState extends ConsumerState<DietPage>
                               ),
                             );
                           },
+                        ),
+
+                        SizedBox(height: SizeConfig.h(24)),
+
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: SizeConfig.w(16),
+                          ),
+                          child: _buildGeneratePlanCapsule(isDarkMode),
                         ),
 
                         SizedBox(height: SizeConfig.h(24)),
@@ -311,6 +395,7 @@ class _DietPageState extends ConsumerState<DietPage>
                           isDarkMode: isDarkMode,
                           selectedDate: _currentDate,
                           onDateSelected: (date) => _loadData(date),
+                          minDate: FirebaseAuth.instance.currentUser?.metadata.creationTime,
                         ),
 
                         SizedBox(height: SizeConfig.h(20)),
@@ -579,6 +664,106 @@ class _DietPageState extends ConsumerState<DietPage>
                 fontSize: SizeConfig.sp(13),
                 color: isDarkMode ? Colors.white54 : Colors.black38,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeneratePlanCapsule(bool isDarkMode) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const GenerateDietPage()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: SizeConfig.h(120),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(SizeConfig.w(24)),
+           gradient: LinearGradient(
+              colors: isDarkMode
+                ? [const Color(0xFF1E3A8A), const Color(0xFF1E40AF)] // Deep Blue
+                : [const Color(0xFFE3F2FD), const Color(0xFFBBDEFB)], // Light Blue
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+           ),
+           border: Border.all(
+              color: isDarkMode ? Colors.blueAccent.withOpacity(0.3) : Colors.blue.withOpacity(0.1),
+              width: 1,
+           ),
+           boxShadow: [
+              BoxShadow(
+                  color: Colors.blue.withOpacity(isDarkMode ? 0.2 : 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+              ),
+           ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              bottom: -20,
+               child: Icon(
+                Icons.auto_awesome,
+                size: SizeConfig.w(140),
+                color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.blue.withOpacity(0.1),
+              ),
+            ),
+            Padding(
+               padding: EdgeInsets.all(SizeConfig.w(24)),
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                            Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                    "AI POWERED",
+                                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Create a Plan",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(20), 
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black87
+                              ),
+                            ),
+                            Text(
+                              "Tailored to your body & goals",
+                              style: TextStyle(
+                                fontSize: SizeConfig.sp(12),
+                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.black26 : Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.arrow_forward, color: isDarkMode ? Colors.white : Colors.blue),
+                    )
+                 ],
+               ),
             ),
           ],
         ),

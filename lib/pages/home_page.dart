@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/home/home_page_content.dart';
 import '../components/shared/navbar.dart';
@@ -6,6 +7,7 @@ import '../pages/diet_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/workout_page.dart';
 import '../providers/theme_provider.dart';
+import '../services/auth_service.dart';
 import '../utils/app_constants.dart';
 import '../utils/size_config.dart';
 
@@ -94,9 +96,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
 
       if (shouldLogout ?? false) {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(AppRoutes.startup, (route) => false);
+        await ref.read(authServiceProvider).signOut(); // Perform actual logout
+        if (context.mounted) {
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.startup, (route) => false);
+        }
       }
 
       return false;
@@ -124,22 +129,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return WillPopScope(
       onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: isDarkMode ? AppColors.darkBackground : Colors.white,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: SafeArea(
-                child: IndexedStack(index: _currentIndex, children: pages),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: isDarkMode ? AppColors.darkBackground : Colors.white,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: SafeArea(
+                  child: IndexedStack(index: _currentIndex, children: pages),
+                ),
               ),
-            ),
-            FloatingNavBar(
-              currentIndex: _currentIndex,
-              onTap: _onNavBarTap,
-              pageColors: _pageColors,
-              isDarkMode: isDarkMode,
-            ),
-          ],
+              FloatingNavBar(
+                currentIndex: _currentIndex,
+                onTap: _onNavBarTap,
+                pageColors: _pageColors,
+                isDarkMode: isDarkMode,
+              ),
+            ],
+          ),
         ),
       ),
     );

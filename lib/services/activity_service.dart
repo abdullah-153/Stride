@@ -1,72 +1,113 @@
-import 'dart:async';
-import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/activity_model.dart';
+import 'firestore/activity_firestore_service.dart';
 
-/// Service for managing daily activity data.
-///
-/// Provides methods to fetch and update activity metrics including
-/// workouts completed, calories burned, and step count.
-/// Simulates API calls with mock data for demonstration purposes.
-/// Uses singleton pattern to ensure single instance across the app.
 class ActivityService {
-  // Singleton pattern
   static final ActivityService _instance = ActivityService._internal();
   factory ActivityService() => _instance;
   ActivityService._internal();
 
-  // Simulate network delay
-  Future<void> _simulateDelay() async {
-    await Future.delayed(Duration(milliseconds: 300 + Random().nextInt(500)));
-  }
+  final ActivityFirestoreService _firestoreService = ActivityFirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Fetches today's activity data
-  /// Returns mock data simulating an API call
+  String? get _currentUserId => _auth.currentUser?.uid;
+
   Future<ActivityData> getTodayActivity() async {
-    await _simulateDelay();
+    if (_currentUserId == null) {
+      return ActivityData(
+        workoutsCompleted: 0,
+        totalWorkouts: 0,
+        caloriesBurned: 0,
+        steps: 0,
+        maxSteps: 10000,
+      );
+    }
 
-    // Mock data - in real app, this would be an HTTP request
-    final random = Random();
-    final workoutsCompleted = 3 + random.nextInt(3); // 3-5
-    final totalWorkouts = 5;
-    final caloriesBurned = 250 + random.nextInt(300); // 250-550
-    final steps = 3000 + random.nextInt(5000); // 3000-8000
-    final maxSteps = 10000;
-
-    return ActivityData(
-      workoutsCompleted: workoutsCompleted,
-      totalWorkouts: totalWorkouts,
-      caloriesBurned: caloriesBurned,
-      steps: steps,
-      maxSteps: maxSteps,
-    );
+    try {
+      final today = DateTime.now();
+      final activity = await _firestoreService.getDailyActivity(_currentUserId!, today);
+      
+      return activity ?? ActivityData(
+        workoutsCompleted: 0,
+        totalWorkouts: 0,
+        caloriesBurned: 0,
+        steps: 0,
+        maxSteps: 10000,
+      );
+    } catch (e) {
+      print('Error getting today activity: $e');
+      return ActivityData(
+        workoutsCompleted: 0,
+        totalWorkouts: 0,
+        caloriesBurned: 0,
+        steps: 0,
+        maxSteps: 10000,
+      );
+    }
   }
 
-  /// Simulates updating activity data
-  Future<ActivityData> updateActivity({
-    int? workoutsCompleted,
-    int? caloriesBurned,
-    int? steps,
-  }) async {
-    await _simulateDelay();
+  Stream<ActivityData?> streamTodayActivity() {
+    if (_currentUserId == null) {
+      return Stream.value(null);
+    }
 
-    // In a real app, this would send data to the server
-    return ActivityData(
-      workoutsCompleted: workoutsCompleted ?? 3,
-      totalWorkouts: 5,
-      caloriesBurned: caloriesBurned ?? 320,
-      steps: steps ?? 4520,
-      maxSteps: 10000,
-    );
+    final today = DateTime.now();
+    return _firestoreService.streamDailyActivity(_currentUserId!, today);
   }
 
-  /// Stream for real-time updates (e.g., step counter)
-  Stream<int> getStepCountStream() async* {
-    int currentSteps = 4520;
-    while (true) {
-      await Future.delayed(const Duration(seconds: 5));
-      // Simulate step increments
-      currentSteps += Random().nextInt(20);
-      yield currentSteps;
+  Future<void> updateActivity(ActivityData activityData) async {
+    if (_currentUserId == null) return;
+
+    try {
+      final today = DateTime.now();
+      await _firestoreService.updateDailyActivity(_currentUserId!, today, activityData);
+    } catch (e) {
+      print('Error updating activity: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> incrementSteps(int steps) async {
+    if (_currentUserId == null) return;
+
+    try {
+      final today = DateTime.now();
+      await _firestoreService.incrementSteps(_currentUserId!, today, steps);
+    } catch (e) {
+      print('Error incrementing steps: $e');
+    }
+  }
+
+  Future<void> addCaloriesBurned(int calories) async {
+    if (_currentUserId == null) return;
+
+    try {
+      final today = DateTime.now();
+      await _firestoreService.addCaloriesBurned(_currentUserId!, today, calories);
+    } catch (e) {
+      print('Error adding calories burned: $e');
+    }
+  }
+
+  Future<void> incrementWorkoutsCompleted() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final today = DateTime.now();
+      await _firestoreService.incrementWorkoutsCompleted(_currentUserId!, today);
+    } catch (e) {
+      print('Error incrementing workouts completed: $e');
+    }
+  }
+
+  Future<List<ActivityData>> getActivityHistory(DateTime startDate, DateTime endDate) async {
+    if (_currentUserId == null) return [];
+
+    try {
+      return await _firestoreService.getActivityHistory(_currentUserId!, startDate, endDate);
+    } catch (e) {
+      print('Error getting activity history: $e');
+      return [];
     }
   }
 }

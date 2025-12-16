@@ -105,6 +105,7 @@ class _WeightPageState extends State<WeightPage> {
                     style: TextStyle(
                       fontSize: SizeConfig.screenWidth * 0.15,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black, // Force visible color
                     ),
                   ),
                   SizedBox(width: SizeConfig.screenWidth * 0.02),

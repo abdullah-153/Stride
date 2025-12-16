@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "164441790077",
+    "project_id": "gainz-49837",
+    "storage_bucket": "gainz-49837.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:164441790077:android:df5bab999e86197c14c314",
+        "android_client_info": {
+          "package_name": "com.example.fitness_tracker_frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "164441790077-abrfa5l41drl342di7r6skls6migk2o7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fitness_tracker_frontend",
+            "certificate_hash": "34bea5960d1d0881dffab08c2d305c2380dbfe3e"
+          }
+        },
+        {
+          "client_id": "164441790077-5v8v9r15h9qr87unucuk1p95tdcniugs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEGKYYIIqdoz-Z3Wl5SiXLvir-QrtBYls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "164441790077-5v8v9r15h9qr87unucuk1p95tdcniugs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "164441790077-kpo683ikt52f42inetps2edcuu2k08f5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.fitnessTrackerFrontend"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:164441790077:android:c327ebb84d6c874f14c314",
+        "android_client_info": {
+          "package_name": "com.example.gym_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "164441790077-bveibjh33nh8eqi7qblkvkikpe04sn6r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gym_tracker",
+            "certificate_hash": "6bff703bd4c3dcb808ac563393270083404b7351"
+          }
+        },
+        {
+          "client_id": "164441790077-5v8v9r15h9qr87unucuk1p95tdcniugs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEGKYYIIqdoz-Z3Wl5SiXLvir-QrtBYls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "164441790077-5v8v9r15h9qr87unucuk1p95tdcniugs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "164441790077-kpo683ikt52f42inetps2edcuu2k08f5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.fitnessTrackerFrontend"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

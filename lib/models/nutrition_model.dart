@@ -113,12 +113,23 @@ class Meal {
     return Meal(
       id: json['id'] as String,
       name: json['name'] as String,
-      type: MealType.values.firstWhere(
-        (e) => e.toString() == 'MealType.${json['type']}',
-      ),
-      calories: json['calories'] as int,
-      macros: MacroNutrients.fromJson(json['macros'] as Map<String, dynamic>),
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      type: json['type'] != null
+          ? MealType.values.firstWhere(
+              (e) => e.name == json['type'],
+              orElse: () => MealType.snack,
+            )
+          : MealType.snack,
+      calories: (json['calories'] ?? 0) as int,
+      macros: json['macros'] != null
+          ? MacroNutrients.fromJson(json['macros'] as Map<String, dynamic>)
+          : MacroNutrients(
+              protein: (json['protein'] ?? 0) as int,
+              carbs: (json['carbs'] ?? 0) as int,
+              fats: (json['fats'] ?? 0) as int,
+            ),
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'] as String)
+          : DateTime.now(),
       imageUrl: json['imageUrl'] as String?,
       isFavorite: json['isFavorite'] as bool? ?? false,
     );

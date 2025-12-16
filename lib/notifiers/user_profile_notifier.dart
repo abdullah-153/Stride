@@ -83,9 +83,45 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
     final currentProfile = state.value;
     if (currentProfile == null) return;
 
-    await _service.saveProfileImage(imagePath);
     final updatedProfile = currentProfile.copyWith(profileImagePath: imagePath);
-    state = AsyncValue.data(updatedProfile);
+    await updateProfile(updatedProfile);
+  }
+
+  Future<void> uploadProfileImage(dynamic imageFile) async {
+    try {
+      final imageUrl = await _service.uploadProfileImage(imageFile);
+      final currentProfile = state.value;
+      if (currentProfile == null) return;
+
+      final updatedProfile = currentProfile.copyWith(profileImagePath: imageUrl);
+      state = AsyncValue.data(updatedProfile);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> updateUnitPreference(UnitPreference preference) async {
+    final currentProfile = state.value;
+    if (currentProfile == null) return;
+
+    final updatedProfile = currentProfile.copyWith(preferredUnits: preference);
+    await updateProfile(updatedProfile);
+  }
+
+  Future<void> updateGoals({
+    int? weeklyWorkoutGoal,
+    int? dailyCalorieGoal,
+    double? weightGoal,
+  }) async {
+    final currentProfile = state.value;
+    if (currentProfile == null) return;
+
+    final updatedProfile = currentProfile.copyWith(
+      weeklyWorkoutGoal: weeklyWorkoutGoal,
+      dailyCalorieGoal: dailyCalorieGoal,
+      weightGoal: weightGoal,
+    );
+    await updateProfile(updatedProfile);
   }
 
   // Clear profile data

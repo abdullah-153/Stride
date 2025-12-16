@@ -185,6 +185,7 @@ class _HeightPageState extends State<HeightPage> {
                                       style: TextStyle(
                                         fontSize: SizeConfig.screenWidth * 0.12,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
                                     Padding(
@@ -210,6 +211,7 @@ class _HeightPageState extends State<HeightPage> {
                                       style: TextStyle(
                                         fontSize: SizeConfig.screenWidth * 0.12,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
                                     Padding(
@@ -229,6 +231,7 @@ class _HeightPageState extends State<HeightPage> {
                                       style: TextStyle(
                                         fontSize: SizeConfig.screenWidth * 0.12,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
                                     Padding(

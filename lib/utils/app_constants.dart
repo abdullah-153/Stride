@@ -73,7 +73,7 @@ class AppSizes {
 /// String constants used throughout the app
 class AppStrings {
   // App info
-  static const String appName = 'Fitness Tracker';
+  static const String appName = 'Stride';
 
   // Navigation
   static const String navHome = 'Home';

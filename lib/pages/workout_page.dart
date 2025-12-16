@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/workout/steps_counter_card.dart';
@@ -9,16 +10,19 @@ import '../components/workout/workout_discovery_card.dart';
 import '../components/workout/workout_detail_sheet.dart';
 import '../models/workout_model.dart';
 import '../services/workout_service.dart';
+import '../services/firestore/workout_plan_service.dart';
 import '../utils/size_config.dart';
 import '../services/gamification_service.dart';
 import '../models/gamification_model.dart';
 import '../components/gamification/streak_card.dart';
-import '../models/gamification_model.dart';
-import '../components/gamification/streak_card.dart';
-import '../components/gamification/streak_card.dart';
 import '../components/gamification/streak_celebration_overlay.dart';
 import 'global_streak_success_page.dart';
+import 'level_up_page.dart';
+import 'streak_success_page.dart'; // Add this import
+import '../components/common/global_back_button.dart'; // Added import
 import '../providers/theme_provider.dart';
+import '../components/shared/bouncing_dots_indicator.dart';
+import 'workout/create_workout_plan_page.dart';
 
 class WorkoutPage extends ConsumerStatefulWidget {
   const WorkoutPage({super.key});
@@ -34,7 +38,9 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   List<Workout> _todayWorkouts = [];
   List<Workout> _recommendedWorkouts = [];
   List<Workout> _filteredWorkouts = [];
+  List<Map<String, dynamic>> _userPlans = [];
   bool _isLoading = true;
+  bool _isSubmitting = false; // Page-wide loading state for completion
 
   // Category filter
   WorkoutCategory _selectedCategory = WorkoutCategory.all;
@@ -53,6 +59,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   void initState() {
     super.initState();
     _loadWorkouts();
+    _loadUserPlans();
   }
 
   @override
@@ -63,7 +70,23 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
 
   Future<void> _loadWorkouts() async {
     try {
-      final todayWorkouts = await _workoutService.getTodayWorkouts();
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      // Check if user has plans first
+      // We can use the service directly here or wait for _loadUserPlans
+      // For speed, let's just assume if they have no plans, today is empty.
+      
+      // Load plans to be sure (async parallel is fine, but we want to depend on it)
+      final plans = userId != null 
+          ? await WorkoutPlanService().getUserWorkoutPlans(userId) 
+          : <Map<String, dynamic>>[];
+          
+      List<Workout> todayWorkouts = [];
+      
+      if (plans.isNotEmpty) {
+        // Only load today's workouts if we have a plan
+        todayWorkouts = await _workoutService.getTodayWorkouts();
+      }
+
       final recommendedWorkouts =
           await _workoutService.getRecommendedWorkouts();
 
@@ -107,16 +130,42 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     }
   }
 
+  Future<void> _loadUserPlans() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      print('No user ID - cannot load plans');
+      return;
+    }
+
+    try {
+      print('Loading plans for user: $userId');
+      final plans = await WorkoutPlanService().getUserWorkoutPlans(userId);
+      print('Loaded ${plans.length} plans');
+      if (mounted) {
+        setState(() {
+          _userPlans = plans;
+        });
+      }
+    } catch (e) {
+      print('Error loading user plans: $e');
+      if (mounted) {
+        setState(() {
+          _userPlans = []; // Set to empty list on error
+        });
+      }
+    }
+  }
+
   void _showWorkoutDetails(Workout workout) {
     WorkoutDetailSheet.show(
       context,
       workout,
       isDarkMode: ref.watch(themeProvider),
-      onStartWorkout: () => _startWorkoutFromRecommended(workout),
+      onStartWorkout: () => _startWorkoutFromRecommended(workout, closeOnAdd: true),
     );
   }
 
-  void _startWorkoutFromRecommended(Workout workout) {
+  void _startWorkoutFromRecommended(Workout workout, {bool closeOnAdd = false}) {
     if (!_todayWorkouts.any((w) => w.id == workout.id)) {
       setState(() {
         _todayWorkouts.add(workout);
@@ -125,8 +174,21 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           _filteredWorkouts.add(workout);
         }
       });
+
     }
-    Navigator.pop(context);
+    
+    if (closeOnAdd) {
+      Navigator.pop(context);
+    } else {
+       ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${workout.title} added to today!', style: TextStyle(color: Colors.black)),
+          backgroundColor: Color(0xFFCEF24B),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _startTimer(int index) {
@@ -151,55 +213,100 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           _remainingSeconds = _remainingSeconds! - 1;
         });
       } else {
-        _timer?.cancel();
-        
-        // Complete the workout first (this updates the streak)
-        await _workoutService.completeWorkout(_filteredWorkouts[index]);
-        
-        // NOW check if both streaks are completed (after the update)
-        final gamificationService = GamificationService();
-        final bothCompleted = gamificationService.areBothStreaksCompletedToday();
-        
-        if (mounted) {
-          if (bothCompleted) {
-            // Show global streak success page
-            final globalStreak = gamificationService.getCurrentData().stats.currentStreak;
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => GlobalStreakSuccessPage(
-                  globalStreak: globalStreak,
-                  themeColor: const Color(0xFFCEF24B), // Lime green for workout
-                ),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-              ),
-            );
-          } else {
-            // Show simple snackbar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Workout completed! 💪',
-                  style: TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.black,
-                duration: const Duration(seconds: 2),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        }
-
-        setState(() {
-          _completed.add(workout.id);
-          _playingIndex = null;
-          _remainingSeconds = null;
-        });
+        await _handleWorkoutCompletion(index);
       }
     });
   }
+
+  Future<void> _handleWorkoutCompletion(int index) async {
+    _timer?.cancel();
+    final workout = _filteredWorkouts[index];
+
+    setState(() {
+      _isSubmitting = true; // Start loading
+    });
+
+    try {
+      // Check if this is the first workout of the day BEFORE completing
+      final gamificationService = GamificationService();
+      final isFirstWorkoutOfDay = await gamificationService.isFirstOfDayForType(StreakType.workout);
+
+      // Complete the workout (this updates the streak)
+      // Now handles offline storage automatically via WorkoutService
+      await _workoutService.completeWorkout(workout);
+
+      // Check for level up when adding XP
+      gamificationService.onLevelUp = (newLevel, xpGained) async {
+        if (mounted) {
+           final currentData = await gamificationService.getCurrentData();
+           final totalXP = currentData.stats.currentXp;
+
+           await Navigator.of(context).push(
+             PageRouteBuilder(
+               opaque: false,
+               pageBuilder: (_, __, ___) => LevelUpPage(
+                 newLevel: newLevel,
+                 xpGained: xpGained,
+                 totalXP: totalXP,
+               ),
+             ),
+           );
+        }
+      };
+
+      if (mounted) {
+        if (isFirstWorkoutOfDay) {
+          // Fetch latest data after update
+          // final currentStreak = await gamificationService.getStreak(StreakType.workout); // REMOVED
+          final data = await gamificationService.getCurrentData();
+          final streakCount = data.stats.workoutStreak; // Use verified property
+
+          // Navigate to Global Streak Success Page
+          await Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  GlobalStreakSuccessPage(
+                globalStreak: streakCount,
+                themeColor: const Color(0xFFCEF24B), // Lime
+                title: 'Workout Streak!',
+                subtitle: 'Great job keeping up the momentum!',
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            ),
+          );
+        } else {
+          // Show simple snackbar for subsequent workouts
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Workout completed! 💪',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.black,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        _completed.add(workout.id);
+        _playingIndex = null;
+        _remainingSeconds = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false; // Stop loading
+        });
+      }
+    }
+  }
+
 
   void _pauseTimer() {
     _timer?.cancel();
@@ -229,6 +336,21 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       _pauseTimer();
     } else {
       _startTimer(_selectedIndex);
+    }
+  }
+
+  void _onCapsuleComplete() {
+    _handleWorkoutCompletion(_selectedIndex);
+  }
+
+  void _onNextWorkout() {
+    if (_selectedIndex < _filteredWorkouts.length - 1) {
+      setState(() {
+        _selectedIndex = _selectedIndex + 1;
+        _remainingSeconds = null;
+        _playingIndex = null; // Auto-pause or auto-play? User said "moves to next workout".
+        // Let's just select it. If they want to play, they press play.
+      });
     }
   }
 
@@ -269,36 +391,35 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
             _selectedIndex < _filteredWorkouts.length
         ? _filteredWorkouts[_selectedIndex]
         : null;
+    
+    // Check if there is a next workout available for the "Next" button
+    final hasNextWorkout = _filteredWorkouts.isNotEmpty && _selectedIndex < _filteredWorkouts.length - 1;
 
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_outlined, color: appBarIconColor),
+        leading: GlobalBackButton(
+          isDark: isDarkMode,
           onPressed: () => Navigator.maybePop(context),
         ),
+        actions: [
+          // Removed + icon from AppBar
+          SizedBox(width: SizeConfig.w(16)),
+        ],
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         elevation: 0,
         iconTheme: IconThemeData(color: appBarIconColor),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: appBarIconColor,
-            ),
-            onPressed: () {
-              ref.read(themeProvider.notifier).toggleTheme();
-            },
-          ),
-        ],
       ),
       body: StreakCelebrationOverlay(
         key: _celebrationKey,
         child: SafeArea(
         child: _isLoading
             ? Center(
-                child: CircularProgressIndicator(
+                child: BouncingDotsIndicator(
                   color: isDarkMode ? Colors.white : Colors.black,
                 ),
               )
@@ -323,13 +444,13 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
 
                     SizedBox(height: SizeConfig.h(24)),
 
-                    // 2. Steps Counter
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: const StepCounterCard(
+                    // 2. Steps Counter (Centered)
+                    Center(
+                      child: StepCounterCard(
                         steps: 8234,
                         maxSteps: 10000,
                         distanceKm: 6.5,
+                        isDarkMode: isDarkMode,
                       ),
                     ),
 
@@ -338,8 +459,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                     // 3. Workout Streak
                     StreamBuilder<GamificationData>(
                       stream: GamificationService().gamificationStream,
-                      initialData: GamificationService().getCurrentData(),
                       builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox.shrink();
                         final data = snapshot.data!;
 
                         return Padding(
@@ -348,15 +469,23 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                             streakDays: data.stats.workoutStreak,
                             isDarkMode: isDarkMode,
                             title: 'Workout Streak',
-                            icon: Icons.fitness_center_rounded,
+                            currentLevel: data.stats.currentLevel,
+                            currentXp: data.stats.currentXp,
+                            nextLevelXp: GamificationService().getXpForNextLevel(data.stats.currentLevel),
+                            // icon: Icons.fitness_center_rounded, // Icon removed in new design or handled internally if needed, but constructor allows it? 
+                            // *Correction*: My new `StreakCard` removed `icon` param?
+                            // Let me check my write_to_file...
+                            // Yes, `StreakCard` constructor doesn't have `icon` anymore.
                             gradientColors: isDarkMode
                                 ? [
-                                    const Color(0xFFFF416C),
-                                    const Color(0xFFFF4B2B)
+                                    Colors.black,
+                                    const Color(0xFF1A1A1A), // Dark grey
+                                    const Color(0xFFCEF24B), // Lime accent
                                   ]
                                 : [
-                                    const Color(0xFFFF512F),
-                                    const Color(0xFFDD2476)
+                                    Colors.white,
+                                    const Color(0xFFF5F5F5), // Light grey
+                                    const Color(0xFFCEF24B), // Lime accent
                                   ],
                           ),
                         );
@@ -384,8 +513,10 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                           kcal: currentWorkout.caloriesBurned,
                           isPlaying: _playingIndex != null &&
                               _playingIndex == _selectedIndex,
-                          heroTag: 'play_button_$_selectedIndex',
+                          heroTag: 'play_button_${currentWorkout.id}',
                           onToggle: _onCapsuleToggle,
+                          onComplete: _onCapsuleComplete,  // Wire up complete button
+                          onNext: hasNextWorkout ? _onNextWorkout : null, // Pass next callback if available
                           points: currentWorkout.points,
                           isCompleted: _completed.contains(currentWorkout.id),
                           remainingSeconds: _selectedIndex == _playingIndex ||
@@ -399,107 +530,139 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                       SizedBox(height: SizeConfig.h(24)),
                     ],
 
-                    // 5. Recommended Workouts
+                    // Divider before My Plans
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
-                      child: Text(
-                        "Recommended Workouts",
-                        style: TextStyle(
-                          fontSize: SizeConfig.sp(18),
-                          fontWeight: FontWeight.w600,
-                          color: primaryText,
-                        ),
-                      ),
+                      child: Divider(color: borderColor, thickness: 1),
                     ),
-
-                    SizedBox(height: SizeConfig.h(12)),
-
-                    // Category chips
-                    SizedBox(
-                      height: SizeConfig.h(40),
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        children: WorkoutCategory.values.map((category) {
-                          final isFirst =
-                              category == WorkoutCategory.values.first;
-                          final isLast = category == WorkoutCategory.values.last;
-
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              left: isFirst ? horizontal : SizeConfig.w(8),
-                              right: isLast ? horizontal : 0,
-                            ),
-                            child: CategoryChip(
-                              category: category,
-                              isSelected: _selectedCategory == category,
-                              onTap: () => _onCategorySelected(category),
-                              isDarkMode: isDarkMode,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-
-                    SizedBox(height: SizeConfig.h(16)),
-
-                    // Recommended workout cards
-                    if (_recommendedWorkouts.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.all(horizontal),
-                        child: Center(
-                          child: Text(
-                            "No recommended workouts available",
-                            style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white54
-                                  : Colors.grey.shade600,
-                              fontSize: SizeConfig.sp(14),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      SizedBox(
-                        height: SizeConfig.h(180),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _recommendedWorkouts.length,
-                          itemBuilder: (context, index) {
-                            final workout = _recommendedWorkouts[index];
-                            final isFirst = index == 0;
-                            final isLast =
-                                index == _recommendedWorkouts.length - 1;
-
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                left: isFirst ? horizontal : SizeConfig.w(8),
-                                right: isLast ? horizontal : 0,
-                              ),
-                              child: WorkoutDiscoveryCard(
-                                workout: workout,
-                                isDarkMode: isDarkMode,
-                                onTap: () => _showWorkoutDetails(workout),
-                                onAddToPlan: () =>
-                                    _startWorkoutFromRecommended(workout),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
                     SizedBox(height: SizeConfig.h(24)),
 
-                    if (currentWorkout != null) ...[
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontal),
-                        child: Divider(color: borderColor, thickness: 1),
+                    // 5. My Plans Section (Always show)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "My Plans",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(18),
+                              fontWeight: FontWeight.w600,
+                              color: primaryText,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const CreateWorkoutPlanPage()),
+                              );
+                              if (result == true) {
+                                _loadWorkouts();
+                                _loadUserPlans();
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFCEF24B),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.add, size: 16, color: Colors.black),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "Create Plan",
+                                    style: TextStyle(
+                                      fontSize: SizeConfig.sp(12),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: SizeConfig.h(24)),
-                    ],
+                    ),
+                    SizedBox(height: SizeConfig.h(12)),
+                    
+                    // Plans list or empty state
+                    _userPlans.isEmpty
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontal),
+                            child: Container(
+                              padding: EdgeInsets.all(SizeConfig.w(24)),
+                              decoration: BoxDecoration(
+                                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDarkMode ? Colors.white10 : Colors.black12,
+                                ),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.fitness_center_outlined,
+                                      size: SizeConfig.w(48),
+                                      color: isDarkMode ? Colors.white54 : Colors.black38,
+                                    ),
+                                    SizedBox(height: SizeConfig.h(12)),
+                                    Text(
+                                      'No workout plans yet',
+                                      style: TextStyle(
+                                        fontSize: SizeConfig.sp(16),
+                                        fontWeight: FontWeight.w600,
+                                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                                      ),
+                                    ),
+                                    SizedBox(height: SizeConfig.h(6)),
+                                    Text(
+                                      'Tap "Create Plan" to get started',
+                                      style: TextStyle(
+                                        fontSize: SizeConfig.sp(13),
+                                        color: isDarkMode ? Colors.white54 : Colors.black38,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : SizedBox(
+                            height: SizeConfig.h(160),
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: _userPlans.length,
+                              itemBuilder: (context, index) {
+                                final plan = _userPlans[index];
+                                final isFirst = index == 0;
+                                final isLast = index == _userPlans.length - 1;
 
-                    // 6. Today's Workouts
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    left: isFirst ? horizontal : SizeConfig.w(8),
+                                    right: isLast ? horizontal : 0,
+                                  ),
+                                  child: _buildPlanCard(plan, isDarkMode, const Color(0xFFCEF24B), isDarkMode ? const Color(0xFF1E1E1E) : Colors.white, primaryText),
+                                );
+                              },
+                            ),
+                          ),
+                    
+                    SizedBox(height: SizeConfig.h(24)),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontal),
+                      child: Divider(color: borderColor, thickness: 1),
+                    ),
+                    SizedBox(height: SizeConfig.h(24)),
+
+                    // 6. Today's Workouts Header (moved up)
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: horizontal),
                       child: Row(
@@ -559,6 +722,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                             final isPlaying =
                                 _playingIndex != null && _playingIndex == index;
                             final isCompleted = _completed.contains(workout.id);
+                            final isPaused = _selectedIndex == index && !isPlaying && !isCompleted;
 
                             return InteractiveWorkoutCard(
                               key: ValueKey('workout_${workout.id}_$index'),
@@ -566,6 +730,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                               index: index,
                               isPlaying: isPlaying,
                               isCompleted: isCompleted,
+                              isPaused: isPaused,
                               isDarkMode: isDarkMode,
                               onPressed: () {
                                 if (isCompleted) {
@@ -589,6 +754,139 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                 ),
               ),
         ),
+      ),
+      ),
+      
+      // Page-wide Loading Overlay
+      if (_isSubmitting)
+        Positioned.fill(
+          child: Stack(
+            children: [
+              // 1. AbsorbPointer to block ALL input
+              AbsorbPointer(
+                absorbing: true,
+                child: Container(
+                  color: Colors.black.withOpacity(0.3), // Semi-transparent dim
+                ),
+              ),
+              // 2. Centered Bouncing Dots
+              Center(
+                child: BouncingDotsIndicator(
+                  color: isDarkMode ? const Color(0xFFCEF24B) : Colors.white,
+                  size: 12.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlanCard(Map<String, dynamic> plan, bool isDark, Color accentColor, Color cardColor, Color textColor) {
+    final weeklyPlan = plan['weeklyPlan'] as List? ?? [];
+    final daysCount = weeklyPlan.length;
+    final isActive = plan['isActive'] == true;
+
+    return Container(
+      width: SizeConfig.w(220),
+      padding: EdgeInsets.all(SizeConfig.w(20)),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive ? accentColor : (isDark ? Colors.white10 : Colors.black12),
+          width: isActive ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black12,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isActive)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: accentColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'ACTIVE',
+                style: TextStyle(
+                  fontSize: SizeConfig.sp(10),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          if (isActive) SizedBox(height: SizeConfig.h(12)),
+          Text(
+            plan['name'] ?? 'Workout Plan',
+            style: TextStyle(
+              fontSize: SizeConfig.sp(16),
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              height: 1.2,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: SizeConfig.h(8)),
+          Text(
+            '$daysCount days/week',
+            style: TextStyle(
+              fontSize: SizeConfig.sp(13),
+              color: textColor.withOpacity(0.6),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          if (!isActive)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final userId = FirebaseAuth.instance.currentUser?.uid;
+                  if (userId != null) {
+                    await WorkoutPlanService().setActiveWorkoutPlan(
+                      userId,
+                      plan['id'],
+                      DateTime.now(),
+                    );
+                    _loadWorkouts();
+                    _loadUserPlans();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Plan activated!'),
+                        backgroundColor: accentColor,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.black,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Activate',
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(14),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

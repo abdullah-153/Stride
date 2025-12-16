@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
+import '../../pages/water_goal_success_page.dart';
 
 class WaterIntakeSliderCard extends StatefulWidget {
   final bool isDarkMode;
@@ -83,23 +84,15 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   }
 
   void _showGoalReached() {
-    // Simple visual feedback
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.water_drop, color: Colors.blue),
-            SizedBox(width: SizeConfig.w(8)),
-            const Text(
-              'Hydration Goal Reached! 🎉',
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.black87,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    // Navigate to Success Page with Wave Animation
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const WaterGoalSuccessPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
       ),
     );
   }

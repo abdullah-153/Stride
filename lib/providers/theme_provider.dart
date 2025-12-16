@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/shared_preferences_manager.dart';
+import 'package:flutter/services.dart';
 
 /// Notifier for managing app theme state
 class ThemeNotifier extends StateNotifier<bool> {
@@ -14,6 +15,7 @@ class ThemeNotifier extends StateNotifier<bool> {
   }
 
   Future<void> toggleTheme() async {
+    HapticFeedback.selectionClick();
     state = !state;
     final prefsManager = await SharedPreferencesManager.getInstance();
     await prefsManager.setBool(SharedPreferencesManager.keyIsDarkMode, state);

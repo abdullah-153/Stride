@@ -3,6 +3,10 @@ import '../../utils/size_config.dart';
 import 'fluid_wave_progress.dart';
 
 class StreakProgress extends StatelessWidget {
+  final int currentLevel;
+  final int currentXp;
+  final int nextLevelXp;
+
   final bool isDarkMode;
   final int streakDays;
   final DateTime? lastDietLogDate;
@@ -14,6 +18,9 @@ class StreakProgress extends StatelessWidget {
     required this.streakDays,
     this.lastDietLogDate,
     this.lastWorkoutLogDate,
+    required this.currentLevel,
+    required this.currentXp,
+    required this.nextLevelXp,
   });
 
   @override
@@ -57,9 +64,7 @@ class StreakProgress extends StatelessWidget {
           SizedBox(height: SizeConfig.h(15)),
           _buildTotalStreakCount(primaryTextColor, secondaryTextColor),
           Divider(color: dividerColor, height: SizeConfig.h(30)),
-          _buildBadgeProgress(primaryTextColor, secondaryTextColor),
-          SizedBox(height: SizeConfig.h(15)),
-          _buildCollectedBadges(primaryTextColor, isDarkMode),
+          _buildLevelProgress(primaryTextColor, secondaryTextColor, isDarkMode),
         ],
       ),
     );
@@ -207,101 +212,85 @@ class StreakProgress extends StatelessWidget {
     );
   }
 
-  Widget _buildBadgeProgress(Color primaryColor, Color secondaryColor) {
-    final currentStreak = streakDays;
-    const requiredStreak = 10;
-    final progress = currentStreak / requiredStreak;
-
+  Widget _buildLevelProgress(Color primaryColor, Color secondaryColor, bool isDarkMode) {
+    final progress = currentXp / nextLevelXp;
+    
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+           children: [
+             Text(
+               'LVL $currentLevel',
+               style: TextStyle(
+                 color: primaryColor,
+                 fontSize: SizeConfig.sp(16),
+                 fontWeight: FontWeight.bold,
+               ),
+             ),
+             Text(
+               '$currentXp / $nextLevelXp XP',
+               style: TextStyle(
+                 color: secondaryColor,
+                 fontSize: SizeConfig.sp(14),
+                 fontWeight: FontWeight.w500,
+               ),
+             ),
+           ],
+        ),
+        SizedBox(height: SizeConfig.h(12)),
+        // Progress Bar
+        Stack(
           children: [
-            Text(
-              'Next Badge: Newbie',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: SizeConfig.sp(14),
-                fontWeight: FontWeight.w600,
+            Container(
+              height: SizeConfig.h(24),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(SizeConfig.w(8)),
               ),
             ),
-            Text(
-              '$currentStreak / $requiredStreak days',
-              style: TextStyle(
-                color: secondaryColor,
-                fontSize: SizeConfig.sp(14),
-                fontWeight: FontWeight.w500,
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
+                  height: SizeConfig.h(24),
+                  width: constraints.maxWidth * progress,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4A90E2), Color(0xFF007AFF)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(SizeConfig.w(8)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF007AFF).withOpacity(0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
         SizedBox(height: SizeConfig.h(8)),
-        SizedBox(height: SizeConfig.h(8)),
-        FluidWaveProgress(
-          value: progress,
-          height: SizeConfig.h(32), // Vertically larger
-          borderRadius: SizeConfig.w(12), // Boxy capsule shape
-          backgroundColor: isDarkMode
-              ? Colors.grey.shade800
-              : Colors.grey.shade200,
-          color: isDarkMode ? Colors.white : Colors.black,
-          isDarkMode: isDarkMode,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCollectedBadges(Color primaryColor, bool isDarkMode) {
-    final iconColor = isDarkMode
-        ? Colors.white.withOpacity(0.3)
-        : Colors.black.withOpacity(0.2);
-    return Row(
-      children: [
-        Text(
-          'Badges',
-          style: TextStyle(
-            color: primaryColor,
-            fontSize: SizeConfig.sp(14),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const Spacer(),
-        SizedBox(
-          width: SizeConfig.w(80),
-          height: SizeConfig.h(30),
-          child: Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              // Placeholder for more badges
-              Positioned(
-                right: SizeConfig.w(30),
-                child: Icon(
-                  Icons.shield_rounded,
-                  color: iconColor,
-                  size: SizeConfig.w(28),
-                ),
-              ),
-              Positioned(
-                right: SizeConfig.w(15),
-                child: Icon(
-                  Icons.shield_rounded,
-                  color: iconColor,
-                  size: SizeConfig.w(28),
-                ),
-              ),
-              // The most recent badge
-              Positioned(
-                right: 0,
-                child: Icon(
-                  Icons.shield_moon_rounded,
-                  color: Colors.amber,
-                  size: SizeConfig.w(28),
-                ),
-              ),
-            ],
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+             Text(
+               'Next Level: ${currentLevel + 1}',
+               style: TextStyle(
+                 color: secondaryColor,
+                 fontSize: SizeConfig.sp(12),
+                 fontWeight: FontWeight.w500,
+               ),
+             ),
+          ],
         ),
       ],
     );
   }
 }
+

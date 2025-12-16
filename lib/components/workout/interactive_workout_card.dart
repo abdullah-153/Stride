@@ -8,6 +8,7 @@ class InteractiveWorkoutCard extends StatefulWidget {
   final int index;
   final bool isPlaying;
   final bool isCompleted;
+  final bool isPaused;
   final bool isDarkMode;
   final VoidCallback onPressed;
   final VoidCallback onDelete;
@@ -18,6 +19,7 @@ class InteractiveWorkoutCard extends StatefulWidget {
     required this.index,
     required this.isPlaying,
     required this.isCompleted,
+    this.isPaused = false,
     required this.isDarkMode,
     required this.onPressed,
     required this.onDelete,
@@ -158,9 +160,11 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
               time: "${widget.workout.durationMinutes}",
               title: widget.workout.title,
               points: widget.workout.points,
-              kcal: widget.workout.caloriesBurned,
+              metricValue: widget.workout.caloriesBurned.toString(),
+              metricLabel: "kcal",
               isPlaying: widget.isPlaying,
               isCompleted: widget.isCompleted,
+              isPaused: widget.isPaused,
               isDarkMode: widget.isDarkMode,
               heroTag: 'workout_${widget.workout.id}_${widget.index}',
               onPressed: _showDeleteOption ? null : widget.onPressed,

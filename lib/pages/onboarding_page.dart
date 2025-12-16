@@ -142,6 +142,7 @@ class OnboardingPageState extends State<OnboardingPage>
                   leading: IconButton(
                     icon: Icon(
                       Icons.arrow_back_ios_new_outlined,
+                      size: SizeConfig.w(30),
                       color: _pageColors[_currentIndex],
                     ),
                     padding: const EdgeInsets.only(left: 0),
@@ -204,13 +205,12 @@ class OnboardingPageState extends State<OnboardingPage>
             top: MediaQuery.of(context).padding.top,
             left: 0,
             child: IconButton(
-              iconSize: 24,
+              iconSize: SizeConfig.w(30),
               padding: const EdgeInsets.only(left: 20),
-              icon: Image.asset(
-                'lib/assets/icons/back-arrow.png',
+              icon: Icon(
+                Icons.arrow_back_ios_new_outlined,
+                size: SizeConfig.w(30),
                 color: Colors.white,
-                width: 30,
-                height: 30,
               ),
               onPressed: _handleBackPressed,
             ),

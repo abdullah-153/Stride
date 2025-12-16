@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
+import 'package:flutter/services.dart';
 
 class StreakCelebrationOverlay extends StatefulWidget {
   final Widget child;
@@ -58,6 +59,9 @@ class StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
 
   void celebrate() {
     if (_isAnimating) return;
+
+    // Heavy haptic feedback for streak increase
+    HapticFeedback.heavyImpact();
 
     final random = Random();
     _particles.clear();

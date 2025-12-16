@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
+import 'package:flutter/services.dart';
 
 class EnhancedMealCard extends StatelessWidget {
   final Meal meal;
@@ -32,7 +33,10 @@ class EnhancedMealCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap?.call();
+          },
           borderRadius: BorderRadius.circular(SizeConfig.w(16)),
           child: Ink(
             padding: EdgeInsets.all(SizeConfig.w(14)),
@@ -117,8 +121,10 @@ class EnhancedMealCard extends StatelessWidget {
                     color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                     onSelected: (value) {
                       if (value == 'edit' && onEdit != null) {
+                        HapticFeedback.lightImpact();
                         onEdit!();
                       } else if (value == 'delete' && onDelete != null) {
+                        HapticFeedback.mediumImpact();
                         onDelete!();
                       }
                     },

@@ -6,6 +6,7 @@ import '../providers/theme_provider.dart';
 import '../utils/image_picker_helper.dart';
 import '../utils/validators.dart';
 import '../utils/size_config.dart';
+import '../components/shared/bouncing_dots_indicator.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -114,7 +115,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: BouncingDotsIndicator(size: 8),
                 ),
               ),
             )

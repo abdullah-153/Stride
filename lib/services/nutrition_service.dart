@@ -1,268 +1,213 @@
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/nutrition_model.dart';
 import '../models/gamification_model.dart';
+import 'package:fitness_tracker_frontend/models/nutrition_model.dart';
+import 'package:fitness_tracker_frontend/models/diet_plan_model.dart';
 import 'gamification_service.dart';
+import 'firestore/nutrition_firestore_service.dart';
+import 'user_profile_service.dart';
 
-/// Service for managing nutrition tracking and meal logging.
-///
-/// Handles daily nutrition data, meal management, water intake tracking,
-/// and favorite meals. Integrates with [GamificationService] to award XP
-/// for logging meals and achieving nutrition goals.
-/// Uses singleton pattern to ensure single instance across the app.
 class NutritionService {
   static final NutritionService _instance = NutritionService._internal();
   factory NutritionService() => _instance;
   NutritionService._internal();
 
-  final NutritionGoal _defaultGoal = NutritionGoal(
-    dailyCalories: 2000,
-    protein: 150,
-    carbs: 250,
-    fats: 45,
-    waterGoal: 2500,
-  );
-
-  final Map<DateTime, DailyNutrition> _nutritionData = {};
-  final List<Meal> _favoriteMeals = [];
+  final NutritionFirestoreService _firestoreService = NutritionFirestoreService();
   final GamificationService _gamificationService = GamificationService();
+  final UserProfileService _userProfileService = UserProfileService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String? get _currentUserId => _auth.currentUser?.uid;
 
   Future<NutritionGoal> getNutritionGoal() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _defaultGoal;
-  }
-
-  Future<DailyNutrition> getDailyNutrition(DateTime date) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final dateKey = DateTime(date.year, date.month, date.day);
-
-    if (_nutritionData.containsKey(dateKey)) {
-      return _nutritionData[dateKey]!;
-    }
-
-    final isToday = _isSameDay(date, DateTime.now());
-    final meals = isToday ? _getTodayMockMeals() : _getRandomMockMeals(date);
-    final waterIntake = isToday ? 1500 : (date.day * 100) % 2500;
-
-    final dailyNutrition = DailyNutrition(
-      date: dateKey,
-      meals: meals,
-      waterIntake: waterIntake,
-      goal: _defaultGoal,
-    );
-
-    _nutritionData[dateKey] = dailyNutrition;
-    return dailyNutrition;
-  }
-
-  Future<void> logMeal(Meal meal) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final today = DateTime.now();
-    final dateKey = DateTime(today.year, today.month, today.day);
-
-    if (_nutritionData.containsKey(dateKey)) {
-      _nutritionData[dateKey]!.meals.add(meal);
-    } else {
-      _nutritionData[dateKey] = DailyNutrition(
-        date: dateKey,
-        meals: [meal],
-        waterIntake: 0,
-        goal: _defaultGoal,
+    if (_currentUserId == null) {
+      return NutritionGoal(
+        dailyCalories: 2000,
+        protein: 150,
+        carbs: 250,
+        fats: 45,
+        waterGoal: 2500,
       );
     }
 
-    // Gamification Integration
-    _gamificationService.addXp(10); // 10 XP per meal
-    _gamificationService.checkStreak(StreakType.diet, today);
+    try {
+      // First try to get from user profile (Single Source of Truth)
+      final profile = await _userProfileService.loadProfile();
+      if (profile.nutritionGoal != null) {
+        return profile.nutritionGoal!;
+      }
 
-    // Check for protein goal
-    final currentDay = _nutritionData[dateKey]!;
-    if (currentDay.proteinGoalMet) {
-      _gamificationService.unlockAchievement('protein_pro');
-      _gamificationService.addXp(50); // Bonus for hitting protein goal
+      // Fallback to legacy behavior
+      return await _firestoreService.getNutritionGoals(_currentUserId!);
+    } catch (e) {
+      print('Error getting nutrition goal: $e');
+      return NutritionGoal(
+        dailyCalories: 2000,
+        protein: 150,
+        carbs: 250,
+        fats: 45,
+        waterGoal: 2500,
+      );
     }
   }
 
-  Future<void> deleteMeal(String mealId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+  Future<DailyNutrition?> getDailyNutrition(DateTime date) async {
+    if (_currentUserId == null) return null;
 
-    final today = DateTime.now();
-    final dateKey = DateTime(today.year, today.month, today.day);
+    try {
+      return await _firestoreService.getDailyNutrition(_currentUserId!, date);
+    } catch (e) {
+      print('Error getting daily nutrition: $e');
+      return null;
+    }
+  }
 
-    if (_nutritionData.containsKey(dateKey)) {
-      _nutritionData[dateKey]!.meals.removeWhere((m) => m.id == mealId);
+  Stream<DailyNutrition?> streamDailyNutrition(DateTime date) {
+    if (_currentUserId == null) {
+      return Stream.value(null);
+    }
+
+    return _firestoreService.streamDailyNutrition(_currentUserId!, date);
+  }
+
+  Future<void> logMeal(Meal meal) async {
+    if (_currentUserId == null) return;
+
+    try {
+      final today = DateTime.now();
+      
+      // Get current goals from profile to ensure new day creation uses correct goals
+      final profile = await _userProfileService.loadProfile();
+      
+      await _firestoreService.addMeal(_currentUserId!, today, meal, currentGoals: profile.nutritionGoal);
+
+      await _gamificationService.addXp(10);
+      await _gamificationService.checkStreak(StreakType.diet, today);
+
+      await _userProfileService.incrementMealsLogged();
+
+      final dailyNutrition = await _firestoreService.getDailyNutrition(_currentUserId!, today);
+      if (dailyNutrition != null && dailyNutrition.proteinGoalMet) {
+        await _gamificationService.unlockAchievement('protein_pro');
+        await _gamificationService.addXp(50);
+      }
+    } catch (e) {
+      print('Error logging meal: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateMeal(DateTime date, Meal meal) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.updateMeal(_currentUserId!, date, meal);
+    } catch (e) {
+      print('Error updating meal: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteMeal(DateTime date, String mealId) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.deleteMeal(_currentUserId!, date, mealId);
+    } catch (e) {
+      print('Error deleting meal: $e');
+      rethrow;
+    }
+  }
+
+  Future<String> uploadMealImage(String mealId, File imageFile) async {
+    if (_currentUserId == null) {
+      throw Exception('User must be authenticated to upload meal image');
+    }
+
+    try {
+      return await _firestoreService.uploadMealImage(_currentUserId!, mealId, imageFile);
+    } catch (e) {
+      print('Error uploading meal image: $e');
+      rethrow;
     }
   }
 
   Future<void> logWater(int amount) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    if (_currentUserId == null) return;
 
-    final today = DateTime.now();
-    final dateKey = DateTime(today.year, today.month, today.day);
+    try {
+      final today = DateTime.now();
+      
+      // Get current goals from profile to ensure new day creation uses correct goals
+      final profile = await _userProfileService.loadProfile();
+      
+      final current = await _firestoreService.getDailyNutrition(_currentUserId!, today);
+      final newAmount = (current?.waterIntake ?? 0) + amount;
 
-    if (_nutritionData.containsKey(dateKey)) {
-      final current = _nutritionData[dateKey]!;
-      _nutritionData[dateKey] = DailyNutrition(
-        date: current.date,
-        meals: current.meals,
-        waterIntake: current.waterIntake + amount,
-        goal: current.goal,
-      );
-    } else {
-      _nutritionData[dateKey] = DailyNutrition(
-        date: dateKey,
-        meals: [],
-        waterIntake: amount,
-        goal: _defaultGoal,
-      );
-    }
+      await _firestoreService.updateWaterIntake(_currentUserId!, today, newAmount, currentGoals: profile.nutritionGoal);
 
-    // Gamification Integration
-    _gamificationService.addXp(5); // 5 XP per water log
+      await _gamificationService.addXp(10); // Increased XP
+      await _gamificationService.checkStreak(StreakType.diet, today); // Water counts for diet streak!
 
-    final currentDay = _nutritionData[dateKey]!;
-    if (currentDay.waterGoalMet) {
-      _gamificationService.unlockAchievement('hydration_hero');
-      _gamificationService.addXp(30); // Bonus for hitting water goal
-    }
-  }
-
-  Future<List<Meal>> getRecentMeals() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final recentMeals = <Meal>[];
-    final now = DateTime.now();
-
-    for (int i = 0; i < 7; i++) {
-      final date = now.subtract(Duration(days: i));
-      final dateKey = DateTime(date.year, date.month, date.day);
-
-      if (_nutritionData.containsKey(dateKey)) {
-        recentMeals.addAll(_nutritionData[dateKey]!.meals);
+      final dailyNutrition = await _firestoreService.getDailyNutrition(_currentUserId!, today);
+      if (dailyNutrition != null && dailyNutrition.waterGoalMet) {
+        await _gamificationService.unlockAchievement('hydration_hero');
+        await _gamificationService.addXp(30);
       }
-    }
-
-    final uniqueMeals = <String, Meal>{};
-    for (var meal in recentMeals) {
-      if (!uniqueMeals.containsKey(meal.name)) {
-        uniqueMeals[meal.name] = meal;
-      }
-    }
-
-    return uniqueMeals.values.take(10).toList();
-  }
-
-  Future<List<Meal>> getFavoriteMeals() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return List.from(_favoriteMeals);
-  }
-
-  Future<void> toggleFavorite(String mealId) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    for (var dailyData in _nutritionData.values) {
-      for (var meal in dailyData.meals) {
-        if (meal.id == mealId) {
-          final updatedMeal = meal.copyWith(isFavorite: !meal.isFavorite);
-          final index = dailyData.meals.indexOf(meal);
-          dailyData.meals[index] = updatedMeal;
-
-          if (updatedMeal.isFavorite) {
-            if (!_favoriteMeals.any((m) => m.name == updatedMeal.name)) {
-              _favoriteMeals.add(updatedMeal);
-            }
-          } else {
-            _favoriteMeals.removeWhere((m) => m.name == updatedMeal.name);
-          }
-          return;
-        }
-      }
+    } catch (e) {
+      print('Error logging water: $e');
+      rethrow;
     }
   }
 
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
+  Future<void> saveDietPlan(DietPlan plan) async {
+    if (_currentUserId == null) return;
 
-  List<Meal> _getTodayMockMeals() {
-    final now = DateTime.now();
-    return [
-      Meal(
-        id: 'today_1',
-        name: 'Oatmeal with Berries',
-        type: MealType.breakfast,
-        calories: 350,
-        macros: MacroNutrients(protein: 12, carbs: 60, fats: 8),
-        timestamp: DateTime(now.year, now.month, now.day, 8, 30),
-        isFavorite: true,
-      ),
-      Meal(
-        id: 'today_2',
-        name: 'Grilled Chicken Salad',
-        type: MealType.lunch,
-        calories: 450,
-        macros: MacroNutrients(protein: 45, carbs: 30, fats: 15),
-        timestamp: DateTime(now.year, now.month, now.day, 13, 0),
-        isFavorite: true,
-      ),
-      Meal(
-        id: 'today_3',
-        name: 'Protein Shake',
-        type: MealType.snack,
-        calories: 200,
-        macros: MacroNutrients(protein: 30, carbs: 15, fats: 3),
-        timestamp: DateTime(now.year, now.month, now.day, 16, 0),
-        isFavorite: false,
-      ),
-    ];
-  }
+    try {
+      // 1. Update Profile (Active Plan & Default Goals)
+      await _userProfileService.updateActiveDietPlan(plan);
 
-  List<Meal> _getRandomMockMeals(DateTime date) {
-    final meals = <Meal>[];
-    final random = date.day % 3;
-
-    if (random >= 0) {
-      meals.add(
-        Meal(
-          id: 'past_${date.day}_1',
-          name: 'Scrambled Eggs & Toast',
-          type: MealType.breakfast,
-          calories: 400,
-          macros: MacroNutrients(protein: 25, carbs: 35, fats: 18),
-          timestamp: DateTime(date.year, date.month, date.day, 8, 0),
-          isFavorite: false,
-        ),
+      // 2. Update Today's Goals (so UI reflects change immediately)
+      final goals = NutritionGoal(
+        dailyCalories: plan.dailyCalories,
+        protein: plan.macros.protein,
+        carbs: plan.macros.carbs,
+        fats: plan.macros.fats,
+        waterGoal: (plan.waterIntakeLiters * 1000).round(), // Convert L to mL
       );
-    }
+      
+      await _firestoreService.updateNutritionGoals(_currentUserId!, goals);
 
-    if (random >= 1) {
-      meals.add(
-        Meal(
-          id: 'past_${date.day}_2',
-          name: 'Turkey Sandwich',
-          type: MealType.lunch,
-          calories: 500,
-          macros: MacroNutrients(protein: 35, carbs: 50, fats: 15),
-          timestamp: DateTime(date.year, date.month, date.day, 12, 30),
-          isFavorite: false,
-        ),
-      );
+      // 3. Update Today's Daily Entry Goal
+      final today = DateTime.now();
+      await _firestoreService.updateDailyGoal(_currentUserId!, today, goals);
+      
+    } catch (e) {
+      print('Error saving diet plan: $e');
+      rethrow;
     }
+  }
 
-    if (random >= 2) {
-      meals.add(
-        Meal(
-          id: 'past_${date.day}_3',
-          name: 'Salmon with Rice',
-          type: MealType.dinner,
-          calories: 600,
-          macros: MacroNutrients(protein: 40, carbs: 55, fats: 20),
-          timestamp: DateTime(date.year, date.month, date.day, 19, 0),
-          isFavorite: false,
-        ),
-      );
+  Future<void> updateNutritionGoals(NutritionGoal goals) async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestoreService.updateNutritionGoals(_currentUserId!, goals);
+    } catch (e) {
+      print('Error updating nutrition goals: $e');
+      rethrow;
     }
+  }
 
-    return meals;
+  Future<List<DailyNutrition>> getNutritionHistory(DateTime startDate, DateTime endDate) async {
+    if (_currentUserId == null) return [];
+
+    try {
+      return await _firestoreService.getNutritionHistory(_currentUserId!, startDate, endDate);
+    } catch (e) {
+      print('Error getting nutrition history: $e');
+      return [];
+    }
   }
 }

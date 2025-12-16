@@ -1,18 +1,43 @@
 import 'package:flutter/material.dart';
-import '../components/shared/password_field.dart';
+import 'package:flutter/services.dart';
+import '../components/auth/auth_scaffold.dart';
+import '../components/auth/animated_input_field.dart';
+import '../components/auth/auth_navigation_buttons.dart';
+import '../components/auth/auth_glass_card.dart';
 import '../utils/size_config.dart';
 import '../utils/app_constants.dart';
 
-class LoginPage extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/auth_service.dart';
+import '../utils/transitions.dart';
+import '../pages/onboarding_page.dart';
+import '../pages/home_page.dart';
+import '../pages/register_page.dart';
+import '../pages/forgot_password_page.dart';
+
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  
+  // Page Controller for steps
+  final PageController _pageController = PageController();
+  int _currentStep = 0;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -20,204 +45,303 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void loginButtonAction() {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      _showError("Please enter all required information.");
+  Future<void> _handleContinue() async {
+    // Step 0: Email
+    if (_currentStep == 0) {
+      if (emailController.text.trim().isEmpty) {
+        _showError("Please enter your email address.");
+        return;
+      }
+      
+      // Basic email validation
+      final emailRegex = RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+      if (!emailRegex.hasMatch(emailController.text.trim())) {
+        _showError("Please enter a valid email address.");
+        return;
+      }
+
+      // Move to next step
+      _nextStep();
       return;
     }
-    Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+
+    // Step 1: Password (Login)
+    if (_currentStep == 1) {
+      if (passwordController.text.isEmpty) {
+        _showError("Please enter your password.");
+        return;
+      }
+      await _loginAction();
+    }
+  }
+
+  void _nextStep() {
+    setState(() {
+      _currentStep++;
+    });
+  }
+
+  Future<void> _loginAction() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final cred = await ref.read(authServiceProvider).signInWithEmailPassword(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+      );
+
+      // Initialize user data (creates profile/gamification if missing)
+      await ref.read(authServiceProvider).initializeUserData();
+
+      if (mounted) {
+        if (cred.additionalUserInfo?.isNewUser ?? false) {
+           Navigator.pushReplacement(
+             context,
+             FadeScalePageRoute(page: const OnboardingPage()),
+           );
+        } else {
+           Navigator.pushAndRemoveUntil(
+             context,
+             FadeScalePageRoute(page: const HomeScreen()),
+             (route) => false,
+           );
+        }
+      }
+    } catch (e) {
+      if (mounted) _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _googleLoginAction() async {
+    setState(() => _isLoading = true);
+    try {
+      final cred = await ref.read(authServiceProvider).signInWithGoogle();
+
+      // Initialize user data (creates profile/gamification if missing)
+      await ref.read(authServiceProvider).initializeUserData();
+
+      if (mounted) {
+        if (cred.additionalUserInfo?.isNewUser ?? false) {
+           Navigator.pushReplacement(
+             context,
+             FadeScalePageRoute(page: const OnboardingPage()),
+           );
+        } else {
+           Navigator.pushAndRemoveUntil(
+             context,
+             FadeScalePageRoute(page: const HomeScreen()),
+             (route) => false,
+           );
+        }
+      }
+    } catch (e) {
+      if (mounted) _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_outlined, size: SizeConfig.w(30)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Center(
-        child: SizedBox(
-          width: SizeConfig.screenWidth * 0.85,
-          height: SizeConfig.screenHeight * 0.9,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: SizeConfig.h(20)),
-              Text(
-                "Welcome Back",
-                style: TextStyle(
-                  fontWeight: FontWeight.w300,
-                  fontSize: SizeConfig.sp(40),
+    // Dynamic title/subtitle based on step
+    String title = "Welcome Back";
+    String subtitle = "Enter your email to sign in to your account.";
+    if (_currentStep == 1) {
+      title = "Enter Password";
+      subtitle = "Welcome back, ${emailController.text.trim()}";
+    }
+    
+    // Show back button on all steps
+    final bool showBack = true;
+
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentStep > 0) {
+          setState(() => _currentStep--);
+          return false;
+        }
+        return true;
+      },
+      child: AuthScaffold(
+        flow: AuthFlow.login,
+        title: title,
+        subtitle: subtitle,
+        showBackButton: showBack,
+        currentStep: _currentStep,
+        onBack: () {
+          if (_currentStep > 0) {
+             setState(() => _currentStep--);
+          } else {
+             Navigator.pop(context);
+          }
+        },
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ),
-              Text(
-                "Your next workout awaits.",
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(18),
-                  fontWeight: FontWeight.w300,
-                  color: Colors.grey[600],
-                ),
-              ),
-              SizedBox(height: SizeConfig.h(40)),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  minimumSize: Size(SizeConfig.w(300), SizeConfig.h(55)),
-                ),
-                onPressed: () {},
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: SizeConfig.h(25),
-                      width: SizeConfig.w(25),
-                      child: Image.asset(
-                        'lib/assets/icons/google.png',
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: SizeConfig.w(20)),
-                    Text(
-                      "Continue using Google",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: SizeConfig.sp(12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: SizeConfig.h(40)),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: Colors.grey[400], thickness: 1),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(10)),
-                    child: Text(
-                      "Or",
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                        fontSize: SizeConfig.sp(14),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(color: Colors.grey[400], thickness: 1),
-                  ),
-                ],
-              ),
-              SizedBox(height: SizeConfig.h(30)),
-
-              TextField(
-                controller: emailController,
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(16),
-                  color: Colors.black87,
-                ),
-                decoration: InputDecoration(
-                  floatingLabelStyle: const TextStyle(color: Colors.black),
-                  labelText: "Email",
-                  labelStyle: TextStyle(fontSize: SizeConfig.sp(12)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(SizeConfig.w(10)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(width: 3),
-                    borderRadius: BorderRadius.circular(SizeConfig.w(15)),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: SizeConfig.h(15),
-                    horizontal: SizeConfig.w(15),
-                  ),
-                ),
-              ),
-              SizedBox(height: SizeConfig.h(20)),
-
-              PasswordField(
-                label: "Password",
-                controller: passwordController,
-                vpad: 16,
-                fSize: 12,
-              ),
-              SizedBox(height: SizeConfig.h(5)),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: SizeConfig.sp(11),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: SizeConfig.h(95)),
-
-              _registerRedirect(context),
-
-              SizedBox(height: SizeConfig.h(14)),
-
-              Center(
-                child: ElevatedButton(
-                  onPressed: loginButtonAction,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    minimumSize: Size(SizeConfig.w(235), SizeConfig.h(55)),
-                  ),
-                  child: Text(
-                    "Login",
-                    style: TextStyle(
-                      fontSize: SizeConfig.sp(16),
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                       Expanded(
+                         child: AnimatedSwitcher(
+                           duration: const Duration(milliseconds: 500),
+                           transitionBuilder: (Widget child, Animation<double> animation) {
+                             // Slide transition logic could be added here, currently simple fade/scale
+                             return FadeTransition(opacity: animation, child: SlideTransition(
+                               position: Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero).animate(animation),
+                               child: child
+                             ));
+                           },
+                           child: _currentStep == 0 
+                               ? _buildEmailStep() 
+                               : _buildPasswordStep(),
+                         ),
+                       ),
+                       
+                       // Bottom Navigation
+                       Padding(
+                         padding: EdgeInsets.symmetric(
+                           horizontal: SizeConfig.w(24),
+                         ).copyWith(bottom: SizeConfig.h(24)),
+                         child: Column(
+                           mainAxisSize: MainAxisSize.min,
+                           children: [
+                              AuthNavigationButtons(
+                                onContinue: _handleContinue,
+                                onGoogleSignIn: _currentStep == 0 ? _googleLoginAction : null,
+                                isLoading: _isLoading,
+                                continueLabel: _currentStep == 0 ? "Continue" : "Log In",
+                              ),
+                              SizedBox(height: SizeConfig.h(24)),
+                              
+                              if (_currentStep == 0)
+                                GestureDetector(
+                                  onTap: () {
+                                     Navigator.pushReplacement(
+                                       context,
+                                       FadeScalePageRoute(page: const RegisterPage())
+                                     );
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: "Don't have an account? ",
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: SizeConfig.sp(14),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: "Sign Up",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: SizeConfig.sp(14),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              
+                              if (_currentStep == 1)
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() => _currentStep = 0);
+                                  },
+                                  child: Text(
+                                    "Switch Account",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: SizeConfig.sp(14),
+                                    ),
+                                  ),
+                                ),
+                           ],
+                         ),
+                       ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            );
+          }
         ),
       ),
     );
   }
 
-  Widget _registerRedirect(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Text(
-        "Don't have an account?",
-        style: TextStyle(color: Colors.black54, fontSize: SizeConfig.sp(12)),
-      ),
-      SizedBox(width: SizeConfig.w(5)),
-      GestureDetector(
-        onTap: () =>
-            Navigator.pushReplacementNamed(context, AppRoutes.register),
-        child: Text(
-          "Register",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: SizeConfig.sp(12),
+  Widget _buildEmailStep() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24)),
+      child: Column(
+        key: const ValueKey('step0'), // Key forces rebuild for animation
+        children: [
+          AuthGlassCard(
+            child: AnimatedInputField(
+              controller: emailController,
+              label: "Email Address",
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              delayMs: 200,
+            ),
           ),
-        ),
+        ],
       ),
-    ],
-  );
+    );
+  }
+
+  Widget _buildPasswordStep() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24)),
+      child: Column(
+         key: const ValueKey('step1'),
+        children: [
+          AuthGlassCard(
+            child: Column(
+              children: [
+                AnimatedInputField(
+                  controller: passwordController,
+                  label: "Password",
+                  icon: Icons.lock_outline_rounded,
+                  isPassword: true,
+                  delayMs: 200,
+                ),
+                SizedBox(height: SizeConfig.h(10)),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      // Navigate to forgot password
+                       Navigator.push(
+                         context,
+                         FadeScalePageRoute(page: const ForgotPasswordPage()),
+                       );
+                    },
+                    child: Text(
+                      "Forgot Password?",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: SizeConfig.sp(12),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

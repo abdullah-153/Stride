@@ -6,8 +6,10 @@ class StreakCard extends StatefulWidget {
   final int streakDays;
   final bool isDarkMode;
   final String title;
-  final IconData icon;
-  final List<Color>? gradientColors; // Custom gradient
+  final int currentLevel;
+  final int currentXp; // Xp towards the *next* level
+  final int nextLevelXp; // Total XP needed for next level
+  final List<Color>? gradientColors;
   final Color? textColor;
   final VoidCallback? onTap;
 
@@ -16,7 +18,9 @@ class StreakCard extends StatefulWidget {
     required this.streakDays,
     required this.isDarkMode,
     this.title = 'Current Streak',
-    this.icon = Icons.local_fire_department_rounded,
+    this.currentLevel = 1,
+    this.currentXp = 0,
+    this.nextLevelXp = 100,
     this.gradientColors,
     this.textColor,
     this.onTap,
@@ -56,19 +60,24 @@ class _StreakCardState extends State<StreakCard>
 
   @override
   Widget build(BuildContext context) {
-    // Default gradients if none provided
+    // Default gradients
     final defaultGradient = widget.isDarkMode
-        ? [const Color(0xFFFF512F), const Color(0xFFDD2476)]
-        : [const Color(0xFFFF512F), const Color(0xFFDD2476)];
+        ? [const Color(0xFFFF512F), const Color(0xFFDD2476)] // Vibrant Red/Pink
+        : [Colors.white, Colors.white]; // White for clean Light Mode
 
     final colors = widget.gradientColors ?? defaultGradient;
-    final milestone = _getNextMilestone(widget.streakDays);
-    final progress = widget.streakDays / milestone;
+    
+    // Determine text color based on background (Light mode bg -> Black text)
+    final effectiveTextColor = widget.textColor ?? (widget.isDarkMode ? Colors.white : Colors.black);
+    final secondaryTextColor = widget.isDarkMode ? Colors.white.withOpacity(0.9) : Colors.black87;
 
+    // Level Progress
+    final double levelProgress = (widget.currentXp / widget.nextLevelXp).clamp(0.0, 1.0);
+    
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
-        height: SizeConfig.h(110), // Slightly taller for milestone info
+        height: SizeConfig.h(110),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(SizeConfig.w(24)),
           gradient: LinearGradient(
@@ -76,178 +85,218 @@ class _StreakCardState extends State<StreakCard>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
+          border: Border.all(
+            color: widget.isDarkMode
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.2), // Subtle border in light mode
+            width: 1.5,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: colors[0].withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
+            widget.isDarkMode
+              // Dark Mode Shadows (Clean, subtle glow)
+              ? BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
+                )
+              // Light Mode Shadows (Soft, dispersed)
+              : BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
+                ),
           ],
         ),
-        child: Stack(
-          children: [
-            // Background Pattern (Subtle Circles)
-            Positioned(
-              right: -SizeConfig.w(20),
-              top: -SizeConfig.h(20),
-              child: Container(
-                width: SizeConfig.w(100),
-                height: SizeConfig.w(100),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(SizeConfig.w(24)),
+          child: Stack(
+            children: [
+              // Background Pattern
+              Positioned(
+                right: -SizeConfig.w(20),
+                top: -SizeConfig.h(20),
+                child: Container(
+                  width: SizeConfig.w(100),
+                  height: SizeConfig.w(100),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: -SizeConfig.h(30),
-              left: SizeConfig.w(40),
-              child: Container(
-                width: SizeConfig.w(80),
-                height: SizeConfig.w(80),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
-                ),
-              ),
-            ),
 
-            // Shimmer Effect
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return FractionallySizedBox(
-                  widthFactor: 1.5,
-                  child: Transform.translate(
-                    offset: Offset(
-                      (2 * SizeConfig.screenWidth * _controller.value) -
-                          SizeConfig.screenWidth,
-                      0,
-                    ),
-                    child: Transform.rotate(
-                      angle: -math.pi / 4,
-                      child: Container(
-                        width: SizeConfig.w(50),
-                        height: SizeConfig.h(200),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.white.withOpacity(0.2),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
+              // Shimmer Effect
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return FractionallySizedBox(
+                    widthFactor: 1.5,
+                    child: Transform.translate(
+                      offset: Offset(
+                        (2 * SizeConfig.screenWidth * _controller.value) -
+                            SizeConfig.screenWidth,
+                        0,
+                      ),
+                      child: Transform.rotate(
+                        angle: -math.pi / 4,
+                        child: Container(
+                          width: SizeConfig.w(50),
+                          height: SizeConfig.h(200),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withOpacity(0.2),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
 
-            // Content
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(20)),
-              child: Row(
-                children: [
-                  // Icon with Glow
-                  Container(
-                    padding: EdgeInsets.all(SizeConfig.w(10)),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 1,
+              // Content
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(20)),
+                child: Row(
+                  children: [
+                    // Level Progress Indicator (Left Side)
+                    SizedBox(
+                      width: SizeConfig.w(54),
+                      height: SizeConfig.w(54),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Background Ring
+                          SizedBox(
+                            width: SizeConfig.w(54),
+                            height: SizeConfig.w(54),
+                            child: CircularProgressIndicator(
+                              value: 1.0,
+                              strokeWidth: 5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white.withOpacity(0.2),
+                              ),
+                            ),
+                          ),
+                          // Progress Ring
+                          SizedBox(
+                            width: SizeConfig.w(54),
+                            height: SizeConfig.w(54),
+                            child: CircularProgressIndicator(
+                              value: levelProgress,
+                              strokeWidth: 5,
+                              strokeCap: StrokeCap.round,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                          // Level Text
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "LVL",
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(10),
+                                  fontWeight: FontWeight.w600,
+                                  color: widget.isDarkMode ? Colors.white.withOpacity(0.9) : Colors.black54,
+                                  height: 1.0,
+                                ),
+                              ),
+                              Text(
+                                "${widget.currentLevel}",
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(18),
+                                  fontWeight: FontWeight.bold,
+                                  color: effectiveTextColor,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    child: Icon(
-                      widget.icon,
-                      color: Colors.white,
-                      size: SizeConfig.w(32),
-                    ),
-                  ),
-                  SizedBox(width: SizeConfig.w(16)),
+                    
+                    SizedBox(width: SizeConfig.w(16)),
 
-                  // Text Content
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              '${widget.streakDays}',
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(32),
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.0,
-                              ),
-                            ),
-                            SizedBox(width: SizeConfig.w(4)),
-                            Text(
-                              'Day Streak',
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(16),
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: SizeConfig.h(8)),
-                        
-                        // Milestone Progress
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Next Milestone: $milestone Days',
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.sp(11),
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                    // Text Content
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '${widget.streakDays}',
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(32),
+                                  fontWeight: FontWeight.w800,
+                                  color: effectiveTextColor,
+                                  height: 1.0,
                                 ),
-                                Text(
-                                  '${(progress * 100).toInt()}%',
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.sp(11),
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: SizeConfig.h(4)),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                backgroundColor: Colors.black.withOpacity(0.2),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                                minHeight: SizeConfig.h(6),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              SizedBox(width: SizeConfig.w(4)),
+                              Text(
+                                'Day Streak',
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(16),
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: SizeConfig.h(6)),
+                          
+                          // Level XP Stats
+                          Row(
+                            children: [
+                              Text(
+                                '${widget.currentXp} / ${widget.nextLevelXp} XP',
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(12),
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                              SizedBox(width: SizeConfig.w(8)),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: SizeConfig.w(8)),
+                              Text(
+                                'to Level ${widget.currentLevel + 1}',
+                                style: TextStyle(
+                                  fontSize: SizeConfig.sp(12),
+                                  color: widget.isDarkMode ? Colors.white.withOpacity(0.7) : Colors.black54,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

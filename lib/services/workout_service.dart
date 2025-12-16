@@ -1,87 +1,257 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/workout_model.dart';
 import '../models/gamification_model.dart';
 import 'gamification_service.dart';
+import 'firestore/workout_firestore_service.dart';
+import 'firestore/workout_plan_service.dart';
+import 'user_profile_service.dart';
 
-/// Service for managing workout data and operations.
-///
-/// Provides methods to fetch, filter, and complete workouts.
-/// Integrates with [GamificationService] to award XP and track streaks.
-/// Uses singleton pattern to ensure single instance across the app.
 class WorkoutService {
-  // Singleton pattern
   static final WorkoutService _instance = WorkoutService._internal();
   factory WorkoutService() => _instance;
-  WorkoutService._internal();
+  WorkoutService._internal() {
+    _initializeWorkoutLibrary();
+  }
 
+  final WorkoutFirestoreService _firestoreService = WorkoutFirestoreService();
+  final WorkoutPlanService _planService = WorkoutPlanService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final Random _random = Random();
 
-  // Simulate network delay
-  Future<void> _simulateDelay() async {
-    await Future.delayed(Duration(milliseconds: 300 + _random.nextInt(500)));
-  }
+  String? get _currentUserId => _auth.currentUser?.uid;
 
-  /// Get today's workouts (3-5 workouts)
-  Future<List<Workout>> getTodayWorkouts() async {
-    await _simulateDelay();
-
-    final allWorkouts = _generateMockWorkouts();
-    final count = 3 + _random.nextInt(3); // 3-5 workouts
-    return allWorkouts.take(count).toList();
-  }
-
-  /// Get workouts filtered by category
-  Future<List<Workout>> getWorkoutsByCategory(WorkoutCategory category) async {
-    await _simulateDelay();
-
-    if (category == WorkoutCategory.all) {
-      return _generateMockWorkouts();
+  Future<void> _initializeWorkoutLibrary() async {
+    try {
+      final hasLibrary = await _firestoreService.hasWorkoutLibrary();
+      if (!hasLibrary) {
+        final mockWorkouts = _generateMockWorkouts();
+        await _firestoreService.seedWorkoutLibrary(mockWorkouts);
+        print('Workout library seeded successfully');
+      }
+    } catch (e) {
+      print('Error initializing workout library: $e');
     }
-
-    final allWorkouts = _generateMockWorkouts();
-    return allWorkouts.where((w) => w.category == category).toList();
   }
 
-  /// Get recommended workouts
+  Future<List<Workout>> getTodayWorkouts() async {
+    try {
+      // Check for active plan first
+      if (_currentUserId != null) {
+        final activePlanData = await _planService.getActiveWorkoutPlan(_currentUserId!);
+        if (activePlanData != null) {
+           final planId = activePlanData['planId'];
+           final currentDay = activePlanData['currentDay'] as int;
+           
+           final plan = await _planService.getWorkoutPlan(_currentUserId!, planId);
+           if (plan != null) {
+              final weeklyPlan = plan['weeklyPlan'] as List;
+              var dayData = weeklyPlan.firstWhere(
+                  (day) => day['day'] == currentDay, 
+                  orElse: () => null
+              );
+              
+               if (dayData != null) {
+                  final exercisesList = dayData['exercises'] as List;
+                  List<Workout> workouts = [];
+                  
+                  for (var i = 0; i < exercisesList.length; i++) {
+                     final ex = exercisesList[i];
+                     
+                     // Parse reps
+                     int? repsInt;
+                     var repsVal = ex['reps'];
+                     if (repsVal is int) {
+                        repsInt = repsVal;
+                     } else if (repsVal is String) {
+                        final parts = repsVal.split('-');
+                        if (parts.isNotEmpty) {
+                           repsInt = int.tryParse(parts[0]);
+                        }
+                     }
+                     
+                     // Get exercise duration
+                     final exerciseMinutes = ex['estimatedMinutes'] as int? ?? 5;
+                     
+                     // Create single exercise
+                     final exercise = Exercise(
+                        name: (ex['name'] as String?) ?? 'Exercise',
+                        sets: ex['sets'] as int?,
+                        reps: repsInt,
+                        muscleGroups: ex['targetMuscle'] != null ? [(ex['targetMuscle'] as String)] : const <String>[], 
+                     );
+
+                     // Create individual workout for this exercise
+                     final workout = Workout(
+                       id: 'plan_${planId}_day_${currentDay}_ex_$i',
+                       title: ex['name'] ?? 'Exercise ${i + 1}',
+                       category: WorkoutCategory.strength,
+                       durationMinutes: exerciseMinutes,
+                       caloriesBurned: (exerciseMinutes * 6.5).round(),
+                       points: 10,
+                       difficulty: DifficultyLevel.intermediate,
+                       exercises: [exercise],
+                       description: '${ex['sets']} sets × ${ex['reps']} reps',
+                       isRecommended: false,
+                     );
+                     
+                     workouts.add(workout);
+                  }
+                  
+                  return workouts;
+               }
+           }
+        }
+      }
+
+      final allWorkouts = await _firestoreService.getWorkoutLibrary();
+      final count = 3 + _random.nextInt(3);
+      allWorkouts.shuffle(_random);
+      return allWorkouts.take(count).toList();
+    } catch (e) {
+      print('Error getting today workouts: $e');
+      return [];
+    }
+  }
+
+  Future<List<Workout>> getWorkoutsByCategory(WorkoutCategory category) async {
+    try {
+      return await _firestoreService.getWorkoutsByCategory(category);
+    } catch (e) {
+      print('Error getting workouts by category: $e');
+      return [];
+    }
+  }
+
   Future<List<Workout>> getRecommendedWorkouts() async {
-    await _simulateDelay();
-
-    final allWorkouts = _generateMockWorkouts();
-    return allWorkouts.where((w) => w.isRecommended).take(3).toList();
+    // Removed placeholder workouts - only show active plan workouts
+    return [];
   }
 
-  /// Get all available categories
   List<WorkoutCategory> getAllCategories() {
     return WorkoutCategory.values;
   }
 
-  /// Get workout by ID with full details
   Future<Workout?> getWorkoutById(String id) async {
-    await _simulateDelay();
-
-    final allWorkouts = _generateMockWorkouts();
     try {
-      return allWorkouts.firstWhere((w) => w.id == id);
+      return await _firestoreService.getWorkoutById(id);
     } catch (e) {
+      print('Error getting workout by id: $e');
       return null;
     }
   }
 
-  Future<void> completeWorkout(Workout workout) async {
-    // In a real app, this would save to a database
-    await _simulateDelay();
+  Future<void> completeWorkout(
+    Workout workout, {
+    int? actualDuration,
+    String? notes,
+  }) async {
+    if (_currentUserId == null) return;
 
-    // Gamification Integration
-    final gamificationService = GamificationService();
-    gamificationService.addXp(workout.points * 10); // Points * 10 XP
-    gamificationService.checkStreak(StreakType.workout, DateTime.now());
+    try {
+      await _firestoreService.saveCompletedWorkout(
+        _currentUserId!,
+        workout,
+        actualDuration: actualDuration,
+        notes: notes,
+      );
+
+      final gamificationService = GamificationService();
+      await gamificationService.addXp(workout.points * 10);
+      await gamificationService.checkStreak(StreakType.workout, DateTime.now());
+
+      final profileService = UserProfileService();
+      await profileService.incrementWorkoutsCompleted();
+    } catch (e) {
+      print('Error completing workout (offline mode): $e');
+      
+      // Offline Store Logic
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final pendingWorkouts = prefs.getStringList('pending_workouts') ?? [];
+        
+        final offlineData = {
+          'userId': _currentUserId,
+          'workout': workout.toJson(),
+          'actualDuration': actualDuration,
+          'notes': notes,
+          'completedAt': DateTime.now().toIso8601String(),
+        };
+        
+        pendingWorkouts.add(jsonEncode(offlineData));
+        await prefs.setStringList('pending_workouts', pendingWorkouts);
+        print('Workout saved locally for later sync');
+        
+        // Optimistically treat as success for the UI
+        return; 
+      } catch (innerE) {
+        print('Error saving locally: $innerE');
+        // If even local save fails, then we might want to rethrow or just fail silently
+        // But rethrow is probably better here to let UI know something is really wrong
+        rethrow;
+      }
+    }
   }
 
-  /// Generate mock workout data
+  Future<List<Map<String, dynamic>>> getWorkoutHistory({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? limit,
+  }) async {
+    if (_currentUserId == null) return [];
+
+    try {
+      return await _firestoreService.getWorkoutHistory(
+        _currentUserId!,
+        startDate: startDate,
+        endDate: endDate,
+        limit: limit,
+      );
+    } catch (e) {
+      print('Error getting workout history: $e');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> getWorkoutStats() async {
+    if (_currentUserId == null) {
+      return {
+        'totalWorkouts': 0,
+        'totalCalories': 0,
+        'totalMinutes': 0,
+        'categoryBreakdown': {},
+      };
+    }
+
+    try {
+      return await _firestoreService.getWorkoutStats(_currentUserId!);
+    } catch (e) {
+      print('Error getting workout stats: $e');
+      return {
+        'totalWorkouts': 0,
+        'totalCalories': 0,
+        'totalMinutes': 0,
+        'categoryBreakdown': {},
+      };
+    }
+  }
+
+  Future<int> getTodayWorkoutCount() async {
+    if (_currentUserId == null) return 0;
+
+    try {
+      return await _firestoreService.getTodayWorkoutCount(_currentUserId!);
+    } catch (e) {
+      print('Error getting today workout count: $e');
+      return 0;
+    }
+  }
+
   List<Workout> _generateMockWorkouts() {
     return [
-      // Cardio Workouts
       Workout(
         id: 'cardio_1',
         title: 'Morning Run',
@@ -114,7 +284,7 @@ class WorkoutService {
         id: 'cardio_2',
         title: 'HIIT Cardio Blast',
         category: WorkoutCategory.hiit,
-        durationMinutes: 1,
+        durationMinutes: 20,
         caloriesBurned: 280,
         points: 3,
         difficulty: DifficultyLevel.advanced,
@@ -151,7 +321,7 @@ class WorkoutService {
         id: 'cardio_3',
         title: 'Cycling Session',
         category: WorkoutCategory.cardio,
-        durationMinutes: 1,
+        durationMinutes: 45,
         caloriesBurned: 420,
         points: 3,
         difficulty: DifficultyLevel.intermediate,
@@ -180,13 +350,11 @@ class WorkoutService {
           ),
         ],
       ),
-
-      // Strength Workouts
       Workout(
         id: 'strength_1',
         title: 'Upper Body Power',
         category: WorkoutCategory.strength,
-        durationMinutes: 2,
+        durationMinutes: 40,
         caloriesBurned: 250,
         points: 2,
         difficulty: DifficultyLevel.intermediate,
@@ -229,7 +397,7 @@ class WorkoutService {
         id: 'strength_2',
         title: 'Leg Day',
         category: WorkoutCategory.strength,
-        durationMinutes: 3,
+        durationMinutes: 50,
         caloriesBurned: 320,
         points: 3,
         difficulty: DifficultyLevel.advanced,
@@ -266,7 +434,7 @@ class WorkoutService {
         id: 'strength_3',
         title: 'Core Crusher',
         category: WorkoutCategory.strength,
-        durationMinutes: 3,
+        durationMinutes: 25,
         caloriesBurned: 180,
         points: 2,
         difficulty: DifficultyLevel.beginner,
@@ -299,13 +467,11 @@ class WorkoutService {
           ),
         ],
       ),
-
-      // Yoga Workouts
       Workout(
         id: 'yoga_1',
         title: 'Morning Flow',
         category: WorkoutCategory.yoga,
-        durationMinutes: 1,
+        durationMinutes: 30,
         caloriesBurned: 120,
         points: 1,
         difficulty: DifficultyLevel.beginner,
@@ -343,7 +509,7 @@ class WorkoutService {
         id: 'yoga_2',
         title: 'Power Yoga',
         category: WorkoutCategory.yoga,
-        durationMinutes: 2,
+        durationMinutes: 45,
         caloriesBurned: 200,
         points: 2,
         difficulty: DifficultyLevel.intermediate,
@@ -374,13 +540,11 @@ class WorkoutService {
           ),
         ],
       ),
-
-      // Flexibility Workouts
       Workout(
         id: 'flex_1',
         title: 'Full Body Stretch',
         category: WorkoutCategory.flexibility,
-        durationMinutes: 1,
+        durationMinutes: 20,
         caloriesBurned: 80,
         points: 1,
         difficulty: DifficultyLevel.beginner,
@@ -413,13 +577,11 @@ class WorkoutService {
           ),
         ],
       ),
-
-      // Sports Workouts
       Workout(
         id: 'sports_1',
         title: 'Basketball Drills',
         category: WorkoutCategory.sports,
-        durationMinutes: 2,
+        durationMinutes: 40,
         caloriesBurned: 380,
         points: 3,
         difficulty: DifficultyLevel.intermediate,
@@ -452,7 +614,7 @@ class WorkoutService {
         id: 'sports_2',
         title: 'Soccer Training',
         category: WorkoutCategory.sports,
-        durationMinutes: 1,
+        durationMinutes: 50,
         caloriesBurned: 450,
         points: 3,
         difficulty: DifficultyLevel.advanced,

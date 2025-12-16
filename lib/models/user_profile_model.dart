@@ -1,3 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fitness_tracker_frontend/models/nutrition_model.dart';
+import 'package:fitness_tracker_frontend/models/diet_plan_model.dart';
+
+enum UnitPreference { metric, imperial }
+
 class UserProfile {
   final String name;
   final String bio;
@@ -6,6 +12,23 @@ class UserProfile {
   final int age;
   final DateTime? dateOfBirth;
   final String? profileImagePath;
+  
+  // Goals
+  final int weeklyWorkoutGoal;
+  final int dailyCalorieGoal;
+  final double? weightGoal; // Target weight in kg
+  
+  // Nutrition & Diet
+  final NutritionGoal? nutritionGoal;
+  final DietPlan? activeDietPlan;
+
+  // Activity Stats
+  final int totalWorkoutsCompleted;
+  final int totalMealsLogged;
+  final int daysActive;
+  
+  // Preferences
+  final UnitPreference preferredUnits;
 
   const UserProfile({
     required this.name,
@@ -15,6 +38,15 @@ class UserProfile {
     required this.age,
     this.dateOfBirth,
     this.profileImagePath,
+    this.weeklyWorkoutGoal = 5,
+    this.dailyCalorieGoal = 2000,
+    this.weightGoal,
+    this.nutritionGoal,
+    this.activeDietPlan,
+    this.totalWorkoutsCompleted = 0,
+    this.totalMealsLogged = 0,
+    this.daysActive = 0,
+    this.preferredUnits = UnitPreference.metric,
   });
 
   // Calculate BMI
@@ -29,6 +61,15 @@ class UserProfile {
     int? age,
     DateTime? dateOfBirth,
     String? profileImagePath,
+    int? weeklyWorkoutGoal,
+    int? dailyCalorieGoal,
+    double? weightGoal,
+    NutritionGoal? nutritionGoal,
+    DietPlan? activeDietPlan,
+    int? totalWorkoutsCompleted,
+    int? totalMealsLogged,
+    int? daysActive,
+    UnitPreference? preferredUnits,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -38,6 +79,16 @@ class UserProfile {
       age: age ?? this.age,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       profileImagePath: profileImagePath ?? this.profileImagePath,
+      weeklyWorkoutGoal: weeklyWorkoutGoal ?? this.weeklyWorkoutGoal,
+      // If a nutrition goal is updated, we might want to sync the daily calorie goal for backward compatibility
+      dailyCalorieGoal: dailyCalorieGoal ?? nutritionGoal?.dailyCalories ?? this.dailyCalorieGoal,
+      weightGoal: weightGoal ?? this.weightGoal,
+      nutritionGoal: nutritionGoal ?? this.nutritionGoal,
+      activeDietPlan: activeDietPlan ?? this.activeDietPlan,
+      totalWorkoutsCompleted: totalWorkoutsCompleted ?? this.totalWorkoutsCompleted,
+      totalMealsLogged: totalMealsLogged ?? this.totalMealsLogged,
+      daysActive: daysActive ?? this.daysActive,
+      preferredUnits: preferredUnits ?? this.preferredUnits,
     );
   }
 
@@ -51,6 +102,15 @@ class UserProfile {
       'age': age,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'profileImagePath': profileImagePath,
+      'weeklyWorkoutGoal': weeklyWorkoutGoal,
+      'dailyCalorieGoal': dailyCalorieGoal,
+      'weightGoal': weightGoal,
+      'nutritionGoal': nutritionGoal?.toJson(),
+      'activeDietPlan': activeDietPlan?.toJson(),
+      'totalWorkoutsCompleted': totalWorkoutsCompleted,
+      'totalMealsLogged': totalMealsLogged,
+      'daysActive': daysActive,
+      'preferredUnits': preferredUnits.toString().split('.').last,
     };
   }
 
@@ -62,9 +122,29 @@ class UserProfile {
       height: (json['height'] as num).toDouble(),
       age: json['age'] as int,
       dateOfBirth: json['dateOfBirth'] != null
-          ? DateTime.parse(json['dateOfBirth'] as String)
+          ? (json['dateOfBirth'] is Timestamp
+              ? (json['dateOfBirth'] as Timestamp).toDate()
+              : DateTime.parse(json['dateOfBirth'] as String))
           : null,
       profileImagePath: json['profileImagePath'] as String?,
+      weeklyWorkoutGoal: json['weeklyWorkoutGoal'] as int? ?? 5,
+      dailyCalorieGoal: json['dailyCalorieGoal'] as int? ?? 2000,
+      weightGoal: json['weightGoal'] != null ? (json['weightGoal'] as num).toDouble() : null,
+      nutritionGoal: json['nutritionGoal'] != null 
+          ? NutritionGoal.fromJson(json['nutritionGoal']) 
+          : null,
+      activeDietPlan: json['activeDietPlan'] != null
+          ? DietPlan.fromJson(json['activeDietPlan'])
+          : null,
+      totalWorkoutsCompleted: json['totalWorkoutsCompleted'] as int? ?? 0,
+      totalMealsLogged: json['totalMealsLogged'] as int? ?? 0,
+      daysActive: json['daysActive'] as int? ?? 0,
+      preferredUnits: json['preferredUnits'] != null
+          ? UnitPreference.values.firstWhere(
+              (e) => e.toString().split('.').last == json['preferredUnits'],
+              orElse: () => UnitPreference.metric,
+            )
+          : UnitPreference.metric,
     );
   }
 
@@ -76,6 +156,12 @@ class UserProfile {
       weight: 70.0,
       height: 170.0,
       age: 25,
+      weeklyWorkoutGoal: 5,
+      dailyCalorieGoal: 2000,
+      totalWorkoutsCompleted: 0,
+      totalMealsLogged: 0,
+      daysActive: 0,
+      preferredUnits: UnitPreference.metric,
     );
   }
 }

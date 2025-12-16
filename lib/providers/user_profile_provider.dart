@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile_model.dart';
 import '../services/user_profile_service.dart';
 import '../notifiers/user_profile_notifier.dart';
+import '../services/auth_service.dart'; // Import auth service for authStateProvider
 
 // Service provider
 final userProfileServiceProvider = Provider<UserProfileService>((ref) {
@@ -12,12 +14,19 @@ final userProfileServiceProvider = Provider<UserProfileService>((ref) {
 final userProfileProvider =
     StateNotifierProvider<UserProfileNotifier, AsyncValue<UserProfile>>((ref) {
       final service = ref.watch(userProfileServiceProvider);
+      // Watch auth state to trigger reload on login/logout
+      final authState = ref.watch(authStateProvider);
+      
       return UserProfileNotifier(service);
     });
 
 // Derived providers for individual fields (for convenience)
 final userNameProvider = Provider<String>((ref) {
-  return ref.watch(userProfileProvider).value?.name ?? 'User';
+  final profileName = ref.watch(userProfileProvider).value?.name;
+  if (profileName != null && profileName.isNotEmpty && profileName != 'User') {
+    return profileName;
+  }
+  return FirebaseAuth.instance.currentUser?.displayName ?? 'User';
 });
 
 final userBioProvider = Provider<String>((ref) {
