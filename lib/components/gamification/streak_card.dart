@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
@@ -7,8 +7,8 @@ class StreakCard extends StatefulWidget {
   final bool isDarkMode;
   final String title;
   final int currentLevel;
-  final int currentXp; // Xp towards the *next* level
-  final int nextLevelXp; // Total XP needed for next level
+  final int currentXp;
+  final int nextLevelXp;
   final List<Color>? gradientColors;
   final Color? textColor;
   final VoidCallback? onTap;
@@ -61,8 +61,8 @@ class _StreakCardState extends State<StreakCard>
   @override
   Widget build(BuildContext context) {
     final defaultGradient = widget.isDarkMode
-        ? [const Color(0xFFFF512F), const Color(0xFFDD2476)] // Vibrant Red/Pink
-        : [Colors.white, Colors.white]; // White for clean Light Mode
+        ? [const Color(0xFFFF512F), const Color(0xFFDD2476)]
+        : [Colors.white, Colors.white];
 
     final colors = widget.gradientColors ?? defaultGradient;
 
@@ -91,7 +91,7 @@ class _StreakCardState extends State<StreakCard>
           border: Border.all(
             color: widget.isDarkMode
                 ? Colors.white.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.2), // Subtle border in light mode
+                : Colors.grey.withOpacity(0.2),
             width: 1.5,
           ),
           boxShadow: [

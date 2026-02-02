@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class FluidWaveProgress extends StatelessWidget {
-  final double value; // 0.0 to 1.0
+  final double value;
   final double height;
   final Color color;
   final Color backgroundColor;

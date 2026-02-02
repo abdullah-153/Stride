@@ -1,16 +1,56 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/activity_model.dart';
 import 'firestore/activity_firestore_service.dart';
+import 'recording_api_service.dart';
 
 class ActivityService {
-  static final ActivityService _instance = ActivityService._internal();
+  static ActivityService _instance = ActivityService._internal();
   factory ActivityService() => _instance;
-  ActivityService._internal();
+  
+  final ActivityFirestoreService _firestoreService;
+  final FirebaseAuth _auth;
+  final RecordingApiService _recordingApiService;
+  
+  ActivityService._internal({
+    ActivityFirestoreService? firestoreService,
+    FirebaseAuth? auth,
+    RecordingApiService? recordingApiService,
+  }) : _firestoreService = firestoreService ?? ActivityFirestoreService(),
+       _auth = auth ?? FirebaseAuth.instance,
+       _recordingApiService = recordingApiService ?? RecordingApiService() {
+    _initRecordingApi();
+  }
 
-  final ActivityFirestoreService _firestoreService = ActivityFirestoreService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  @visibleForTesting
+  static void reset({
+    ActivityFirestoreService? firestoreService,
+    FirebaseAuth? auth,
+    RecordingApiService? recordingApiService,
+  }) {
+    _instance = ActivityService._internal(
+      firestoreService: firestoreService,
+      auth: auth,
+      recordingApiService: recordingApiService,
+    );
+  }
 
   String? get _currentUserId => _auth.currentUser?.uid;
+
+  Future<void> _initRecordingApi() async {
+     
+    bool permissionGranted = await _recordingApiService.requestPermission();
+    
+    if (permissionGranted) {
+       
+      bool available = await _recordingApiService.checkPlayServices();
+      if (available) {
+        await _recordingApiService.subscribe();
+      }
+    } else {
+      print("Activity Recognition permission denied.");
+    }
+  }
 
   Future<ActivityData> getTodayActivity() async {
     if (_currentUserId == null) {
@@ -25,19 +65,42 @@ class ActivityService {
 
     try {
       final today = DateTime.now();
-      final activity = await _firestoreService.getDailyActivity(
+      ActivityData? activity = await _firestoreService.getDailyActivity(
         _currentUserId!,
         today,
       );
 
-      return activity ??
-          ActivityData(
+       
+      activity ??= ActivityData(
             workoutsCompleted: 0,
             totalWorkouts: 0,
             caloriesBurned: 0,
             steps: 0,
             maxSteps: 10000,
           );
+
+       
+      try {
+        int localSteps = await _recordingApiService.readSteps();
+        if (localSteps > activity.steps) {
+           ActivityData updatedActivity = ActivityData(
+             workoutsCompleted: activity.workoutsCompleted,
+             totalWorkouts: activity.totalWorkouts,
+             caloriesBurned: activity.caloriesBurned,
+             steps: localSteps,
+             maxSteps: activity.maxSteps,
+           );
+           
+            
+           _firestoreService.updateDailyActivity(_currentUserId!, today, updatedActivity);
+           
+           return updatedActivity;
+        }
+      } catch (e) {
+        print("Error syncing local steps: $e");
+      }
+
+      return activity;
     } catch (e) {
       print('Error getting today activity: $e');
       return ActivityData(
@@ -109,7 +172,7 @@ class ActivityService {
       await _firestoreService.incrementWorkoutsCompleted(
         _currentUserId!,
         today,
-      );
+        );
     } catch (e) {
       print('Error incrementing workouts completed: $e');
     }

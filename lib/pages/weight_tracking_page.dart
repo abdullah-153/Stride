@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -541,8 +541,9 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
               reservedSize: 30,
               interval: 1,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= history.length || value < 0)
+                if (value.toInt() >= history.length || value < 0) {
                   return const Text('');
+                }
                 final date = history[value.toInt()].date;
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
@@ -557,7 +558,7 @@ class _WeightTrackingPageState extends ConsumerState<WeightTrackingPage> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 1, // Auto interval?
+              interval: 1,  
               getTitlesWidget: (value, meta) {
                 if (value % 5 != 0) return Container();
                 return Text(

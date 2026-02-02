@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:math';
 import '../shared/bouncing_dots_indicator.dart';
 
@@ -143,7 +143,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
       Colors.deepPurpleAccent,
       Colors.pinkAccent.shade400,
       Colors.cyanAccent.shade700,
-      Colors.amberAccent.shade700, // Gold/Yellow
+      Colors.amberAccent.shade700,
       Colors.blueAccent.shade700,
       Colors.tealAccent.shade400,
     ];
@@ -157,7 +157,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   void didUpdateWidget(AnimatedBackground oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.stepIndex != oldWidget.stepIndex) {
-      setState(() => _currentShape = _targetShape()); // Immediate switch
+      setState(() => _currentShape = _targetShape());
       _burstController.forward(from: 0.0);
     }
   }
@@ -169,7 +169,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   _Orb _generateOrb(List<Color> colors) {
     return _Orb(
       color: colors[_random.nextInt(colors.length)],
-      radius: _random.nextDouble() * 80 + 40, // 40-120
+      radius: _random.nextDouble() * 80 + 40,
       alignment: _randomEdgeAlignment(),
       velocity: Alignment(
         (_random.nextDouble() * 0.006 - 0.003),
@@ -256,10 +256,14 @@ class _Orb {
     double nextX = alignment.x + velocity.x;
     double nextY = alignment.y + velocity.y;
     if (nextX < -1.1 || nextX > 1.1)
-      velocity = Alignment(-velocity.x, velocity.y);
-    if (nextY < -1.1 || nextY > 1.1)
-      velocity = Alignment(velocity.x, -velocity.y);
-    alignment = alignment + velocity;
+     {
+      ty = Alignment(-velocity.x, velocity.y);
+    
+    }if (nextY < -1.1 || nextY > 1.1)
+     {
+      ty = Alignment(velocity.x, -velocity.y);
+    
+    }alignment = alignment + velocity;
     currentRotation += rotationSpeed;
     if (shakeIntensity > 0) {
       shakeX = (Random().nextDouble() - 0.5) * shakeIntensity * 0.005;
@@ -307,19 +311,16 @@ class _OrbPainter extends CustomPainter {
         sRadius * 0.9,
         Paint()
           ..color = orb.color.withOpacity(0.3 * opacity)
-          ..maskFilter = const MaskFilter.blur(
-            BlurStyle.normal,
-            10,
-          ), // Reduced blur
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
 
       final shader = RadialGradient(
         colors: [
-          orb.color.withOpacity(opacity * 0.9), // Nearly solid center
+          orb.color.withOpacity(opacity * 0.9),
           orb.color.withOpacity(opacity * 0.6),
-          orb.color.withOpacity(0.0), // Fade at very edge
+          orb.color.withOpacity(0.0),
         ],
-        stops: const [0.3, 0.75, 1.0], // Larger core
+        stops: const [0.3, 0.75, 1.0],
         center: const Alignment(-0.2, -0.2),
         radius: 1.0,
       ).createShader(Rect.fromCircle(center: center, radius: sRadius));

@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class MonthlyActivityCalendar extends StatefulWidget {
   final bool isDarkMode;
-  final Map<DateTime, ActivityType> monthlyActivity; // Date -> Activity type
+  final Map<DateTime, ActivityType> monthlyActivity;
   final int currentStreak;
 
   const MonthlyActivityCalendar({
@@ -47,7 +47,7 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
 
     final days = <DateTime>[];
 
-    final firstWeekday = firstDay.weekday % 7; // 0 = Monday
+    final firstWeekday = firstDay.weekday % 7;
     for (int i = 0; i < firstWeekday; i++) {
       days.add(firstDay.subtract(Duration(days: firstWeekday - i)));
     }
@@ -67,9 +67,9 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
   Color _getActivityColor(ActivityType type) {
     switch (type) {
       case ActivityType.workout:
-        return const Color(0xFFCEF24B); // Lime
+        return const Color(0xFFCEF24B);
       case ActivityType.meal:
-        return const Color(0xFF0EA5E9); // Blue
+        return const Color(0xFF0EA5E9);
       case ActivityType.both:
         return Colors.purple;
       case ActivityType.none:
@@ -295,7 +295,10 @@ class _MonthlyActivityCalendarState extends State<MonthlyActivityCalendar> {
                 ),
                 child: Row(
                   children: [
-                    Text('Ã°Å¸â€Â¥', style: TextStyle(fontSize: SizeConfig.sp(14))),
+                    Text(
+                      'Ã°Å¸â€Â¥',
+                      style: TextStyle(fontSize: SizeConfig.sp(14)),
+                    ),
                     SizedBox(width: SizeConfig.w(4)),
                     Text(
                       '${widget.currentStreak} day streak',

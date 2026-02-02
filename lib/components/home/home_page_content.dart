@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/gamification_service.dart';
@@ -87,8 +87,13 @@ class HomePageContent extends ConsumerWidget {
                     ? snapshot.data!.stats.lastWorkoutLogDate
                     : null;
 
+                final activityDates = snapshot.hasData
+                    ? snapshot.data!.stats.activityDates
+                    : <DateTime>[];
+
                 return StreakProgress(
                   streakDays: currentStreak,
+                  activityDates: activityDates,
                   isDarkMode: isDarkMode,
                   currentLevel: currentLevel,
                   currentXp: currentXp,
@@ -123,7 +128,7 @@ class HomePageContent extends ConsumerWidget {
     return Row(
       children: [
         GestureDetector(
-          onTap: () => onNavigate?.call(3), // Navigate to ProfilePage
+          onTap: () => onNavigate?.call(3),
           child: CircleAvatar(
             radius: SizeConfig.w(28),
             backgroundImage: profileImage != null

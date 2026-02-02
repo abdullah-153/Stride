@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/animations.dart';
@@ -8,12 +8,12 @@ class WorkoutCard extends StatefulWidget {
   final String time;
   final String title;
   final int points;
-  final String metricValue; // Was kcal, now generic value
-  final String metricLabel; // e.g. "kcal", "reps", "mins"
+  final String metricValue;
+  final String metricLabel;
   final bool isDarkMode;
   final bool isPlaying;
   final bool isCompleted;
-  final bool isPaused; // New property
+  final bool isPaused;
   final String heroTag;
   final VoidCallback? onPressed;
 
@@ -45,7 +45,7 @@ class _WorkoutCardState extends State<WorkoutCard>
 
   late final AnimationController _fillCtrl;
   late final AnimationController _waveCtrl;
-  late final AnimationController _pulseCtrl; // New controller for paused state
+  late final AnimationController _pulseCtrl;
 
   @override
   void initState() {
@@ -132,7 +132,7 @@ class _WorkoutCardState extends State<WorkoutCard>
         ? const Color(0xFF2C2C2E)
         : const Color(0xFF2C2C2E);
 
-    final completedText = Colors.white; // Clean white text
+    final completedText = Colors.white;
     final completedBorder = Colors.transparent;
     final completedShadow = Colors.black.withOpacity(0.2);
 
@@ -169,7 +169,7 @@ class _WorkoutCardState extends State<WorkoutCard>
 
         final idleBorder = dark ? Colors.white12 : Colors.grey.shade300;
         final activeBorder = const Color(0xFFB5D93B);
-        final pausedBorderColor = const Color(0xFFCEF24B); // Lime
+        final pausedBorderColor = const Color(0xFFCEF24B);
 
         Color borderColor;
         double borderWidth;
@@ -178,9 +178,9 @@ class _WorkoutCardState extends State<WorkoutCard>
           borderColor = completedBorder;
           borderWidth = 1.5;
         } else if (widget.isPaused) {
-          final pulse = _pulseCtrl.value; // 0..1..0
+          final pulse = _pulseCtrl.value;
           borderColor = pausedBorderColor.withOpacity(0.4 + (0.6 * pulse));
-          borderWidth = 1.0 + (pulse * 2.5); // 1.0 to 3.5
+          borderWidth = 1.0 + (pulse * 2.5);
         } else {
           borderColor = Color.lerp(idleBorder, activeBorder, t)!;
           borderWidth = 1.0 + (t * 1.5);
@@ -189,9 +189,9 @@ class _WorkoutCardState extends State<WorkoutCard>
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           width: cardWidth,
-          height: cardHeight, // Fixed height for consistency
+          height: cardHeight,
           decoration: BoxDecoration(
-            color: bgColor, // Static background (unless completed)
+            color: bgColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: borderColor, width: borderWidth),
             boxShadow: [
@@ -204,7 +204,7 @@ class _WorkoutCardState extends State<WorkoutCard>
               ),
             ],
           ),
-          clipBehavior: Clip.antiAlias, // Clip the wave
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
               if (!widget.isCompleted && t > 0)
@@ -268,14 +268,12 @@ class _WorkoutCardState extends State<WorkoutCard>
                             AnimatedBuilder(
                               animation: _rotateCtrl,
                               builder: (context, child) {
-
                                 final circleBg = widget.isCompleted
                                     ? (dark
                                           ? Colors.yellow.withOpacity(0.1)
                                           : Colors.white)
                                     : widget.isPlaying
-                                    ? Colors
-                                          .black // Black button on Lime
+                                    ? Colors.black
                                     : (dark
                                           ? const Color(0xFF2C2C2E)
                                           : Colors.white);
@@ -295,9 +293,7 @@ class _WorkoutCardState extends State<WorkoutCard>
                                           ? const Color(0xFFCEF24B)
                                           : const Color(0xFF5A701E))
                                     : widget.isPlaying
-                                    ? const Color(
-                                        0xFFCEF24B,
-                                      ) // Lime icon on Black
+                                    ? const Color(0xFFCEF24B)
                                     : (dark ? Colors.white : Colors.black);
 
                                 return Transform.rotate(
@@ -374,7 +370,7 @@ class _WorkoutCardState extends State<WorkoutCard>
                             ),
                             SizedBox(height: 2 * fontScale),
                             Text(
-                              "${widget.points} pts  Ã¢â‚¬Â¢  ~${widget.metricValue} ${widget.metricLabel}",
+                              "${widget.points} pts  •  ~${widget.metricValue} ${widget.metricLabel}",
                               style: TextStyle(
                                 color: subTextColor,
                                 fontSize: 16 * fontScale,

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../utils/size_config.dart';
-import '../../models/nutrition_model.dart'; // Added import
+import '../../models/nutrition_model.dart';
 
 class MealHistoryCalendar extends StatefulWidget {
   final bool isDarkMode;
@@ -24,7 +24,6 @@ class MealHistoryCalendar extends StatefulWidget {
 }
 
 class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
-
   @override
   Widget build(BuildContext context) {
     final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
@@ -71,11 +70,9 @@ class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(12)),
-            itemCount: 14, // Always show 14 days
+            itemCount: 14,
             reverse: true,
             itemBuilder: (context, index) {
-
-
               final date = today.subtract(Duration(days: index));
 
               final bool isBeforeCreation =
@@ -97,14 +94,14 @@ class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
                       SnackBar(
                         content: Text(
                           isFuture
-                              ? "You can't travel to the future! Ã°Å¸Å¡â‚¬"
+                              ? "You can't travel to the future! 🚀"
                               : "Account hadn't been created yet!",
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        backgroundColor: Colors.black, // Enforce Black/White
+                        backgroundColor: Colors.black,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -146,7 +143,7 @@ class _MealHistoryCalendarState extends State<MealHistoryCalendar> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          DateFormat('E').format(date), // Mon, Tue...
+                          DateFormat('E').format(date),
                           style: TextStyle(
                             fontSize: SizeConfig.sp(12),
                             fontWeight: FontWeight.w600,

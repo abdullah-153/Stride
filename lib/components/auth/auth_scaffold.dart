@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'animated_background.dart';
-import 'dart:ui'; // Required for BackdropFilter
+import 'dart:ui';
 import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
 
 enum AuthFlow { login, register, forgotPassword, otp }
@@ -13,7 +13,7 @@ class AuthScaffold extends StatelessWidget {
   final String subtitle;
   final bool showBackButton;
   final bool isFullPage;
-  final bool isLoading; // New prop for validation state
+  final bool isLoading;
   final int currentStep;
   final VoidCallback? onBack;
 
@@ -47,17 +47,14 @@ class AuthScaffold extends StatelessWidget {
 
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: 10,
-                sigmaY: 10,
-              ), // Increased blur for better separation
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.transparent),
             ),
           ),
 
           Positioned.fill(
             child: SafeArea(
-              top: false, // Handle padding manually inside for full control
+              top: false,
               bottom: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class StreakProgress extends StatelessWidget {
@@ -11,6 +11,8 @@ class StreakProgress extends StatelessWidget {
   final DateTime? lastDietLogDate;
   final DateTime? lastWorkoutLogDate;
 
+  final List<DateTime> activityDates;
+
   const StreakProgress({
     super.key,
     this.isDarkMode = false,
@@ -20,6 +22,7 @@ class StreakProgress extends StatelessWidget {
     required this.currentLevel,
     required this.currentXp,
     required this.nextLevelXp,
+    this.activityDates = const [],
   });
 
   @override
@@ -138,15 +141,29 @@ class StreakProgress extends StatelessWidget {
   }
 
   Widget _buildWeekTracker() {
-    final weekStatus = [
-      'completed',
-      'completed',
-      'missed',
-      'completed',
-      'completed',
-      'current',
-      'future',
-    ];
+    final today = DateTime.now();
+
+    final weekStatus = List<String>.generate(7, (index) {
+      final date = today.subtract(Duration(days: 6 - index));
+      final isFuture = date.isAfter(today);
+
+      if (isFuture) return 'future';
+
+      final isCompleted = activityDates.any(
+        (d) =>
+            d.year == date.year && d.month == date.month && d.day == date.day,
+      );
+
+      if (isCompleted) return 'completed';
+
+      final isToday =
+          date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day;
+
+      return isToday ? 'current' : 'missed';
+    });
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: weekStatus.map((status) => _buildDayCircle(status)).toList(),

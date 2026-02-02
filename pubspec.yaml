@@ -27,6 +27,8 @@ dependencies:
   http: ^1.1.0
   email_otp: ^3.0.2
   google_generative_ai: ^0.4.7
+  permission_handler: ^11.3.0
+  google_fonts: ^6.1.0
 
 
   path: any

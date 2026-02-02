@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/size_config.dart';
 
@@ -52,13 +52,13 @@ class CustomKeyboard extends StatelessWidget {
 
   Widget _buildKey(String value) {
     final bool isDelete = value == 'delete';
-    final Color textColor = Colors.black87; // Force dark text for glass
+    final Color textColor = Colors.black87;
 
     return Container(
       width: SizeConfig.w(80),
       height: SizeConfig.w(70),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2), // Glassy background
+        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
         boxShadow: [

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/workout_model.dart';
 
 class WorkoutColors {
@@ -60,11 +60,11 @@ class WorkoutColors {
   static Color getDifficultyColor(DifficultyLevel difficulty) {
     switch (difficulty) {
       case DifficultyLevel.beginner:
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50);
       case DifficultyLevel.intermediate:
-        return const Color(0xFFFF9800); // Orange
+        return const Color(0xFFFF9800);
       case DifficultyLevel.advanced:
-        return const Color(0xFFF44336); // Red
+        return const Color(0xFFF44336);
     }
   }
 

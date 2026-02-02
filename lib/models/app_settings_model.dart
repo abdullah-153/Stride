@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppSettings {
   final bool notificationsEnabled;
@@ -6,7 +6,7 @@ class AppSettings {
   final bool dietReminders;
   final TimeOfDay? workoutReminderTime;
   final TimeOfDay? dietReminderTime;
-  final String privacyLevel; // 'public', 'friends', 'private'
+  final String privacyLevel;
 
   const AppSettings({
     this.notificationsEnabled = true,

@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class USDAApiService {
@@ -18,7 +18,7 @@ class USDAApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         final foods = data['foods'] as List?;
 
         if (foods == null || foods.isEmpty) return [];
@@ -76,7 +76,7 @@ class USDAApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         return _parseFood(data);
       } else {
         print('USDA API error: ${response.statusCode}');
@@ -101,16 +101,16 @@ class USDAApiService {
       final value = (nutrient['value'] ?? 0).toDouble();
 
       switch (nutrientNumber) {
-        case '208': // Energy (kcal)
+        case '208':
           calories = value;
           break;
-        case '203': // Protein
+        case '203':
           protein = value;
           break;
-        case '205': // Carbohydrates
+        case '205':
           carbs = value;
           break;
-        case '204': // Total lipid (fat)
+        case '204':
           fats = value;
           break;
       }

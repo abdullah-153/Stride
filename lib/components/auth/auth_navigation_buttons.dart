@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'bouncing_dots_indicator.dart';
 
@@ -78,9 +78,7 @@ class AuthNavigationButtons extends StatelessWidget {
           OutlinedButton(
             onPressed: isLoading ? null : onGoogleSignIn,
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(
-                0.8,
-              ), // Frosted white background
+              backgroundColor: Colors.white.withOpacity(0.8),
               side: const BorderSide(color: Colors.white),
               minimumSize: Size(double.infinity, SizeConfig.h(56)),
               shape: RoundedRectangleBorder(

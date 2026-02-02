@@ -60,6 +60,7 @@ flutter {
 dependencies {
     // 1. Resolve 'kotlin_version' error by using a hardcoded, compatible version.
     // 1.8.20 is a common stable version for modern Flutter projects.
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20") 
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20")
+    implementation("com.google.android.gms:play-services-fitness:21.2.0") 
     
 }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class AgeSelector extends StatefulWidget {
@@ -24,10 +24,11 @@ class _AgeSelectorState extends State<AgeSelector> {
   void initState() {
     super.initState();
     selectedAgeIndex = ageList.indexOf(widget.initialAge);
-    if (selectedAgeIndex == -1)
-      selectedAgeIndex = 12; // Default to 25 if not found
+    if (selectedAgeIndex == -1) {
+      dAgeIndex = 12;
 
-    _controller = FixedExtentScrollController(initialItem: selectedAgeIndex);
+   
+    } _controller = FixedExtentScrollController(initialItem: selectedAgeIndex);
   }
 
   @override

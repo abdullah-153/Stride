@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'google_sign_in_helper.dart';
 import 'user_profile_service.dart';
@@ -58,14 +58,12 @@ class AuthService {
         email: email,
         password: "dummy_password_checker_123",
       );
-      return [
-        'email',
-      ]; // Should not happen ideally unless password matches dummy
+      return ['email'];
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        return []; // Available
+        return [];
       } else if (e.code == 'wrong-password') {
-        return ['email']; // Exists
+        return ['email'];
       } else if (e.code == 'invalid-email') {
         throw 'Invalid email address.';
       }
@@ -88,7 +86,11 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      await AuthorizationProvider.googleSignIn.signOut();
+      try {
+        await AuthorizationProvider.googleSignIn.signOut();
+      } catch (e) {
+        print('Google Sign Out Error: $e');
+      }
       await _auth.signOut();
     } catch (e) {
       throw 'Error signing out. Please try again.';
@@ -104,7 +106,6 @@ class AuthService {
       throw 'An unexpected error occurred. Please try again.';
     }
   }
-
 
   Future<void> sendEmailVerification() async {
     try {

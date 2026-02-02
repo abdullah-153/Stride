@@ -1,5 +1,4 @@
-﻿library;
-
+library;
 
 import 'package:flutter/material.dart';
 
@@ -20,7 +19,6 @@ class AppColors {
   static const Color navProfile = Colors.orange;
 }
 
-
 class AppDurations {
   static const Duration shortAnimation = Duration(milliseconds: 200);
   static const Duration mediumAnimation = Duration(milliseconds: 300);
@@ -30,7 +28,6 @@ class AppDurations {
   static const Duration debounce = Duration(milliseconds: 300);
   static const Duration snackBarDuration = Duration(seconds: 3);
 }
-
 
 class AppSizes {
   static const double paddingXSmall = 4.0;
@@ -52,7 +49,6 @@ class AppSizes {
   static const double cardElevation = 2.0;
   static const double cardElevationHover = 4.0;
 }
-
 
 class AppStrings {
   static const String appName = 'Stride';
@@ -77,7 +73,6 @@ class AppStrings {
   static const String errorMessage = 'Something went wrong';
 }
 
-
 class AppRoutes {
   static const String startup = '/startup';
   static const String home = '/home';
@@ -91,21 +86,20 @@ class AppRoutes {
   static const String privacySecurity = '/privacy-security';
 }
 
-
 class AppConstants {
   static const double defaultDailyCalories = 2000.0;
   static const double defaultDailyProtein = 150.0;
   static const double defaultDailyCarbs = 250.0;
   static const double defaultDailyFat = 65.0;
-  static const double defaultDailyWater = 2000.0; // ml
+  static const double defaultDailyWater = 2000.0;
 
-  static const int defaultWorkoutDuration = 30; // minutes
-  static const int maxWorkoutDuration = 180; // minutes
+  static const int defaultWorkoutDuration = 30;
+  static const int maxWorkoutDuration = 180;
 
-  static const double minWeight = 30.0; // kg
-  static const double maxWeight = 300.0; // kg
-  static const double minHeight = 100.0; // cm
-  static const double maxHeight = 250.0; // cm
+  static const double minWeight = 30.0;
+  static const double maxWeight = 300.0;
+  static const double minHeight = 100.0;
+  static const double maxHeight = 250.0;
   static const int minAge = 13;
   static const int maxAge = 120;
 

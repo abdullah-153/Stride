@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../services/nutrition_service.dart';
 import '../../services/meal_service.dart';
@@ -31,7 +31,7 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
   List<Meal> _recentMeals = [];
   List<Meal> _favoriteMeals = [];
   List<Meal> _searchResults = [];
-  List<String> _suggestions = []; // Autocomplete suggestions
+  List<String> _suggestions = [];
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -39,7 +39,7 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // Increased to 4
+    _tabController = TabController(length: 4, vsync: this);
     _loadAllData();
   }
 
@@ -406,7 +406,7 @@ class _QuickAddMealSheetState extends State<QuickAddMealSheet>
                     ),
                     SizedBox(height: SizeConfig.h(4)),
                     Text(
-                      '${meal.calories} kcal Ã¢â‚¬Â¢ ${meal.macros.protein}g P Ã¢â‚¬Â¢ ${meal.macros.carbs}g C Ã¢â‚¬Â¢ ${meal.macros.fats}g F',
+                      '${meal.calories} kcal • ${meal.macros.protein}g P • ${meal.macros.carbs}g C • ${meal.macros.fats}g F',
                       style: TextStyle(
                         fontSize: SizeConfig.sp(12),
                         color: subTextColor,

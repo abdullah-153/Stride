@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/gamification_model.dart';
 import 'firestore/gamification_firestore_service.dart';
@@ -13,6 +13,10 @@ class GamificationService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Function(int newLevel, int xpGained)? onLevelUp;
+
+  static bool? _cachedFirstWorkoutOfDay;
+  static bool? _cachedFirstMealOfDay;
+  static DateTime? _cacheDate;
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
@@ -40,7 +44,31 @@ class GamificationService {
   }
 
   int getXpForNextLevel(int currentLevel) {
-    return currentLevel * 100;
+    return 80 + (currentLevel * 20);
+  }
+
+  Future<void> validateStreaksOnAppOpen() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final data = await _firestoreService.getGamificationData(_currentUserId!);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final lastLog = data.stats.lastLogDate;
+
+      if (lastLog == null) return;
+
+      final lastLogDay = DateTime(lastLog.year, lastLog.month, lastLog.day);
+
+      if (!_isSameDay(lastLogDay, today) &&
+          !_isSameDay(lastLogDay, yesterday)) {
+        await _firestoreService.resetGlobalStreak(_currentUserId!);
+        print('Streak reset: missed day detected');
+      }
+    } catch (e) {
+      print('Error validating streaks: $e');
+    }
   }
 
   Stream<GamificationData> get gamificationStream {
@@ -67,7 +95,7 @@ class GamificationService {
     for (var defaultAch in defaultAchievements) {
       final existing = data.achievements.firstWhere(
         (a) => a.id == defaultAch.id,
-        orElse: () => defaultAch, // Return default (locked) if not found
+        orElse: () => defaultAch,
       );
 
       updatedAchievements.add(
@@ -134,18 +162,47 @@ class GamificationService {
   Future<bool> isFirstOfDayForType(StreakType type) async {
     if (_currentUserId == null) return true;
 
+    final today = DateTime.now();
+
+    if (_cacheDate == null || !_isSameDay(_cacheDate!, today)) {
+      _cacheDate = today;
+      _cachedFirstWorkoutOfDay = null;
+      _cachedFirstMealOfDay = null;
+    }
+
+    if (type == StreakType.workout && _cachedFirstWorkoutOfDay != null) {
+      return _cachedFirstWorkoutOfDay!;
+    }
+    if (type == StreakType.diet && _cachedFirstMealOfDay != null) {
+      return _cachedFirstMealOfDay!;
+    }
+
     try {
       final data = await _firestoreService.getGamificationData(_currentUserId!);
-      final now = DateTime.now();
       final lastDate = type == StreakType.diet
           ? data.stats.lastDietLogDate
           : data.stats.lastWorkoutLogDate;
 
-      if (lastDate == null) return true;
-      return !_isSameDay(lastDate, now);
+      final isFirst = lastDate == null || !_isSameDay(lastDate, today);
+
+      if (type == StreakType.workout) {
+        _cachedFirstWorkoutOfDay = isFirst;
+      } else {
+        _cachedFirstMealOfDay = isFirst;
+      }
+
+      return isFirst;
     } catch (e) {
       print('Error checking if first of day: $e');
       return true;
+    }
+  }
+
+  void markActivityDone(StreakType type) {
+    if (type == StreakType.workout) {
+      _cachedFirstWorkoutOfDay = false;
+    } else {
+      _cachedFirstMealOfDay = false;
     }
   }
 

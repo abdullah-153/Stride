@@ -1,9 +1,9 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile_model.dart';
 import '../services/user_profile_service.dart';
 import '../notifiers/user_profile_notifier.dart';
-import '../services/auth_service.dart'; // Import auth service for authStateProvider
+import '../services/auth_service.dart';
 
 final userProfileServiceProvider = Provider<UserProfileService>((ref) {
   return UserProfileService();

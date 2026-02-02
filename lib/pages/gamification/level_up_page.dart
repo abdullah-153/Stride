@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/size_config.dart';
@@ -362,8 +362,8 @@ class _LevelUpPageState extends State<LevelUpPage>
 }
 
 class _LevelUpWavePainter extends CustomPainter {
-  final double progress; // 0..1 (bottom to top)
-  final double phase; // wave animation phase
+  final double progress;
+  final double phase;
 
   _LevelUpWavePainter({required this.progress, required this.phase});
 
@@ -375,9 +375,9 @@ class _LevelUpWavePainter extends CustomPainter {
       begin: Alignment.bottomCenter,
       end: Alignment.topCenter,
       colors: [
-        const Color(0xFF8B5CF6), // Purple
-        const Color(0xFFA855F7), // Light purple
-        const Color(0xFFF59E0B), // Gold
+        const Color(0xFF8B5CF6),
+        const Color(0xFFA855F7),
+        const Color(0xFFF59E0B),
       ],
       stops: const [0.0, 0.5, 1.0],
     );

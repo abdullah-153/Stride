@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/size_config.dart';
@@ -73,10 +73,9 @@ class _GoalPageState extends ConsumerState<GoalPage>
         gender: widget.selectedGender,
         height: widget.selectedHeight,
         weight: widget.selectedWeight,
-        bio: widget
-            .selectedFitnessLevel, // Storing fitness level in bio for now or we could add a field
-        weeklyWorkoutGoal: 4, // Default
-        dailyCalorieGoal: 2000, // Default, will be recalculated
+        bio: widget.selectedFitnessLevel,
+        weeklyWorkoutGoal: 4,
+        dailyCalorieGoal: 2000,
       );
 
       await ref.read(userProfileProvider.notifier).updateProfile(newProfile);
@@ -102,7 +101,7 @@ class _GoalPageState extends ConsumerState<GoalPage>
     final isMale = widget.selectedGender.toLowerCase() == 'male';
 
     return Scaffold(
-      backgroundColor: Colors.black, // Premium Dark Background
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           Positioned(

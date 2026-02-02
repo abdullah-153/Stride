@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,25 +41,25 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
     {
       'id': 'muscle_gain',
       'label': 'Muscle Gain',
-      'emoji': 'Ã°Å¸â€™Âª',
+      'emoji': '💪',
       'desc': 'Build lean mass & strength',
     },
     {
       'id': 'weight_loss',
       'label': 'Weight Loss',
-      'emoji': 'Ã°Å¸â€Â¥',
+      'emoji': '🔥',
       'desc': 'Burn calories & tone up',
     },
     {
       'id': 'strength',
       'label': 'Strength',
-      'emoji': 'Ã°Å¸Ââ€¹Ã¯Â¸Â',
+      'emoji': '🏋️‍♀️',
       'desc': 'Focus on power lifting',
     },
     {
       'id': 'endurance',
       'label': 'Endurance',
-      'emoji': 'Ã°Å¸ÂÆ’',
+      'emoji': '🏃',
       'desc': 'Improve cardio & stamina',
     },
   ];
@@ -184,7 +184,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Ã°Å¸Å¡â‚¬ Plan activated successfully! Let\'s go!',
+              '🚀 Plan activated successfully! Let\'s go!',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
@@ -215,7 +215,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
     final bgColor = isDarkMode
         ? const Color(0xFF0F0F0F)
         : const Color(0xFFFAFAFA);
-    final accentColor = const Color(0xFFCEF24B); // Lime Green
+    final accentColor = const Color(0xFFCEF24B);
     final textColor = isDarkMode ? Colors.white : const Color(0xFF1A1A1A);
     final cardColor = isDarkMode
         ? const Color(0xFF1E1E1E).withOpacity(0.6)
@@ -366,7 +366,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Ready, $userName? Ã°Å¸Å¡â‚¬",
+          "Ready, $userName? 🚀",
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -498,7 +498,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
             Expanded(
               child: _buildEquipmentCard(
                 'none',
-                'Ã°Å¸ÂÂ ',
+                '🏠',
                 'Home',
                 accentColor,
                 cardColor,
@@ -510,7 +510,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
             Expanded(
               child: _buildEquipmentCard(
                 'basic',
-                'Ã°Å¸â€â€',
+                '⚖️',
                 'Basic',
                 accentColor,
                 cardColor,
@@ -522,7 +522,7 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
             Expanded(
               child: _buildEquipmentCard(
                 'gym',
-                'Ã¢Å¡Â¡',
+                '⚡',
                 'Gym',
                 accentColor,
                 cardColor,
@@ -751,8 +751,8 @@ class _CreateWorkoutPlanPageState extends ConsumerState<CreateWorkoutPlanPage>
     return Text(
       title,
       style: TextStyle(
-        color: color.withOpacity(0.9), // Increased opacity for readability
-        fontSize: 16, // Pro size
+        color: color.withOpacity(0.9),
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
       ),

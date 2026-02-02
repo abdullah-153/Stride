@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/nutrition_model.dart';
 import '../../utils/size_config.dart';
 import 'package:flutter/services.dart';
@@ -6,26 +6,36 @@ import 'package:flutter/services.dart';
 class EnhancedMealCard extends StatelessWidget {
   final Meal meal;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit; // Added onEdit
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final bool isDarkMode;
+  final bool isHistory;
 
   const EnhancedMealCard({
     super.key,
     required this.meal,
     this.onTap,
-    this.onEdit, // Initialize
+    this.onEdit,
     this.onDelete,
     this.isDarkMode = false,
+    this.isHistory = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
-    final borderColor = isDarkMode
-        ? Colors.white.withOpacity(0.2)
-        : Colors.grey.shade300;
+    final baseBg = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
+    final cardBg = isHistory ? baseBg.withOpacity(0.6) : baseBg;
+
+    final borderColor = isHistory
+        ? (isDarkMode ? Colors.white10 : Colors.black12)
+        : (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.grey.shade300);
+
     final textColor = isDarkMode ? Colors.white : Colors.black87;
+
+    final effectiveTextColor = isHistory
+        ? textColor.withOpacity(0.7)
+        : textColor;
+
     final subTextColor = isDarkMode ? Colors.white70 : Colors.black54;
 
     return Container(
@@ -35,6 +45,7 @@ class EnhancedMealCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
+
             onTap?.call();
           },
           borderRadius: BorderRadius.circular(SizeConfig.w(16)),
@@ -51,12 +62,16 @@ class EnhancedMealCard extends StatelessWidget {
                   width: SizeConfig.w(50),
                   height: SizeConfig.w(50),
                   decoration: BoxDecoration(
-                    color: _getMealTypeColor().withOpacity(0.2),
+                    color: _getMealTypeColor().withOpacity(
+                      isHistory ? 0.1 : 0.2,
+                    ),
                     borderRadius: BorderRadius.circular(SizeConfig.w(12)),
                   ),
                   child: Icon(
                     _getMealTypeIcon(),
-                    color: _getMealTypeColor(),
+                    color: _getMealTypeColor().withOpacity(
+                      isHistory ? 0.7 : 1.0,
+                    ),
                     size: SizeConfig.w(24),
                   ),
                 ),
@@ -70,7 +85,10 @@ class EnhancedMealCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: SizeConfig.sp(15),
                           fontWeight: FontWeight.w700,
-                          color: textColor,
+                          color: effectiveTextColor,
+                          decoration: isHistory
+                              ? TextDecoration.none
+                              : TextDecoration.none,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -83,12 +101,14 @@ class EnhancedMealCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: SizeConfig.sp(13),
                               fontWeight: FontWeight.w600,
-                              color: const Color.fromRGBO(206, 242, 75, 1),
+                              color: isHistory
+                                  ? (const Color.fromRGBO(206, 242, 75, 0.7))
+                                  : const Color.fromRGBO(206, 242, 75, 1),
                             ),
                           ),
                           SizedBox(width: SizeConfig.w(8)),
                           Text(
-                            'â€¢',
+                            '•',
                             style: TextStyle(
                               color: subTextColor,
                               fontSize: SizeConfig.sp(12),
@@ -100,7 +120,9 @@ class EnhancedMealCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: SizeConfig.sp(11),
                               fontWeight: FontWeight.w500,
-                              color: subTextColor,
+                              color: subTextColor.withOpacity(
+                                isHistory ? 0.6 : 1.0,
+                              ),
                             ),
                           ),
                         ],
@@ -108,7 +130,8 @@ class EnhancedMealCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onEdit != null || onDelete != null)
+
+                if ((onEdit != null || onDelete != null) && !isHistory)
                   PopupMenuButton<String>(
                     icon: Icon(
                       Icons.more_vert,
@@ -163,6 +186,16 @@ class EnhancedMealCard extends StatelessWidget {
                           ),
                         ),
                     ],
+                  ),
+
+                if (isHistory)
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      size: 16,
+                      color: subTextColor.withOpacity(0.5),
+                    ),
                   ),
               ],
             ),

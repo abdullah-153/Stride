@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitness_tracker_frontend/models/nutrition_model.dart';
 import 'package:fitness_tracker_frontend/models/diet_plan_model.dart';
 
@@ -7,16 +7,16 @@ enum UnitPreference { metric, imperial }
 class UserProfile {
   final String name;
   final String bio;
-  final double weight; // in kg
-  final double height; // in cm
+  final double weight;
+  final double height;
   final int age;
   final DateTime? dateOfBirth;
-  final String? profileImagePath; // Fixed: returned to nullable
-  final String gender; // Added gender
+  final String? profileImagePath;
+  final String gender;
 
   final int weeklyWorkoutGoal;
   final int dailyCalorieGoal;
-  final double? weightGoal; // Target weight in kg
+  final double? weightGoal;
 
   final NutritionGoal? nutritionGoal;
   final DietPlan? activeDietPlan;
@@ -33,7 +33,7 @@ class UserProfile {
     required this.weight,
     required this.height,
     required this.age,
-    this.gender = 'Male', // Default
+    this.gender = 'Male',
     this.dateOfBirth,
     this.profileImagePath,
     this.weeklyWorkoutGoal = 5,

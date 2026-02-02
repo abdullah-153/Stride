@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class StreakSummaryCard extends StatefulWidget {
   final bool isDarkMode;
-  final List<bool> weeklyActivity; // Last 7 days
+  final List<bool> weeklyActivity;
   final int currentStreak;
   final List<int> dailyCalories;
   final List<int> dailyDuration;

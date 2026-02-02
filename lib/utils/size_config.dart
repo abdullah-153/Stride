@@ -1,4 +1,4 @@
-﻿import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart';
 
 class SizeConfig {
   static late MediaQueryData _mediaQueryData;
@@ -22,7 +22,7 @@ class SizeConfig {
 
     scaleWidth = screenWidth / designWidth;
     scaleHeight = screenHeight / designHeight;
-    textScale = scaleWidth; // Use width for text scaling
+    textScale = scaleWidth;
 
     final safeAreaHorizontal =
         _mediaQueryData.padding.left + _mediaQueryData.padding.right;

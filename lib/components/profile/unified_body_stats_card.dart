@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class UnifiedBodyStatsCard extends StatelessWidget {
@@ -6,7 +6,7 @@ class UnifiedBodyStatsCard extends StatelessWidget {
   final double height;
   final int age;
   final bool isDarkMode;
-  final bool isMetric; // Derived from UnitPreference
+  final bool isMetric;
   final VoidCallback onTap;
 
   const UnifiedBodyStatsCard({
@@ -33,7 +33,7 @@ class UnifiedBodyStatsCard extends StatelessWidget {
     final displayWeight = isMetric ? weight : weight * 2.20462;
     final weightUnit = isMetric ? 'kg' : 'lbs';
 
-    final displayHeight = isMetric ? height : height / 30.48; // ft
+    final displayHeight = isMetric ? height : height / 30.48;
     final heightUnit = isMetric ? 'cm' : 'ft';
 
     String formattedHeight;
@@ -83,9 +83,7 @@ class UnifiedBodyStatsCard extends StatelessWidget {
                   _buildStatItem(
                     label: 'Height',
                     value: formattedHeight,
-                    unit: isMetric
-                        ? heightUnit
-                        : '', // Unit inside value for imperial
+                    unit: isMetric ? heightUnit : '',
                     textColor: textColor,
                     labelColor: labelColor,
                     icon: Icons.height_rounded,

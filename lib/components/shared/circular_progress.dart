@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:dashed_circular_progress_bar/dashed_circular_progress_bar.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
@@ -7,7 +7,7 @@ class DietCircularProgress extends StatefulWidget {
   final double consumedKcal;
   final double burnedKcal;
   final bool isDarkMode;
-  final double? diameter; // Added optional diameter
+  final double? diameter;
 
   const DietCircularProgress({
     super.key,
@@ -15,7 +15,7 @@ class DietCircularProgress extends StatefulWidget {
     required this.consumedKcal,
     required this.burnedKcal,
     this.isDarkMode = false,
-    this.diameter, // Initialize
+    this.diameter,
   });
 
   @override
@@ -48,12 +48,11 @@ class _DietCircularProgressState extends State<DietCircularProgress> {
     double remaining = (total - (consumed + burned)).clamp(0, total);
     double progress = (consumed + burned).clamp(0, total);
 
-    double diameter =
-        widget.diameter ?? SizeConfig.w(180); // Use passed diameter or default
+    double diameter = widget.diameter ?? SizeConfig.w(180);
     double stroke = SizeConfig.w(16);
 
     final bool dark = widget.isDarkMode;
-    final Color fgColor = Colors.lightBlue; // accent unchanged
+    final Color fgColor = Colors.lightBlue;
     final Color bgColor = dark
         ? Colors.white.withOpacity(0.08)
         : Colors.blue.shade50;

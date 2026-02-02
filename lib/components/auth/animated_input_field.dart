@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class AnimatedInputField extends StatefulWidget {
@@ -42,14 +42,10 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
       parent: _controller,
       curve: Curves.easeOut,
     );
-    _slideAnimation =
-        Tween<Offset>(
-              begin: const Offset(0.2, 0),
-              end: Offset.zero,
-            ) // Slide from right
-            .animate(
-              CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-            );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.2, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     if (widget.delayMs > 0) {
       Future.delayed(Duration(milliseconds: widget.delayMs), () {
@@ -75,11 +71,9 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
         child: Container(
           margin: EdgeInsets.symmetric(vertical: SizeConfig.h(8)),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.5), // Semi-transparent white
+            color: Colors.white.withOpacity(0.5),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.6),
-            ), // Subtle border
+            border: Border.all(color: Colors.white.withOpacity(0.6)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.02),
@@ -95,7 +89,7 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
             style: TextStyle(
               fontSize: SizeConfig.sp(16),
               fontWeight: FontWeight.w500,
-              color: Colors.black87, // Restore black text
+              color: Colors.black87,
             ),
             decoration: InputDecoration(
               hintText: widget.label,

@@ -1,11 +1,9 @@
-﻿import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import '../../components/auth/auth_scaffold.dart';
 import '../../components/auth/animated_input_field.dart';
 import '../../components/auth/auth_navigation_buttons.dart';
 import '../../components/auth/auth_glass_card.dart';
 import '../../utils/size_config.dart';
-import '../../utils/app_constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/auth_service.dart';
@@ -286,7 +284,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(24)),
       child: Column(
-        key: const ValueKey('step0'), // Key forces rebuild for animation
+        key: const ValueKey('step0'),
         children: [
           AuthGlassCard(
             child: AnimatedInputField(

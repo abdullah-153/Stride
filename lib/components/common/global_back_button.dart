@@ -1,15 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class GlobalBackButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isDark;
 
-  const GlobalBackButton({
-    super.key,
-    this.onPressed,
-    this.isDark =
-        false, // You might want to default to detecting theme logic if context available, but passed prop is fine
-  });
+  const GlobalBackButton({super.key, this.onPressed, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {

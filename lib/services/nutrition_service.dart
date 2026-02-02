@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/nutrition_model.dart';
 import '../models/gamification_model.dart';
@@ -84,7 +84,7 @@ class NutritionService {
         currentGoals: profile.nutritionGoal,
       );
 
-      await _gamificationService.addXp(10);
+      await _gamificationService.addXp(5);
       await _gamificationService.checkStreak(StreakType.diet, today);
 
       await _userProfileService.incrementMealsLogged();
@@ -95,7 +95,7 @@ class NutritionService {
       );
       if (dailyNutrition != null && dailyNutrition.proteinGoalMet) {
         await _gamificationService.unlockAchievement('protein_pro');
-        await _gamificationService.addXp(50);
+        await _gamificationService.addXp(25);
       }
     } catch (e) {
       print('Error logging meal: $e');
@@ -163,11 +163,8 @@ class NutritionService {
         currentGoals: profile.nutritionGoal,
       );
 
-      await _gamificationService.addXp(10); // Increased XP
-      await _gamificationService.checkStreak(
-        StreakType.diet,
-        today,
-      ); // Water counts for diet streak!
+      await _gamificationService.addXp(3);
+      await _gamificationService.checkStreak(StreakType.diet, today);
 
       final dailyNutrition = await _firestoreService.getDailyNutrition(
         _currentUserId!,
@@ -175,7 +172,7 @@ class NutritionService {
       );
       if (dailyNutrition != null && dailyNutrition.waterGoalMet) {
         await _gamificationService.unlockAchievement('hydration_hero');
-        await _gamificationService.addXp(30);
+        await _gamificationService.addXp(15);
       }
     } catch (e) {
       print('Error logging water: $e');
@@ -194,7 +191,7 @@ class NutritionService {
         protein: plan.macros.protein,
         carbs: plan.macros.carbs,
         fats: plan.macros.fats,
-        waterGoal: (plan.waterIntakeLiters * 1000).round(), // Convert L to mL
+        waterGoal: (plan.waterIntakeLiters * 1000).round(),
       );
 
       await _firestoreService.updateNutritionGoals(_currentUserId!, goals);

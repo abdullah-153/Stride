@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
@@ -13,7 +13,7 @@ class ProfileBottomSheets {
     required double currentWeight,
     required Function(double) onSave,
   }) async {
-    bool isKg = true; // Default to kg
+    bool isKg = true;
     double displayWeight = currentWeight;
     final controller = TextEditingController(
       text: displayWeight.toStringAsFixed(1),
@@ -172,7 +172,7 @@ class ProfileBottomSheets {
     required double currentHeight,
     required Function(double) onSave,
   }) async {
-    bool isCm = true; // Default to cm
+    bool isCm = true;
     double displayHeight = currentHeight;
     final controller = TextEditingController(
       text: displayHeight.toStringAsFixed(0),
@@ -332,16 +332,8 @@ class ProfileBottomSheets {
     required Function(DateTime) onSave,
   }) async {
     final now = DateTime.now();
-    final minDate = DateTime(
-      now.year - 100,
-      now.month,
-      now.day,
-    ); // Max 100 years old
-    final maxDate = DateTime(
-      now.year - 13,
-      now.month,
-      now.day,
-    ); // Min 13 years old
+    final minDate = DateTime(now.year - 100, now.month, now.day);
+    final maxDate = DateTime(now.year - 13, now.month, now.day);
 
     final selectedDate = await showDatePicker(
       context: context,

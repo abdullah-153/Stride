@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:fitness_tracker_frontend/utils/size_config.dart'; //
+import 'package:flutter/material.dart';
+import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
 class PasswordField extends StatefulWidget {
   final String label;

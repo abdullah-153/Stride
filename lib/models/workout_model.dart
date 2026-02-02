@@ -23,19 +23,19 @@ extension WorkoutCategoryExtension on WorkoutCategory {
   String get emoji {
     switch (this) {
       case WorkoutCategory.all:
-        return 'ðŸƒ';
+        return '🏃';
       case WorkoutCategory.cardio:
-        return 'â¤ï¸';
+        return '❤️';
       case WorkoutCategory.strength:
-        return 'ðŸ’ª';
+        return '💪';
       case WorkoutCategory.yoga:
-        return 'ðŸ§˜';
+        return '🧘';
       case WorkoutCategory.hiit:
-        return 'âš¡';
+        return '⚡';
       case WorkoutCategory.flexibility:
-        return 'ðŸ¤¸';
+        return '🤸';
       case WorkoutCategory.sports:
-        return 'âš½';
+        return '⚽';
     }
   }
 }
@@ -100,9 +100,9 @@ class Exercise {
 
   String get displayText {
     if (sets != null && reps != null) {
-      return '$sets sets Ã— $reps reps';
+      return '$sets sets x $reps reps';
     } else if (sets != null && durationSeconds != null) {
-      return '$sets sets Ã— ${durationSeconds}s';
+      return '$sets sets x ${durationSeconds}s';
     } else if (durationSeconds != null) {
       return '${durationSeconds}s';
     } else if (reps != null) {

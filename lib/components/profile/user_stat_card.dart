@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class UserStatCard extends StatelessWidget {
@@ -36,9 +36,7 @@ class UserStatCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(
-          SizeConfig.w(24),
-        ), // Match ProfilePage radius
+        borderRadius: BorderRadius.circular(SizeConfig.w(24)),
         border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(

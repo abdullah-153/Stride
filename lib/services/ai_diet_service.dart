@@ -2,16 +2,10 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 import '../models/diet_plan_model.dart';
+import '../utils/secrets.dart';
 
 class AIDietService {
-  static const List<String> _apiKeys = [
-    'AIzaSyDCBjX5WeMdX-ZlW_Ap9JV0H0tQx8JiTJ0',
-    'AIzaSyAL54y5K_etp88QxrTM56BJt5_lQsG_CUA',
-    'AIzaSyAvHrGeUdRR0Qq6HXFf2MQriGbbgUfsA98',
-    'AIzaSyALUEk3_qkW4bMtDKPLbYdAlZ0pQ1UZRrU',
-    'AIzaSyDxO-t2YxQTQKETJe6xd7-k5ZtOWoOz69c',
-    'AIzaSyBNgDhqR-SkhTvwwmuC3ZmfvWOx8p5rTPo',
-  ];
+  static const List<String> _apiKeys = ApiSecrets.geminiApiKeys;
 
   GenerativeModel _getModel(String apiKey) {
     return GenerativeModel(
@@ -78,7 +72,7 @@ class AIDietService {
         ]
       }
       
-      Ensure the plan is practical, uses accessible ingredients for the specified region, and strictly adheres to allergies and restrictions.
+      Ensure the plan is practical, uses accessible ingredients for the specified region for regions like Pakistan, give commonly used and available meals, and strictly adheres to allergies and restrictions.
     """;
 
     final content = [Content.text(prompt)];

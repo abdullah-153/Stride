@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import '../../utils/size_config.dart';
@@ -7,6 +7,7 @@ class WorkoutCapsuleCard extends StatefulWidget {
   final bool isDarkMode;
   final bool hasOngoing;
   final String workoutName;
+  final String workoutId;
   final int minutes;
   final int kcal;
   final int points;
@@ -15,7 +16,7 @@ class WorkoutCapsuleCard extends StatefulWidget {
   final String heroTag;
   final VoidCallback onToggle;
   final VoidCallback? onComplete;
-  final VoidCallback? onNext; // Added missing property
+  final VoidCallback? onNext;
   final int? remainingSeconds;
   final Color? activeColor;
 
@@ -24,6 +25,7 @@ class WorkoutCapsuleCard extends StatefulWidget {
     required this.isDarkMode,
     required this.hasOngoing,
     required this.workoutName,
+    required this.workoutId,
     required this.minutes,
     required this.kcal,
     required this.points,
@@ -77,21 +79,25 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
   void didUpdateWidget(covariant WorkoutCapsuleCard oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.workoutName != oldWidget.workoutName) {
+    if (widget.workoutId != oldWidget.workoutId) {
       if (mounted) {
-        _optimisticCompleted = false;
+        setState(() {
+          _optimisticCompleted = false;
+        });
         _rotateCtrl.value = 0.0;
+
         _fillCtrl.value = widget.isPlaying ? 1.0 : 0.0;
       }
+      return;
     }
 
     if (oldWidget.isCompleted != widget.isCompleted) {
       if (widget.isCompleted) {
-        _optimisticCompleted = false;
+        setState(() => _optimisticCompleted = false);
         _rotateCtrl.forward(from: 0.0);
         _fillCtrl.reverse();
       } else {
-        _optimisticCompleted = false;
+        setState(() => _optimisticCompleted = false);
         _rotateCtrl.reverse();
         if (widget.isPlaying) {
           _fillCtrl.forward();
@@ -132,8 +138,8 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
         ? const Color(0xFF2C2C2E)
         : const Color(0xFF2C2C2E);
 
-    final completedText = Colors.white; // Clean white text
-    final completedBorder = Colors.transparent; // No border for cleaner look
+    final completedText = Colors.white;
+    final completedBorder = Colors.transparent;
 
     final idleTitle = dark ? Colors.white : Colors.black87;
     final idleSubtitle = dark ? Colors.white70 : Colors.grey.shade700;
@@ -141,7 +147,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
     final playTitle = Colors.black;
     final playSubtitle = Colors.black87;
 
-    final waveColor = const Color(0xFFCEF24B); // Lime Wave
+    final waveColor = const Color(0xFFCEF24B);
     final waveOpacity = 1.0;
 
     return AnimatedBuilder(
@@ -233,8 +239,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                       vertical: SizeConfig.h(12),
                     ),
                     child: Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.center, // Revert to center
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -362,9 +367,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                         SizedBox(width: SizeConfig.w(12)),
 
                         Padding(
-                          padding: EdgeInsets.only(
-                            bottom: SizeConfig.h(6),
-                          ), // Subtle lift for optical centering
+                          padding: EdgeInsets.only(bottom: SizeConfig.h(6)),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -403,9 +406,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                                           ),
                                           decoration: const BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Color(
-                                              0xFFCEF24B,
-                                            ), // Premium Lime
+                                            color: Color(0xFFCEF24B),
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Color.fromRGBO(
@@ -430,7 +431,6 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                                   ),
                                 ),
                               ),
-
 
                               AnimatedContainer(
                                 curve: Curves.easeInOutCubic,
@@ -473,9 +473,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                                           ),
                                           decoration: const BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Color(
-                                              0xFFCEF24B,
-                                            ), // Lime accent
+                                            color: Color(0xFFCEF24B),
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Color.fromRGBO(
@@ -522,20 +520,18 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                                         curve: Curves.fastOutSlowIn,
                                         padding: EdgeInsets.all(
                                           SizeConfig.w(10),
-                                        ), // Standard padding
+                                        ),
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: _effectiveCompleted
                                               ? (dark
                                                     ? const Color(0xFF2C2C2E)
-                                                    : Colors
-                                                          .white) // Dark grey / White for Restart
+                                                    : Colors.white)
                                               : (coreProgress > 0.5)
-                                              ? Colors
-                                                    .black // Black button on Lime
+                                              ? Colors.black
                                               : (dark
                                                     ? const Color(0xFF2C2C2E)
-                                                    : Colors.white), // Idle
+                                                    : Colors.white),
                                           boxShadow: _effectiveCompleted
                                               ? [
                                                   BoxShadow(
@@ -610,9 +606,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                                                       ? const Color(0xFFCEF24B)
                                                       : const Color(0xFF5A701E))
                                                 : (coreProgress > 0.5)
-                                                ? const Color(
-                                                    0xFFCEF24B,
-                                                  ) // Lime icon on Black button
+                                                ? const Color(0xFFCEF24B)
                                                 : (dark
                                                       ? Colors.white
                                                       : Colors.black),
@@ -626,7 +620,7 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
                               ),
                             ],
                           ),
-                        ), // Close Padding
+                        ),
                       ],
                     ),
                   ),
@@ -641,8 +635,8 @@ class _WorkoutCapsuleCardState extends State<WorkoutCapsuleCard>
 }
 
 class _WaveFillPainter extends CustomPainter {
-  final double progress; // 0..1
-  final double phase; // radians for wave
+  final double progress;
+  final double phase;
   final Color color;
   final double borderRadius;
   final double waveAmplitude;
@@ -658,7 +652,6 @@ class _WaveFillPainter extends CustomPainter {
     this.waveAmplitude = 12.0,
     this.waveCount = 2,
     this.originRight = true,
-    this.originInsetPx = 0.0,
   });
 
   @override
@@ -679,9 +672,7 @@ class _WaveFillPainter extends CustomPainter {
 
     final path = Path();
     path.moveTo(fullW + waveAmplitude, 0);
-
-    final int steps = 40;
-    for (int i = 0; i <= steps; i++) {
+  for (int i = 0; i <= steps; i++) {
       final y = (i / steps) * size.height;
       final ny = y / size.height;
       final wave = sin(phase + ny * waveCount * 2 * pi);

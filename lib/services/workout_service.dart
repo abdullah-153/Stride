@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
@@ -9,6 +9,7 @@ import 'gamification_service.dart';
 import 'firestore/workout_firestore_service.dart';
 import 'firestore/workout_plan_service.dart';
 import 'user_profile_service.dart';
+import 'activity_service.dart';
 
 class WorkoutService {
   static final WorkoutService _instance = WorkoutService._internal();
@@ -21,7 +22,6 @@ class WorkoutService {
   final Random _random = Random();
 
   String? get _currentUserId => _auth.currentUser?.uid;
-
 
   Future<List<Workout>> getTodayWorkouts() async {
     try {
@@ -82,7 +82,7 @@ class WorkoutService {
                   points: 10,
                   difficulty: DifficultyLevel.intermediate,
                   exercises: [exercise],
-                  description: '${ex['sets']} sets Ãƒâ€” ${ex['reps']} reps',
+                  description: '${ex['sets']} sets x ${ex['reps']} reps',
                   isRecommended: false,
                 );
 
@@ -144,11 +144,28 @@ class WorkoutService {
       );
 
       final gamificationService = GamificationService();
-      await gamificationService.addXp(workout.points * 10);
+
+      int xpGain;
+      switch (workout.difficulty) {
+        case DifficultyLevel.beginner:
+          xpGain = 15;
+          break;
+        case DifficultyLevel.intermediate:
+          xpGain = 25;
+          break;
+        case DifficultyLevel.advanced:
+          xpGain = 40;
+          break;
+      }
+      await gamificationService.addXp(xpGain);
       await gamificationService.checkStreak(StreakType.workout, DateTime.now());
 
       final profileService = UserProfileService();
       await profileService.incrementWorkoutsCompleted();
+
+      final activityService = ActivityService();
+      await activityService.incrementWorkoutsCompleted();
+      await activityService.addCaloriesBurned(workout.caloriesBurned);
     } catch (e) {
       print('Error completing workout (offline mode): $e');
 

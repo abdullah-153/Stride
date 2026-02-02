@@ -1,6 +1,6 @@
-﻿class WeightEntry {
+class WeightEntry {
   final DateTime date;
-  final double weight; // in kg
+  final double weight;
   final String? note;
 
   const WeightEntry({required this.date, required this.weight, this.note});

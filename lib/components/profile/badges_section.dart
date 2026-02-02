@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/gamification_model.dart';
 import '../../utils/size_config.dart';
 
@@ -54,7 +54,7 @@ class BadgesSection extends StatelessWidget {
                 ),
               ),
               child: Icon(
-                Icons.shield_rounded, // Placeholder for asset image
+                Icons.shield_rounded,
                 color: isUnlocked ? Colors.amber : Colors.grey,
                 size: SizeConfig.w(30),
               ),

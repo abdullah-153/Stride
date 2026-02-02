@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class PremiumSlider extends StatefulWidget {
   final String label;
@@ -54,7 +54,7 @@ class _PremiumSliderState extends State<PremiumSlider> {
               child: Text(
                 "${widget.value.toInt()}${widget.unit}",
                 style: const TextStyle(
-                  color: Colors.blueAccent, // Premium accent
+                  color: Colors.blueAccent,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

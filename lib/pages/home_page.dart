@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/home/home_page_content.dart';
@@ -92,7 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
 
       if (shouldLogout ?? false) {
-        await ref.read(authServiceProvider).signOut(); // Perform actual logout
+        await ref.read(authServiceProvider).signOut();
         if (context.mounted) {
           Navigator.of(
             context,

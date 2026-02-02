@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class BouncingDotsIndicator extends StatefulWidget {
   final Color color;
@@ -50,9 +50,7 @@ class _BouncingDotsIndicatorState extends State<BouncingDotsIndicator>
             if (t < 0) t += 1.0;
 
             if (t < 0.5) {
-              yOffset =
-                  -10.0 *
-                  (1.0 - (2 * (0.25 - (t - 0.25).abs())).abs()); // Bounce up
+              yOffset = -10.0 * (1.0 - (2 * (0.25 - (t - 0.25).abs())).abs());
             }
 
             return Container(

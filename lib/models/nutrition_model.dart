@@ -241,4 +241,18 @@ class DailyNutrition {
       'goal': goal.toJson(),
     };
   }
+
+  DailyNutrition copyWith({
+    DateTime? date,
+    List<Meal>? meals,
+    int? waterIntake,
+    NutritionGoal? goal,
+  }) {
+    return DailyNutrition(
+      date: date ?? this.date,
+      meals: meals ?? this.meals,
+      waterIntake: waterIntake ?? this.waterIntake,
+      goal: goal ?? this.goal,
+    );
+  }
 }

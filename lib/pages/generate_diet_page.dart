@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../services/ai_diet_service.dart';
 import 'generated_diet_plan_page.dart';
 import '../utils/size_config.dart';
@@ -9,7 +9,7 @@ import '../components/common/global_back_button.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_profile_provider.dart';
-import '../providers/theme_provider.dart'; // Added import
+import '../providers/theme_provider.dart';
 
 class GenerateDietPage extends ConsumerStatefulWidget {
   const GenerateDietPage({super.key});
@@ -75,8 +75,8 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage>
           _age = profile.age;
           _height = profile.height.round();
           _currentWeight = profile.weight.round();
-          _targetWeight = profile.weight.round(); // Default to current
-          _gender = profile.gender; // Fetch gender
+          _targetWeight = profile.weight.round();
+          _gender = profile.gender;
         });
       }
     });
@@ -94,9 +94,7 @@ class _GenerateDietPageState extends ConsumerState<GenerateDietPage>
     final isDarkMode = ref.watch(themeProvider);
 
     return Scaffold(
-      backgroundColor: isDarkMode
-          ? Colors.black
-          : Colors.white, // Pure black/white
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: GlobalBackButton(

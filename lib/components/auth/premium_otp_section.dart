@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'custom_keyboard.dart';
 import 'package:flutter/services.dart';
@@ -13,8 +13,8 @@ class PremiumOTPSection extends StatefulWidget {
   const PremiumOTPSection({
     super.key,
     required this.email,
-    required this.onVerified, // Called after successful verification
-    required this.onVerifyCode, // Called to verify the code
+    required this.onVerified,
+    required this.onVerifyCode,
     required this.onResend,
     this.isLoading = false,
   });
@@ -66,7 +66,7 @@ class _PremiumOTPSectionState extends State<PremiumOTPSection>
         _shakeController.reset();
         setState(() {
           _isError = false;
-          _code = ""; // Reset code
+          _code = "";
         });
       }
     });
@@ -185,10 +185,7 @@ class _PremiumOTPSectionState extends State<PremiumOTPSection>
                       decoration: BoxDecoration(
                         color: _isError
                             ? Colors.red.withOpacity(0.8)
-                            : (isActive
-                                  ? Colors.black
-                                  : Colors
-                                        .black12), // Glass style default (black12)
+                            : (isActive ? Colors.black : Colors.black12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _isError

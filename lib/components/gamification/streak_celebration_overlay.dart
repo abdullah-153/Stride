@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import 'package:flutter/services.dart';
@@ -69,11 +69,11 @@ class StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
       _particles.add(
         _Particle(
           x: random.nextDouble() * SizeConfig.screenWidth,
-          y: SizeConfig.screenHeight + 20, // Start below screen
+          y: SizeConfig.screenHeight + 20,
           color: Colors.primaries[random.nextInt(Colors.primaries.length)],
           size: random.nextDouble() * 10 + 5,
           speed: random.nextDouble() * 5 + 5,
-          angle: (random.nextDouble() - 0.5) * 0.5, // Slight spread
+          angle: (random.nextDouble() - 0.5) * 0.5,
         ),
       );
     }
@@ -121,7 +121,7 @@ class _Particle {
 
   void update(double t) {
     y -= speed;
-    x += sin(y * 0.01) * 2 + angle * 5; // Wavy motion
+    x += sin(y * 0.01) * 2 + angle * 5;
     opacity = (1.0 - t).clamp(0.0, 1.0);
   }
 }

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../utils/size_config.dart';
@@ -7,7 +7,7 @@ import 'day_planner_card.dart';
 class WeeklyPlannerView extends StatefulWidget {
   final Map<String, dynamic> generatedPlan;
   final ValueChanged<Map<String, dynamic>> onPlanUpdated;
-  final bool isDark; // Add explicit theme control
+  final bool isDark;
 
   const WeeklyPlannerView({
     super.key,
@@ -142,14 +142,13 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
   }
 
   void _checkAutoScroll(Offset position) {
-    const double edgeThreshold = 80.0; // Increased threshold
+    const double edgeThreshold = 80.0;
     final double screenWidth = MediaQuery.of(context).size.width;
 
-
     if (position.dx < edgeThreshold) {
-      _startAutoScroll(-8.0); // Slightly faster scroll
+      _startAutoScroll(-8.0);
     } else if (position.dx > screenWidth - edgeThreshold) {
-      _startAutoScroll(8.0); // Slightly faster scroll
+      _startAutoScroll(8.0);
     } else {
       _stopAutoScroll();
     }
@@ -180,13 +179,11 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     _saveToHistory();
 
     setState(() {
-
       final sourceItem = _weeklySchedule[sourceIndex];
       final targetItem = _weeklySchedule[targetIndex];
 
       _weeklySchedule[targetIndex] = sourceItem;
-      _weeklySchedule[sourceIndex] =
-          targetItem; // Swap allows simple shifting without losing data
+      _weeklySchedule[sourceIndex] = targetItem;
     });
 
     HapticFeedback.mediumImpact();
@@ -195,7 +192,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDark; // Use widget parameter
+    final isDark = widget.isDark;
     final textColor = isDark ? Colors.white : Colors.black;
     final accentColor = const Color(0xFFCEF24B);
 
@@ -312,7 +309,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
   void _onAddExercise(int index) {
     if (_weeklySchedule[index] == null) {
-      _onAddNewDay(index); // If empty, first create the day structure
+      _onAddNewDay(index);
       return;
     }
     _showAddExerciseDialog(index);
@@ -322,7 +319,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     String name = '';
     int sets = 3;
     int reps = 12;
-    int minutes = 10; // Default estimate
+    int minutes = 10;
 
     showModalBottomSheet(
       context: context,
@@ -405,7 +402,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
                       'name': name,
                       'sets': sets,
                       'reps': reps,
-                      'restSeconds': 60, // Default
+                      'restSeconds': 60,
                       'estimatedMinutes': minutes,
                       'targetMuscle': 'custom',
                     });
@@ -449,7 +446,6 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
     );
   }
 
-
   Widget _buildDragTargetSlot(int index) {
     final double cardWidth = MediaQuery.of(context).size.width * 0.75;
 
@@ -465,8 +461,8 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: cardWidth, // Updated width
-          margin: EdgeInsets.only(right: SizeConfig.w(12)), // Reduced Margin
+          width: cardWidth,
+          margin: EdgeInsets.only(right: SizeConfig.w(12)),
           transform: isHovered
               ? Matrix4.identity().scaled(1.02)
               : Matrix4.identity(),
@@ -485,7 +481,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
 
   Widget _buildDraggableCard(int index, bool isHovered, double cardWidth) {
     final dayData = _weeklySchedule[index];
-    final isDark = widget.isDark; // Use widget parameter
+    final isDark = widget.isDark;
 
     Widget content;
     if (dayData == null) {
@@ -524,7 +520,7 @@ class _WeeklyPlannerViewState extends State<WeeklyPlannerView> {
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(
-          width: cardWidth, // Feedback matches new width
+          width: cardWidth,
           height: SizeConfig.h(400),
           child: Opacity(
             opacity: 0.9,

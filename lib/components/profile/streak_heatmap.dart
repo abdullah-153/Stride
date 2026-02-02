@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../utils/size_config.dart';
 
@@ -25,8 +25,7 @@ class StreakHeatMap extends StatelessWidget {
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final subTextColor = isDarkMode ? Colors.white54 : Colors.black45;
     final boxColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200;
-    final activeColor =
-        Colors.green; // GitHub green, or use app theme (Lime/Blue)?
+    final activeColor = Colors.green;
 
     return Container(
       padding: EdgeInsets.all(SizeConfig.w(20)),
@@ -107,7 +106,6 @@ class StreakHeatMap extends StatelessWidget {
 
           LayoutBuilder(
             builder: (context, constraints) {
-
               const int columns = 7;
               final double gap = SizeConfig.w(6);
               final double availableWidth = constraints.maxWidth;
@@ -123,15 +121,12 @@ class StreakHeatMap extends StatelessWidget {
                   mainAxisSpacing: gap,
                   childAspectRatio: 1,
                 ),
-                itemCount:
-                    daysInMonth +
-                    startOfMonth.weekday -
-                    1, // Add offset for starting weekday
+                itemCount: daysInMonth + startOfMonth.weekday - 1,
                 itemBuilder: (context, index) {
                   final offset = startOfMonth.weekday - 1;
 
                   if (index < offset) {
-                    return const SizedBox(); // Empty slot
+                    return const SizedBox();
                   }
 
                   final day = index - offset + 1;
@@ -140,11 +135,7 @@ class StreakHeatMap extends StatelessWidget {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: isActive
-                          ? const Color(
-                              0xFFCEF24B,
-                            ) // Lime (Premium/Workout theme)
-                          : boxColor,
+                      color: isActive ? const Color(0xFFCEF24B) : boxColor,
                       borderRadius: BorderRadius.circular(SizeConfig.w(6)),
                     ),
                     child: Center(

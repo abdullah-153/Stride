@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/gamification_model.dart';
 import 'base_firestore_service.dart';
 import 'firestore_collections.dart';
@@ -9,7 +9,10 @@ class GamificationFirestoreService extends BaseFirestoreService {
   factory GamificationFirestoreService() => _instance;
   GamificationFirestoreService._internal();
 
-  static const int XP_PER_LEVEL = 100;
+  static const int BASE_XP = 80;
+  static const int XP_PER_LEVEL_MULTIPLIER = 20;
+
+  int _getXpForLevel(int level) => BASE_XP + (level * XP_PER_LEVEL_MULTIPLIER);
 
   Future<GamificationData> getGamificationData(String userId) async {
     return handleFirestoreOperation(() async {
@@ -65,8 +68,9 @@ class GamificationFirestoreService extends BaseFirestoreService {
 
         currentXp += xpToAdd;
 
-        while (currentXp >= XP_PER_LEVEL) {
-          currentXp -= XP_PER_LEVEL;
+        final xpNeeded = _getXpForLevel(currentLevel);
+        if (currentXp >= xpNeeded) {
+          currentXp -= xpNeeded;
           currentLevel++;
         }
 
@@ -223,6 +227,19 @@ class GamificationFirestoreService extends BaseFirestoreService {
           .doc('data')
           .update(updates);
     }, errorMessage: 'Failed to reset streak');
+  }
+
+  Future<void> resetGlobalStreak(String userId) async {
+    ensureAuthenticated();
+
+    return handleFirestoreOperation(() async {
+      await getUserDocument(
+        userId,
+      ).collection(FirestoreCollections.gamification).doc('data').update({
+        '${FirestoreFields.stats}.${FirestoreFields.currentStreak}': 0,
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    }, errorMessage: 'Failed to reset global streak');
   }
 
   Future<void> _initializeGamificationData(

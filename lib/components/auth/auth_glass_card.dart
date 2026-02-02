@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
 import '../../utils/size_config.dart';
 
@@ -25,7 +25,7 @@ class AuthGlassCard extends StatelessWidget {
       height: height,
       child: GlassMorphismMaterial(
         blurIntensity: 20,
-        opacity: 0.3, // Increased opacity for visibility
+        opacity: 0.3,
         glassThickness: 1.5,
         borderRadius: BorderRadius.circular(20),
         child: Container(
@@ -33,14 +33,14 @@ class AuthGlassCard extends StatelessWidget {
             border: Border.all(
               color: Colors.white.withOpacity(0.8),
               width: 1.5,
-            ), // Stronger border
+            ),
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.5), // Lighter start
-                Colors.white.withOpacity(0.2), // Lighter end
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.2),
               ],
             ),
           ),

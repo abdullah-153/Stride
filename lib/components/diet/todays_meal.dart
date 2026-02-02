@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
 class TodayMealsCard extends StatefulWidget {
@@ -65,7 +65,7 @@ class _TodayMealsCardState extends State<TodayMealsCard> {
     final iconBg = dark
         ? Colors.white.withOpacity(0.03)
         : Colors.black.withOpacity(0.05);
-    final iconColor = Colors.blue; // keep accent
+    final iconColor = Colors.blue;
 
     return Container(
       margin: EdgeInsets.only(top: SizeConfig.h(0)),

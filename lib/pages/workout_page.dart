@@ -1,26 +1,31 @@
-﻿import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/workout_plans_provider.dart';
+import '../providers/workout_provider.dart';
 import '../components/workout/steps_counter_card.dart';
 import '../components/workout/workout_capsule_card.dart';
 import '../components/workout/interactive_workout_card.dart';
 import '../components/workout/workout_detail_sheet.dart';
 import '../models/workout_model.dart';
 import '../services/workout_service.dart';
-import '../services/firestore/workout_plan_service.dart';
 import '../utils/size_config.dart';
 import '../services/gamification_service.dart';
 import '../models/gamification_model.dart';
+import '../models/activity_model.dart';
+import '../services/activity_service.dart';
 import '../components/gamification/streak_card.dart';
 import '../components/gamification/streak_celebration_overlay.dart';
 import 'gamification/global_streak_success_page.dart';
 import 'gamification/level_up_page.dart';
- // Add this import
-import '../components/common/global_back_button.dart'; // Added import
+import '../components/common/global_back_button.dart';
 import '../providers/theme_provider.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
 import 'workout/create_workout_plan_page.dart';
+import 'workout/workout_plan_detail_page.dart';
+import 'active_tracking_page.dart';
 
 class WorkoutPage extends ConsumerStatefulWidget {
   const WorkoutPage({super.key});
@@ -29,32 +34,39 @@ class WorkoutPage extends ConsumerStatefulWidget {
   ConsumerState<WorkoutPage> createState() => _WorkoutPageState();
 }
 
-class _WorkoutPageState extends ConsumerState<WorkoutPage> {
+class _WorkoutPageState extends ConsumerState<WorkoutPage> with TickerProviderStateMixin {
   final WorkoutService _workoutService = WorkoutService();
+  final GlobalKey _celebrationKey = GlobalKey();
 
-  List<Workout> _todayWorkouts = [];
-  List<Workout> _recommendedWorkouts = [];
+   
   List<Workout> _filteredWorkouts = [];
-  List<Map<String, dynamic>> _userPlans = [];
-  bool _isLoading = true;
-  bool _isSubmitting = false; // Page-wide loading state for completion
+  bool _isCategoryLoading = false; 
 
   WorkoutCategory _selectedCategory = WorkoutCategory.all;
 
+   
   int _selectedIndex = 0;
-  int? _playingIndex;
-  final Set<String> _completed = {};
-
+  
+   
+  String? _playingWorkoutId;
+  
   Timer? _timer;
-
   int? _remainingSeconds;
-  final GlobalKey<StreakCelebrationOverlayState> _celebrationKey = GlobalKey();
+  
+   
+   
+   
+   
+  
+  late AnimationController _playAnimController;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadWorkouts();
-    _loadUserPlans();
+    _playAnimController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -62,89 +74,39 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     _timer?.cancel();
     super.dispose();
   }
-
-  Future<void> _loadWorkouts() async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-
-      final plans = userId != null
-          ? await WorkoutPlanService().getUserWorkoutPlans(userId)
-          : <Map<String, dynamic>>[];
-
-      List<Workout> todayWorkouts = [];
-
-      if (plans.isNotEmpty) {
-        todayWorkouts = await _workoutService.getTodayWorkouts();
-      }
-
-      final recommendedWorkouts = await _workoutService
-          .getRecommendedWorkouts();
-
-      if (mounted) {
-        setState(() {
-          _todayWorkouts = todayWorkouts;
-          _recommendedWorkouts = recommendedWorkouts;
-          _filteredWorkouts = todayWorkouts;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
+  
   void _onCategorySelected(WorkoutCategory category) async {
     setState(() {
       _selectedCategory = category;
-      _isLoading = true;
+      _isCategoryLoading = true;
     });
 
     try {
-      final workouts = await _workoutService.getWorkoutsByCategory(category);
-      if (mounted) {
-        setState(() {
-          _filteredWorkouts = workouts;
-          _isLoading = false;
-        });
+      if (category == WorkoutCategory.all) {
+          
+          
+         _isCategoryLoading = false;
+          
+         _filteredWorkouts = [];
+      } else {
+        final workouts = await _workoutService.getWorkoutsByCategory(category);
+        if (mounted) {
+          setState(() {
+            _filteredWorkouts = workouts;
+            _isCategoryLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isCategoryLoading = false;
         });
       }
     }
   }
 
-  Future<void> _loadUserPlans() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
-      print('No user ID - cannot load plans');
-      return;
-    }
 
-    try {
-      print('Loading plans for user: $userId');
-      final plans = await WorkoutPlanService().getUserWorkoutPlans(userId);
-      print('Loaded ${plans.length} plans');
-      if (mounted) {
-        setState(() {
-          _userPlans = plans;
-        });
-      }
-    } catch (e) {
-      print('Error loading user plans: $e');
-      if (mounted) {
-        setState(() {
-          _userPlans = []; // Set to empty list on error
-        });
-      }
-    }
-  }
 
   void _showWorkoutDetails(Workout workout) {
     WorkoutDetailSheet.show(
@@ -160,15 +122,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     Workout workout, {
     bool closeOnAdd = false,
   }) {
-    if (!_todayWorkouts.any((w) => w.id == workout.id)) {
-      setState(() {
-        _todayWorkouts.add(workout);
-        if (_selectedCategory == WorkoutCategory.all ||
-            _selectedCategory == workout.category) {
-          _filteredWorkouts.add(workout);
-        }
-      });
-    }
+    ref.read(workoutProvider.notifier).addWorkoutToToday(workout);
 
     if (closeOnAdd) {
       Navigator.pop(context);
@@ -187,21 +141,16 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     }
   }
 
-  void _startTimer(int index) {
-    if (index >= _filteredWorkouts.length) return;
+  void _startTimer(String workoutId, int index, List<Workout> activeList) {
+    if (index >= activeList.length) return;
 
     _timer?.cancel();
-    final workout = _filteredWorkouts[index];
-
+    
     setState(() {
-      _playingIndex = index;
+      _playingWorkoutId = workoutId;
       _selectedIndex = index;
-      _completed.remove(workout.id);
-
-      if (_remainingSeconds == null || _selectedIndex != index) {
-        _remainingSeconds =
-            3; // Debug: 3 seconds instead of workout.durationMinutes * 60
-      }
+      
+      _remainingSeconds ??= 3;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
@@ -210,18 +159,15 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           _remainingSeconds = _remainingSeconds! - 1;
         });
       } else {
-        await _handleWorkoutCompletion(index);
+        await _handleWorkoutCompletion(workoutId, activeList);
       }
     });
   }
 
-  Future<void> _handleWorkoutCompletion(int index) async {
+  Future<void> _handleWorkoutCompletion(String workoutId, List<Workout> activeList) async {
     _timer?.cancel();
-    final workout = _filteredWorkouts[index];
-
-    setState(() {
-      _isSubmitting = true; // Start loading
-    });
+    
+    final workout = activeList.firstWhere((w) => w.id == workoutId, orElse: () => activeList[0]);
 
     try {
       final gamificationService = GamificationService();
@@ -229,9 +175,18 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         StreakType.workout,
       );
 
-      await _workoutService.completeWorkout(workout);
+       
+      await ref.read(workoutProvider.notifier).completeWorkout(workout);
+      
+       
+       
+      setState(() {
+        _playingWorkoutId = null;
+        _remainingSeconds = null;
+      });
 
-      gamificationService.onLevelUp = (newLevel, xpGained) async {
+       
+       gamificationService.onLevelUp = (newLevel, xpGained) async {
         if (mounted) {
           final currentData = await gamificationService.getCurrentData();
           final totalXP = currentData.stats.currentXp;
@@ -252,14 +207,14 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
       if (mounted) {
         if (isFirstWorkoutOfDay) {
           final data = await gamificationService.getCurrentData();
-          final streakCount = data.stats.workoutStreak; // Use verified property
+          final streakCount = data.stats.workoutStreak;
 
           await Navigator.of(context).push(
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
                   GlobalStreakSuccessPage(
                     globalStreak: streakCount,
-                    themeColor: const Color(0xFFCEF24B), // Lime
+                    themeColor: const Color(0xFFCEF24B),
                     title: 'Workout Streak!',
                     subtitle: 'Great job keeping up the momentum!',
                   ),
@@ -273,7 +228,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                'Workout completed! Ã°Å¸â€™Âª',
+                'Workout completed! 💪',
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.black,
@@ -283,82 +238,80 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           );
         }
       }
-
-      setState(() {
-        _completed.add(workout.id);
-        _playingIndex = null;
-        _remainingSeconds = null;
-      });
     } catch (e) {
       print("Workout completion error: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Issues saving workout. Check internet."),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false; // Stop loading
-        });
-      }
-    }
+    } 
   }
 
   void _pauseTimer() {
     _timer?.cancel();
     setState(() {
-      _playingIndex = null;
+      _playingWorkoutId = null;
     });
   }
 
-  void _onCardPressed(int index) {
-    if (_playingIndex == index) {
+  void _onCardPressed(String workoutId, int index, List<Workout> activeList) {
+    if (_playingWorkoutId == workoutId) {
       _pauseTimer();
     } else {
+        
       if (_selectedIndex != index) {
         _remainingSeconds = null;
       }
-      _startTimer(index);
+      _startTimer(workoutId, index, activeList);
     }
   }
 
-  void _onCardRestarted(int index) {
+  void _onCardRestarted(String workoutId, int index, List<Workout> activeList) {
+     
+    ref.read(workoutProvider.notifier).uncompleteWorkout(workoutId);
+    
     _remainingSeconds = null;
-    _startTimer(index);
+    _startTimer(workoutId, index, activeList);
   }
 
-  void _onCapsuleToggle() {
-    if (_playingIndex != null) {
+  void _onCapsuleToggle(String currentId, int currentIndex, List<Workout> activeList) {
+    final completed = ref.read(workoutProvider).value?.completedWorkoutIds ?? {};
+    
+    if (_playingWorkoutId == currentId) {
+       
       _pauseTimer();
+    } else if (completed.contains(currentId)) {
+        
+        
+       ref.read(workoutProvider.notifier).uncompleteWorkout(currentId);
+       _remainingSeconds = null;  
+       _startTimer(currentId, currentIndex, activeList);
     } else {
-      _startTimer(_selectedIndex);
+      _startTimer(currentId, currentIndex, activeList);
     }
   }
 
-  void _onCapsuleComplete() {
-    _handleWorkoutCompletion(_selectedIndex);
-  }
-
-  void _onNextWorkout() {
-    if (_selectedIndex < _filteredWorkouts.length - 1) {
+   
+  void _onNextWorkout(List<Workout> activeList) {
+    final notifier = ref.read(workoutProvider.notifier);
+    
+     
+    final nextIndex = notifier.getNextUncompletedIndex(_selectedIndex, activeList);
+    
+    if (nextIndex < activeList.length) {
       setState(() {
-        _selectedIndex = _selectedIndex + 1;
+        _selectedIndex = nextIndex;
         _remainingSeconds = null;
-        _playingIndex =
-            null; // Auto-pause or auto-play? User said "moves to next workout".
+        _playingWorkoutId = null;  
       });
     }
   }
 
   void _removeWorkoutFromToday(Workout workout) {
+    ref.read(workoutProvider.notifier).removeWorkoutFromToday(workout.id);
+    
     setState(() {
-      _todayWorkouts.removeWhere((w) => w.id == workout.id);
-      _filteredWorkouts.removeWhere((w) => w.id == workout.id);
-
-      if (_playingIndex != null && _filteredWorkouts.length <= _playingIndex!) {
+        
+       if (_filteredWorkouts.isNotEmpty) {
+         _filteredWorkouts.removeWhere((w) => w.id == workout.id);
+       }
+       if (_playingWorkoutId == workout.id) {
         _pauseTimer();
       }
     });
@@ -375,6 +328,36 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+    
+     
+    final workoutState = ref.watch(workoutProvider);
+    final plansState = ref.watch(workoutPlansProvider);
+    
+     
+    ref.listen<AsyncValue<WorkoutPlansState>>(workoutPlansProvider, (prev, next) {
+       final prevId = prev?.value?.activePlanId;
+       final nextId = next.value?.activePlanId;
+       
+        
+       if (prevId != nextId) {
+           
+          ref.invalidate(workoutProvider);
+       }
+    });
+
+    final isLoading = workoutState.isLoading;
+    final completedIds = workoutState.value?.completedWorkoutIds ?? {};
+    
+     
+     
+     
+    List<Workout> displayedWorkouts;
+    if (_selectedCategory == WorkoutCategory.all && _filteredWorkouts.isEmpty) {
+         
+        displayedWorkouts = ref.read(workoutProvider.notifier).sortedWorkouts;
+    } else {
+        displayedWorkouts = _filteredWorkouts;
+    }
 
     final horizontal = SizeConfig.w(16);
     final headerSize = SizeConfig.sp(48);
@@ -386,15 +369,20 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     final primaryText = isDarkMode ? Colors.white : Colors.black;
     final borderColor = isDarkMode ? Colors.white12 : Colors.grey.shade300;
 
+     
+    if (_selectedIndex >= displayedWorkouts.length && displayedWorkouts.isNotEmpty) {
+      _selectedIndex = 0;
+    }
+    
     final currentWorkout =
-        _filteredWorkouts.isNotEmpty &&
-            _selectedIndex < _filteredWorkouts.length
-        ? _filteredWorkouts[_selectedIndex]
+        displayedWorkouts.isNotEmpty &&
+            _selectedIndex < displayedWorkouts.length
+        ? displayedWorkouts[_selectedIndex]
         : null;
 
-    final hasNextWorkout =
-        _filteredWorkouts.isNotEmpty &&
-        _selectedIndex < _filteredWorkouts.length - 1;
+     
+     
+    final hasNextWorkout = displayedWorkouts.length > 1;
 
     return Stack(
       children: [
@@ -405,19 +393,15 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
               isDark: isDarkMode,
               onPressed: () => Navigator.maybePop(context),
             ),
-            actions: [
-              SizedBox(width: SizeConfig.w(16)),
-            ],
             backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
-            scrolledUnderElevation: 0,
             elevation: 0,
             iconTheme: IconThemeData(color: appBarIconColor),
           ),
           body: StreakCelebrationOverlay(
             key: _celebrationKey,
             child: SafeArea(
-              child: _isLoading
+              child: isLoading || _isCategoryLoading
                   ? Center(
                       child: BouncingDotsIndicator(
                         color: isDarkMode ? Colors.white : Colors.black,
@@ -444,23 +428,44 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                           ),
 
                           SizedBox(height: SizeConfig.h(24)),
-
+                          
+                           
                           Center(
-                            child: StepCounterCard(
-                              steps: 8234,
-                              maxSteps: 10000,
-                              distanceKm: 6.5,
-                              isDarkMode: isDarkMode,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context, 
+                                  MaterialPageRoute(builder: (context) => const ActiveTrackingPage()),
+                                );
+                              },
+                              child: StreamBuilder<ActivityData?>(
+                                stream: ActivityService().streamTodayActivity(),
+                                builder: (context, snapshot) {
+                                  final activityData = snapshot.data;
+                                  final steps = activityData?.steps ?? 0;
+                                  final maxSteps = activityData?.maxSteps ?? 10000;
+                                  final distanceKm = (steps * 0.000762).toDouble();
+
+                                  return StepCounterCard(
+                                    steps: steps,
+                                    maxSteps: maxSteps,
+                                    distanceKm: distanceKm,
+                                    isDarkMode: isDarkMode,
+                                  );
+                                },
+                              ),
                             ),
                           ),
 
                           SizedBox(height: SizeConfig.h(20)),
 
+                           
                           StreamBuilder<GamificationData>(
                             stream: GamificationService().gamificationStream,
                             builder: (context, snapshot) {
-                              if (!snapshot.hasData)
+                              if (!snapshot.hasData) {
                                 return const SizedBox.shrink();
+                              }
                               final data = snapshot.data!;
 
                               return Padding(
@@ -480,17 +485,13 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                   gradientColors: isDarkMode
                                       ? [
                                           Colors.black,
-                                          const Color(0xFF1A1A1A), // Dark grey
-                                          const Color(
-                                            0xFFCEF24B,
-                                          ), // Lime accent
+                                          const Color(0xFF1A1A1A),
+                                          const Color(0xFFCEF24B),
                                         ]
                                       : [
                                           Colors.white,
-                                          const Color(0xFFF5F5F5), // Light grey
-                                          const Color(
-                                            0xFFCEF24B,
-                                          ), // Lime accent
+                                          const Color(0xFFF5F5F5),
+                                          const Color(0xFFCEF24B),
                                         ],
                                 ),
                               );
@@ -515,47 +516,35 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                               ),
                               child: WorkoutCapsuleCard(
                                 isDarkMode: isDarkMode,
-                                hasOngoing: _playingIndex != null,
+                                hasOngoing: _playingWorkoutId != null,
                                 workoutName: currentWorkout.title,
+                                workoutId: currentWorkout.id,
                                 minutes: currentWorkout.durationMinutes,
                                 kcal: currentWorkout.caloriesBurned,
-                                isPlaying:
-                                    _playingIndex != null &&
-                                    _playingIndex == _selectedIndex,
+                                isPlaying: _playingWorkoutId == currentWorkout.id,
                                 heroTag: 'play_button_${currentWorkout.id}',
-                                onToggle: _onCapsuleToggle,
-                                onComplete:
-                                    _onCapsuleComplete, // Wire up complete button
+                                onToggle: () => _onCapsuleToggle(currentWorkout.id, _selectedIndex, displayedWorkouts),
+                                onComplete: () => _handleWorkoutCompletion(currentWorkout.id, displayedWorkouts),
                                 onNext: hasNextWorkout
-                                    ? _onNextWorkout
-                                    : null, // Pass next callback if available
+                                    ? () => _onNextWorkout(displayedWorkouts)
+                                    : null,
                                 points: currentWorkout.points,
-                                isCompleted: _completed.contains(
+                                isCompleted: completedIds.contains(
                                   currentWorkout.id,
                                 ),
-                                remainingSeconds:
-                                    _selectedIndex == _playingIndex ||
-                                        (_remainingSeconds != null &&
-                                            _selectedIndex == _selectedIndex)
-                                    ? _remainingSeconds
-                                    : null,
-                                activeColor: const Color.fromRGBO(
-                                  206,
-                                  242,
-                                  75,
-                                  1,
-                                ),
+                                remainingSeconds: _remainingSeconds,
+                                activeColor: const Color(0xFFCEF24B),
                               ),
                             ),
                             SizedBox(height: SizeConfig.h(24)),
                           ],
 
-
+                           
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: horizontal,
                             ),
-                            child: _buildCreatePlanCapsule(context),
+                            child: _buildGeneratePlanCapsule(context, isDarkMode),
                           ),
 
                           SizedBox(height: SizeConfig.h(24)),
@@ -584,7 +573,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                           ),
                           SizedBox(height: SizeConfig.h(12)),
 
-                          _userPlans.isEmpty
+                          (plansState.value?.plans ?? []).isEmpty
                               ? Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: horizontal,
@@ -607,30 +596,20 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                         children: [
                                           Icon(
                                             Icons.fitness_center_outlined,
-                                            size: SizeConfig.w(48),
+                                            size: SizeConfig.w(32),
                                             color: isDarkMode
                                                 ? Colors.white54
                                                 : Colors.black38,
                                           ),
                                           SizedBox(height: SizeConfig.h(12)),
                                           Text(
-                                            'Generate a workout plan',
+                                            'No custom plans',
                                             style: TextStyle(
-                                              fontSize: SizeConfig.sp(16),
-                                              fontWeight: FontWeight.w600,
+                                              fontSize: SizeConfig.sp(14),
+                                              fontWeight: FontWeight.w500,
                                               color: isDarkMode
                                                   ? Colors.white70
                                                   : Colors.black54,
-                                            ),
-                                          ),
-                                          SizedBox(height: SizeConfig.h(6)),
-                                          Text(
-                                            'Use our AI to create a custom routine',
-                                            style: TextStyle(
-                                              fontSize: SizeConfig.sp(13),
-                                              color: isDarkMode
-                                                  ? Colors.white54
-                                                  : Colors.black38,
                                             ),
                                           ),
                                         ],
@@ -639,16 +618,17 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                   ),
                                 )
                               : SizedBox(
-                                  height: SizeConfig.h(160),
+                                  height: SizeConfig.h(200),
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     physics: const BouncingScrollPhysics(),
-                                    itemCount: _userPlans.length,
+                                    itemCount: (plansState.value?.plans ?? []).length,
                                     itemBuilder: (context, index) {
-                                      final plan = _userPlans[index];
+                                      final plan = (plansState.value?.plans ?? [])[index];
                                       final isFirst = index == 0;
                                       final isLast =
-                                          index == _userPlans.length - 1;
+                                          index == (plansState.value?.plans ?? []).length - 1;
+                                      final isActive = plan['id'] == plansState.value?.activePlanId;
 
                                       return Padding(
                                         padding: EdgeInsets.only(
@@ -665,6 +645,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                               ? const Color(0xFF1E1E1E)
                                               : Colors.white,
                                           primaryText,
+                                          isActive,
+                                          () => ref.read(workoutPlansProvider.notifier).activatePlan(plan['id']),
                                         ),
                                       );
                                     },
@@ -698,7 +680,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                   ),
                                 ),
                                 Text(
-                                  "${_filteredWorkouts.length} workouts",
+                                  "${displayedWorkouts.length} workouts",
                                   style: TextStyle(
                                     fontSize: SizeConfig.sp(14),
                                     fontWeight: FontWeight.w300,
@@ -713,56 +695,16 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
 
                           SizedBox(height: SizeConfig.h(12)),
 
-                          if (_filteredWorkouts.isEmpty)
+                          if (displayedWorkouts.isEmpty)
                             Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: horizontal,
                               ),
-                              child: Container(
-                                padding: EdgeInsets.all(SizeConfig.w(24)),
-                                decoration: BoxDecoration(
-                                  color: isDarkMode
-                                      ? const Color(0xFF1E1E1E)
-                                      : Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isDarkMode
-                                        ? Colors.white10
-                                        : Colors.black12,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.fitness_center_outlined,
-                                        size: SizeConfig.w(48),
-                                        color: isDarkMode
-                                            ? Colors.white54
-                                            : Colors.black38,
-                                      ),
-                                      SizedBox(height: SizeConfig.h(12)),
-                                      Text(
-                                        "It's a rest day or no active plans",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(16),
-                                          fontWeight: FontWeight.w600,
-                                          color: isDarkMode
-                                              ? Colors.white70
-                                              : Colors.black54,
-                                        ),
-                                      ),
-                                      SizedBox(height: SizeConfig.h(6)),
-                                      Text(
-                                        "Tap + to add a custom workout",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(13),
-                                          color: isDarkMode
-                                              ? Colors.white54
-                                              : Colors.black38,
-                                        ),
-                                      ),
-                                    ],
+                              child: Center(
+                                child: Text(
+                                  "No workouts for today",
+                                  style: TextStyle(
+                                     color: isDarkMode ? Colors.white54 : Colors.grey,
                                   ),
                                 ),
                               ),
@@ -773,19 +715,17 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 physics: const BouncingScrollPhysics(),
-                                itemCount: _filteredWorkouts.length,
+                                itemCount: displayedWorkouts.length,
                                 itemBuilder: (context, index) {
-                                  final workout = _filteredWorkouts[index];
-                                  final isPlaying =
-                                      _playingIndex != null &&
-                                      _playingIndex == index;
-                                  final isCompleted = _completed.contains(
+                                  final workout = displayedWorkouts[index];
+                                  final isPlaying = _playingWorkoutId == workout.id;
+                                  final isCompleted = completedIds.contains(
                                     workout.id,
                                   );
-                                  final isPaused =
-                                      _selectedIndex == index &&
-                                      !isPlaying &&
-                                      !isCompleted;
+                                  
+                                   
+                                   
+                                  final isSelected = _selectedIndex == index;
 
                                   return InteractiveWorkoutCard(
                                     key: ValueKey(
@@ -795,62 +735,36 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                                     index: index,
                                     isPlaying: isPlaying,
                                     isCompleted: isCompleted,
-                                    isPaused: isPaused,
+                                    isPaused: isSelected &&
+                                        !isPlaying &&
+                                        !isCompleted,
                                     isDarkMode: isDarkMode,
                                     onPressed: () {
                                       if (isCompleted) {
-                                        _onCardRestarted(index);
-                                      } else if (isPlaying) {
-                                        _pauseTimer();
+                                        _onCardRestarted(workout.id, index, displayedWorkouts);
                                       } else {
-                                        _onCardPressed(index);
+                                        _onCardPressed(workout.id, index, displayedWorkouts);
                                       }
                                     },
-                                    onDelete: () {
-                                      _removeWorkoutFromToday(workout);
-                                    },
+                                    onDelete: () =>
+                                        _removeWorkoutFromToday(workout),
                                   );
                                 },
                               ),
                             ),
-
-                          SizedBox(height: SizeConfig.h(80)),
+                          SizedBox(height: SizeConfig.h(100)),
                         ],
                       ),
                     ),
             ),
           ),
         ),
-
-        if (_isSubmitting)
-          Positioned.fill(
-            child: Stack(
-              children: [
-                AbsorbPointer(
-                  absorbing: true,
-                  child: Container(
-                    color: Colors.black.withOpacity(
-                      0.3,
-                    ), // Semi-transparent dim
-                  ),
-                ),
-                Center(
-                  child: BouncingDotsIndicator(
-                    color: isDarkMode ? const Color(0xFFCEF24B) : Colors.white,
-                    size: 12.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildCreatePlanCapsule(BuildContext context) {
-    final isDarkMode = ref.watch(themeProvider);
-    final limeColor = const Color(0xFFCEF24B);
-
+   
+  Widget _buildGeneratePlanCapsule(BuildContext context, bool isDarkMode) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -861,111 +775,70 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
         );
       },
       child: Container(
-        width: double.infinity,
-        height: SizeConfig.h(120),
+        height: SizeConfig.h(64),  
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(SizeConfig.w(24)),
-          gradient: LinearGradient(
-            colors: isDarkMode
-                ? [
-                    const Color(0xFF1A1A1A),
-                    const Color(0xFF2C2C2C),
-                  ] // Dark Surface
-                : [
-                    const Color(0xFFF9FBE7),
-                    const Color(0xFFF0F4C3),
-                  ], // Light Lime
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(
-            color: isDarkMode
-                ? limeColor.withOpacity(0.3)
-                : limeColor.withOpacity(0.5),
-            width: 1,
-          ),
+          color: const Color(0xFFCEF24B),  
+          borderRadius: BorderRadius.circular(SizeConfig.w(32)),
           boxShadow: [
             BoxShadow(
-              color: limeColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: const Color(0xFFCEF24B).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Stack(
+        child: Row(
           children: [
-            Positioned(
-              right: -30,
-              bottom: -20,
+            SizedBox(width: SizeConfig.w(20)),
+            Container(
+              padding: EdgeInsets.all(SizeConfig.w(8)),
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
               child: Icon(
-                Icons.fitness_center_rounded,
-                size: SizeConfig.w(140),
-                color: isDarkMode
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.black.withOpacity(0.05),
+                Icons.auto_awesome,
+                color: const Color(0xFFCEF24B),
+                size: SizeConfig.w(18),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(SizeConfig.w(24)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            SizedBox(width: SizeConfig.w(16)),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: limeColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            "AI POWERED",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Create a workout plan",
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(20),
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          "Tailored to your fitness goals",
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(12),
-                            color: isDarkMode ? Colors.white70 : Colors.black54,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Generate Workout Plan',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: SizeConfig.sp(15),
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward,
-                      color: isDarkMode ? Colors.white : Colors.black,
+                  Text(
+                    'AI-powered personalization',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: SizeConfig.sp(12),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(right: SizeConfig.w(8)),
+              width: SizeConfig.w(48),
+              height: SizeConfig.w(48),
+              decoration: const BoxDecoration(
+                color: Colors.black,  
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: const Color(0xFFCEF24B),
+                size: SizeConfig.w(20),
               ),
             ),
           ],
@@ -974,120 +847,169 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
     );
   }
 
+   
   Widget _buildPlanCard(
     Map<String, dynamic> plan,
-    bool isDark,
+    bool isDarkMode,
     Color accentColor,
     Color cardColor,
     Color textColor,
+    bool isActive,
+    VoidCallback onActivate,
   ) {
-    final weeklyPlan = plan['weeklyPlan'] as List? ?? [];
-    final daysCount = weeklyPlan.length;
-    final isActive = plan['isActive'] == true;
+    final String name = plan['name'] ?? 'Workout Plan';
+    final String goal = plan['goal'] ?? 'Fitness';
+    final int days = (plan['weeklyPlan'] as List?)?.length ?? 0;
+    
+     
+    final glassColor = isDarkMode 
+        ? const Color(0xFF1E1E1E).withOpacity(0.6) 
+        : Colors.white.withOpacity(0.8);
+    final borderColor = isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black12;
+    final limeAccent = const Color(0xFFCEF24B);
 
-    return Container(
-      width: SizeConfig.w(220),
-      padding: EdgeInsets.all(SizeConfig.w(20)),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isActive
-              ? accentColor
-              : (isDark ? Colors.white10 : Colors.black12),
-          width: isActive ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : Colors.black12,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WorkoutPlanDetailPage(
+              plan: plan,
+              isDarkMode: isDarkMode,
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isActive)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: accentColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'ACTIVE',
-                style: TextStyle(
-                  fontSize: SizeConfig.sp(10),
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  letterSpacing: 0.5,
-                ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: SizeConfig.w(220),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: glassColor,
+              borderRadius: BorderRadius.circular(24),
+              border: isActive 
+                  ? Border.all(color: limeAccent.withOpacity(0.5), width: 1.5)
+                  : Border.all(color: borderColor),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode 
+                    ? [Colors.white.withOpacity(0.05), Colors.transparent]
+                    : [Colors.white, Colors.white.withValues(alpha: 0.5)],
               ),
             ),
-          if (isActive) SizedBox(height: SizeConfig.h(12)),
-          Text(
-            plan['name'] ?? 'Workout Plan',
-            style: TextStyle(
-              fontSize: SizeConfig.sp(16),
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              height: 1.2,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: SizeConfig.h(8)),
-          Text(
-            '$daysCount days/week',
-            style: TextStyle(
-              fontSize: SizeConfig.sp(13),
-              color: textColor.withOpacity(0.6),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Spacer(),
-          if (!isActive)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final userId = FirebaseAuth.instance.currentUser?.uid;
-                  if (userId != null) {
-                    await WorkoutPlanService().setActiveWorkoutPlan(
-                      userId,
-                      plan['id'],
-                      DateTime.now(),
-                    );
-                    _loadWorkouts();
-                    _loadUserPlans();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Plan activated!'),
-                        backgroundColor: accentColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: limeAccent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: Colors.black,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+                      child: Row(
+                        children: [
+                          Icon(Icons.bolt_rounded, color: limeAccent, size: 14),
+                          if (isActive) ...[
+                            const SizedBox(width: 4),
+                            Text("ACTIVE", style: TextStyle(color: limeAccent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                          ]
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_rounded, color: isDarkMode ? Colors.white24 : Colors.black26, size: 20),
+                  ],
                 ),
-                child: Text(
-                  'Activate',
-                  style: TextStyle(
-                    fontSize: SizeConfig.sp(14),
-                    fontWeight: FontWeight.bold,
+                Expanded(  
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        goal.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: SizeConfig.sp(10),
+                          fontWeight: FontWeight.w900,
+                          color: isDarkMode ? Colors.white54 : Colors.black54,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: SizeConfig.sp(18),
+                          fontWeight: FontWeight.w800,
+                          color: textColor,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded, size: 12, color: isDarkMode ? Colors.white38 : Colors.black38),
+                          const SizedBox(width: 6),
+                          Text(
+                            "$days Days / Week",
+                            style: TextStyle(
+                              fontSize: SizeConfig.sp(12),
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode ? Colors.white38 : Colors.black38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                 
+                if (!isActive)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      onActivate();
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: isDarkMode ? Colors.white10 : Colors.black12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Activate",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                          fontSize: SizeConfig.sp(12),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                   SizedBox(
+                      height: 36,
+                      child: Align(
+                         alignment: Alignment.centerLeft,
+                         child: Text("Current Plan", style: TextStyle(color: limeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                   )
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../components/auth/auth_scaffold.dart';
 import '../../components/auth/animated_input_field.dart';
@@ -112,9 +112,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         flow: AuthFlow.forgotPassword,
         title: title,
         subtitle: subtitle,
-        showBackButton:
-            _currentStep ==
-            0, // Hide back button on success step to force "Back to Login" flow
+        showBackButton: _currentStep == 0,
         body: Column(
           children: [
             Expanded(
@@ -174,7 +172,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           Container(
             padding: EdgeInsets.all(SizeConfig.w(30)),
             decoration: BoxDecoration(
-              color: Colors.green[50], // Light green bg
+              color: Colors.green[50],
               shape: BoxShape.circle,
             ),
             child: const Icon(

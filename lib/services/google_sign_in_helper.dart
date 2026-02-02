@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthorizationProvider {
@@ -21,16 +21,10 @@ class AuthorizationProvider {
 
     final GoogleSignInAccount account = await googleSignIn.authenticate();
 
-    final authData = account.authentication; // âœ… await properly
+    final authData = account.authentication;  
     final idtoken = authData.idToken;
 
     final authClient = account.authorizationClient;
-    if (authClient == null) {
-      throw FirebaseAuthException(
-        code: "auth-client-null",
-        message: 'Google authorization client was not available.',
-      );
-    }
 
     GoogleSignInClientAuthorization? auth = await authClient
         .authorizationForScopes(['email', 'profile']);

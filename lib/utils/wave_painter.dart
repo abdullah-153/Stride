@@ -1,9 +1,9 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 class WaveFillPainter extends CustomPainter {
-  final double progress; // 0..1
-  final double phase; // radians for animation
+  final double progress;
+  final double phase;
   final Color color;
   final double borderRadius;
   final double waveAmplitude;

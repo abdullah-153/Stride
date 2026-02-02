@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../onboarding_page.dart';
 
 import '../../utils/size_config.dart';
@@ -105,7 +105,7 @@ class _WeightPageState extends State<WeightPage> {
                     style: TextStyle(
                       fontSize: SizeConfig.screenWidth * 0.15,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black, // Force visible color
+                      color: Colors.black,
                     ),
                   ),
                   SizedBox(width: SizeConfig.screenWidth * 0.02),

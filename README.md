@@ -1,16 +1,32 @@
-# fitness_tracker_frontend
+# Fitness Tracker Frontend
 
-A new Flutter project.
+A modern, glassmorphic fitness tracking application built with Flutter.
+
+## Features
+-   **User Authentication**: Login, Register, and Forgot Password flows.
+-   **Dashboard**: Overview of daily progress, streaks, and hydration.
+-   **Workouts**: AI-powered workout generation and plan management.
+-   **Diet**: Meal tracking, nutrition analysis, and diet generation.
+-   **Gamification**: EXP system, levels, badges, and streaks to keep you motivated.
+-   **Profile**: Detailed statistics and goal settings.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
+-   Flutter SDK
+-   Dart SDK
 
-A few resources to get you started if this is your first Flutter project:
+### Installation
+1.  Clone the repository.
+2.  Run `flutter pub get` to install dependencies.
+3.  Run `flutter run` to start the application.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Project Structure
+-   `lib/components`: Reusable UI components.
+-   `lib/pages`: Application screens.
+-   `lib/services`: Logic and API handling.
+-   `lib/models`: Data models.
+-   `lib/utils`: Constants and helper functions.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Design
+This project uses a "Glassmorphism" design aesthetic with transparent elements, blur effects, and vibrant colors.

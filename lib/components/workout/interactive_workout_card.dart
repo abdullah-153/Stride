@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/workout_model.dart';
 import 'workout_card.dart';
@@ -64,7 +64,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
       if (status == AnimationStatus.completed) {
         setState(() {
           _showDeleteOption = true;
-          _isHolding = false; // Stop holding logic
+          _isHolding = false;
         });
       }
     });
@@ -72,7 +72,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
     _exitController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
-      value: 1.0, // Start fully visible
+      value: 1.0,
     );
   }
 
@@ -85,7 +85,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   }
 
   void _onLongPressStart(LongPressStartDetails details) {
-    if (_showDeleteOption) return; // Don't restart if already in delete mode
+    if (_showDeleteOption) return;
 
     setState(() {
       _isHolding = true;
@@ -95,7 +95,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
   }
 
   void _onLongPressEnd(LongPressEndDetails details) {
-    if (_showDeleteOption) return; // Ignore if delete mode is active
+    if (_showDeleteOption) return;
 
     _isHolding = false;
     _pulseController.reverse();
@@ -135,7 +135,7 @@ class _InteractiveWorkoutCardState extends State<InteractiveWorkoutCard>
     return SizeTransition(
       sizeFactor: _exitController,
       axis: Axis.horizontal,
-      axisAlignment: -1.0, // Shrink towards the left
+      axisAlignment: -1.0,
       child: GestureDetector(
         onTap: _showDeleteOption ? _cancelDeleteMode : null,
         onLongPressStart: _onLongPressStart,
@@ -276,7 +276,7 @@ class GrowingPulsePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill; // Changed to fill
+    final paint = Paint()..style = PaintingStyle.fill;
 
     final maxBaseRadius = 60.0;
     final currentBaseRadius = 20.0 + (maxBaseRadius - 20.0) * progress;
@@ -292,9 +292,7 @@ class GrowingPulsePainter extends CustomPainter {
         final pulseRadius = currentBaseRadius + (40.0 * pulseProgress);
         final pulseOpacity = (1.0 - pulseProgress).clamp(0.0, 1.0);
 
-        paint.color = color.withOpacity(
-          0.4 * pulseOpacity,
-        ); // Lower opacity for filled pulses
+        paint.color = color.withOpacity(0.4 * pulseOpacity);
         canvas.drawCircle(center, pulseRadius, paint);
       }
     }

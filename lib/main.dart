@@ -1,9 +1,10 @@
-﻿import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
+import 'package:flutter_glass_morphism/flutter_glass_morphism.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pages/home_page.dart';
 import 'components/shared/bouncing_dots_indicator.dart';
 import 'pages/auth/login_page.dart';
+import 'components/shared/error_boundary.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/auth/register_page.dart';
 import 'pages/startup_page.dart';
@@ -11,12 +12,18 @@ import 'utils/app_constants.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'services/auth_service.dart';
+import 'services/gamification_service.dart';
 import 'firebase_options.dart';
 import 'providers/user_profile_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return CustomErrorWidget(errorDetails: details);
+  };
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -78,7 +85,6 @@ class AuthGate extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-
           return const ProfileCheckGate();
         }
         return const StartupPage();
@@ -90,15 +96,26 @@ class AuthGate extends ConsumerWidget {
   }
 }
 
-class ProfileCheckGate extends ConsumerWidget {
+class ProfileCheckGate extends ConsumerStatefulWidget {
   const ProfileCheckGate({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileCheckGate> createState() => _ProfileCheckGateState();
+}
+
+class _ProfileCheckGateState extends ConsumerState<ProfileCheckGate> {
+  bool _hasValidatedStreaks = false;
+
+  @override
+  Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
 
     return profileAsync.when(
       data: (profile) {
+        if (!_hasValidatedStreaks) {
+          _hasValidatedStreaks = true;
+          GamificationService().validateStreaksOnAppOpen();
+        }
         return const HomeScreen();
       },
       loading: () =>

@@ -1,26 +1,20 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
+import '../utils/secrets.dart';
 
 class AIWorkoutService {
-  static const List<String> _apiKeys = [
-    'AIzaSyDCBjX5WeMdX-ZlW_Ap9JV0H0tQx8JiTJ0', // Current key
-    'AIzaSyAL54y5K_etp88QxrTM56BJt5_lQsG_CUA',
-    'AIzaSyAvHrGeUdRR0Qq6HXFf2MQriGbbgUfsA98',
-    'AIzaSyALUEk3_qkW4bMtDKPLbYdAlZ0pQ1UZRrU',
-    'AIzaSyDxO-t2YxQTQKETJe6xd7-k5ZtOWoOz69c',
-    'AIzaSyBNgDhqR-SkhTvwwmuC3ZmfvWOx8p5rTPo',
-  ];
+  static const List<String> _apiKeys = ApiSecrets.geminiApiKeys;
 
   GenerativeModel _getModel(String apiKey) {
     return GenerativeModel(
-      model: 'gemini-2.5-flash-lite', // Changed model as per instruction
+      model: 'gemini-2.5-flash-lite',
       apiKey: apiKey,
       generationConfig: GenerationConfig(responseMimeType: 'application/json'),
     );
   }
 
-  AIWorkoutService(); // Empty constructor as model is now created dynamically
+  AIWorkoutService();
 
   Future<Map<String, dynamic>> generateWorkoutPlan({
     required String goal,
@@ -85,8 +79,7 @@ class AIWorkoutService {
     final content = [Content.text(prompt)];
 
     int currentKeyIndex =
-        DateTime.now().millisecondsSinceEpoch %
-        _apiKeys.length; // Start with a random key to distribute load
+        DateTime.now().millisecondsSinceEpoch % _apiKeys.length;
 
     for (int i = 0; i < _apiKeys.length; i++) {
       final apiKey = _apiKeys[(currentKeyIndex + i) % _apiKeys.length];

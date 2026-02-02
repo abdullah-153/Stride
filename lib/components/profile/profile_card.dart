@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:zo_animated_border/zo_animated_border.dart';
 import '../../utils/size_config.dart';
@@ -45,7 +45,7 @@ class ProfileSetupCard extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: SizeConfig.w(16)),
           child: Transform.translate(
-            offset: Offset(0, -SizeConfig.h(25)), // slight overlap
+            offset: Offset(0, -SizeConfig.h(25)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(SizeConfig.w(24)),
               child: BackdropFilter(

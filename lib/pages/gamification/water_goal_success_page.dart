@@ -1,10 +1,10 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/size_config.dart';
 
 class WaterGoalSuccessPage extends StatefulWidget {
-  final VoidCallback? onClose; // Optional callback
+  final VoidCallback? onClose;
 
   const WaterGoalSuccessPage({super.key, this.onClose});
 
@@ -50,7 +50,7 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
       _bubbles.add(
         Bubble(
           x: Random().nextDouble(),
-          y: Random().nextDouble(), // Relative to wave height
+          y: Random().nextDouble(),
           radius: 4 + Random().nextDouble() * 8,
           speed: 0.005 + Random().nextDouble() * 0.01,
         ),
@@ -84,7 +84,7 @@ class _WaterGoalSuccessPageState extends State<WaterGoalSuccessPage>
                   waveAnimation: _waveController,
                   fillPercent: _fillAnimation.value,
                   bubbles: _bubbles,
-                  color: const Color(0xFF3B82F6), // Blue 500
+                  color: const Color(0xFF3B82F6),
                 ),
                 size: Size.infinite,
               );
@@ -222,8 +222,6 @@ class FullScreenWavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-
-
     if (fillPercent >= 1.2) {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height),
@@ -269,7 +267,7 @@ class FullScreenWavePainter extends CustomPainter {
 
     for (var bubble in bubbles) {
       bubble.y -= bubble.speed;
-      if (bubble.y < 0) bubble.y = 1.0; // Reset to bottom relative
+      if (bubble.y < 0) bubble.y = 1.0;
 
       final double waterDepth = size.height - baseHeight;
       if (waterDepth <= 0) continue;
@@ -285,6 +283,6 @@ class FullScreenWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant FullScreenWavePainter oldDelegate) {
-    return true; // Always repaint for animation
+    return true;
   }
 }

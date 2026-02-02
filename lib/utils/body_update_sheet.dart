@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import '../components/onboarding/weight_selector.dart';
 import '../components/onboarding/height_selector.dart';
@@ -147,8 +147,7 @@ class _BodyUpdateSheetState extends State<BodyUpdateSheet> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              physics:
-                  const NeverScrollableScrollPhysics(), // Force navigation via button
+              physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (index) => setState(() => _currentPage = index),
               children: [
                 Center(

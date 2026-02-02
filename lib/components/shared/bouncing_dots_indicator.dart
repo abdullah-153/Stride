@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class BouncingDotsIndicator extends StatefulWidget {
   final Color color;
@@ -54,7 +54,7 @@ class _BouncingDotsIndicatorState extends State<BouncingDotsIndicator>
       children: List.generate(3, (index) {
         double value = _animations[index].value;
         if (value > 5.0) {
-          value = 10.0 - value; // This makes it go back down
+          value = 10.0 - value;
         }
 
         return Container(

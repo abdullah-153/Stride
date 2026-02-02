@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/workout_model.dart';
 import '../../utils/size_config.dart';
 import 'exercise_list_item.dart';
@@ -242,7 +242,7 @@ class WorkoutDetailSheet extends StatelessWidget {
                       );
                     }),
 
-                    SizedBox(height: SizeConfig.h(80)), // Space for button
+                    SizedBox(height: SizeConfig.h(80)),
                   ],
                 ),
               ),

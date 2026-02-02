@@ -1,13 +1,19 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 import 'package:fitness_tracker_frontend/services/activity_service.dart';
 import 'package:fitness_tracker_frontend/models/activity_model.dart';
 import 'package:fitness_tracker_frontend/services/user_profile_service.dart';
 import 'package:fitness_tracker_frontend/models/user_profile_model.dart';
+import 'package:fitness_tracker_frontend/services/nutrition_service.dart';
+import 'package:fitness_tracker_frontend/models/nutrition_model.dart';
 import '../shared/bouncing_dots_indicator.dart';
+import '../../pages/active_tracking_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/workout_provider.dart';
 
-class TodayActivitySection extends StatefulWidget {
+class TodayActivitySection extends ConsumerStatefulWidget {
   final bool isDarkMode;
   final Function(int)? onNavigate;
 
@@ -18,26 +24,48 @@ class TodayActivitySection extends StatefulWidget {
   });
 
   @override
-  State<TodayActivitySection> createState() => _TodayActivitySectionState();
+  ConsumerState<TodayActivitySection> createState() =>
+      _TodayActivitySectionState();
 }
 
-class _TodayActivitySectionState extends State<TodayActivitySection> {
+class _TodayActivitySectionState extends ConsumerState<TodayActivitySection>
+    with SingleTickerProviderStateMixin {
   final ActivityService _activityService = ActivityService();
   final UserProfileService _userProfileService = UserProfileService();
+  final NutritionService _nutritionService = NutritionService();
+
   ActivityData? _activityData;
   UserProfile? _userProfile;
   bool _isLoading = true;
+
+  late AnimationController _entranceController;
 
   @override
   void initState() {
     super.initState();
     _loadActivityData();
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _entranceController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadActivityData() async {
     try {
       final activityData = await _activityService.getTodayActivity();
       final profileData = await _userProfileService.loadProfile();
+
       if (mounted) {
         setState(() {
           _activityData = activityData;
@@ -47,248 +75,196 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   void _navigateToWorkout() {
-    widget.onNavigate?.call(2); // Navigate to WorkoutPage (index 2)
+    HapticFeedback.lightImpact();
+    widget.onNavigate?.call(2);
   }
 
   void _navigateToDiet() {
-    widget.onNavigate?.call(1); // Navigate to DietPage (index 1)
+    HapticFeedback.lightImpact();
+    widget.onNavigate?.call(1);
+  }
+
+  void _navigateToSteps() {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ActiveTrackingPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    final screenH = SizeConfig.screenHeight;
-    final preferred = SizeConfig.h(140);
-    final maxAllowed = screenH * 0.32;
-    final cardHeight = math.min(preferred, maxAllowed);
-
-    final containerBgColor = widget.isDarkMode
-        ? const Color(0xFF1E1E1E)
-        : Colors.white;
-    final borderColor = widget.isDarkMode
-        ? Colors.grey.shade800
-        : Colors.grey.shade300;
-    final shadowColor = widget.isDarkMode
-        ? Colors.white.withOpacity(0.02)
-        : Colors.black.withOpacity(0.04);
-    final headerColor = widget.isDarkMode ? Colors.white54 : Colors.black38;
-    final workoutBg = widget.isDarkMode
-        ? const Color(0xFF2C2C2E)
-        : Colors.black;
+    final workoutState = ref.watch(workoutProvider);
+    final completedCount = workoutState.value?.completedWorkoutIds.length ?? 0;
+    final totalWorkoutsCount = workoutState.value?.todayWorkouts.length ?? 0;
 
     if (_isLoading) {
-      return Container(
-        width: double.infinity,
-        margin: EdgeInsets.symmetric(
-          horizontal: SizeConfig.w(4),
-          vertical: SizeConfig.h(6),
-        ),
-        padding: EdgeInsets.all(SizeConfig.w(14)),
-        decoration: BoxDecoration(
-          color: containerBgColor,
-          borderRadius: BorderRadius.circular(SizeConfig.w(22)),
-          border: Border.all(color: borderColor, width: 1.1),
-        ),
-        child: Center(
-          child: BouncingDotsIndicator(
-            color: widget.isDarkMode ? Colors.white : Colors.black,
-          ),
-        ),
-      );
+      return _buildLoadingState();
     }
 
-    final workoutsCompleted = _activityData?.workoutsCompleted ?? 0;
-    final dailyWorkoutGoal = (_userProfile?.weeklyWorkoutGoal ?? 5) > 0
-        ? ((_userProfile?.weeklyWorkoutGoal ?? 5) / 7).ceil()
-        : 1;
-    final totalWorkouts = dailyWorkoutGoal > 0 ? dailyWorkoutGoal : 1;
+    return AnimatedBuilder(
+      animation: _entranceController,
+      builder: (context, child) {
+        final slideValue = Curves.easeOutCubic.transform(
+          _entranceController.value,
+        );
+        final fadeValue = Curves.easeOut.transform(_entranceController.value);
 
-    final calories = _activityData?.caloriesBurned ?? 0;
-    final calorieGoal = _userProfile?.dailyCalorieGoal ?? 2000;
+        return Transform.translate(
+          offset: Offset(0, 16 * (1 - slideValue)),
+          child: Opacity(opacity: fadeValue, child: child),
+        );
+      },
+      child: StreamBuilder<ActivityData?>(
+        stream: _activityService.streamTodayActivity(),
+        builder: (context, activitySnapshot) {
+          return StreamBuilder<DailyNutrition?>(
+            stream: _nutritionService.streamDailyNutrition(DateTime.now()),
+            builder: (context, nutritionSnapshot) {
+              final activityData = activitySnapshot.data;
+              final nutritionData = nutritionSnapshot.data;
 
-    final steps = _activityData?.steps ?? 0;
-    final stepGoal = 10000; // Default step goal as it's not in profile yet
+              final workouts = completedCount;
+              final dailyWorkoutGoal =
+                  (_userProfile?.weeklyWorkoutGoal ?? 5) > 0
+                  ? ((_userProfile?.weeklyWorkoutGoal ?? 5) / 7).ceil()
+                  : 1;
+              final totalWorkouts =
+                  math.max(dailyWorkoutGoal, totalWorkoutsCount) > 0
+                  ? math.max(dailyWorkoutGoal, totalWorkoutsCount)
+                  : 1;
 
-    final workoutProgress = (workoutsCompleted / totalWorkouts).clamp(0.0, 1.0);
+              final calories = nutritionData?.totalCalories ?? 0;
+              final calorieGoal = _userProfile?.dailyCalorieGoal ?? 2000;
+
+              final steps = activityData?.steps ?? 0;
+              final stepGoal = 10000;
+
+              return _buildContent(
+                workouts: workouts,
+                totalWorkouts: totalWorkouts,
+                calories: calories,
+                calorieGoal: calorieGoal,
+                steps: steps,
+                stepGoal: stepGoal,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent({
+    required int workouts,
+    required int totalWorkouts,
+    required int calories,
+    required int calorieGoal,
+    required int steps,
+    required int stepGoal,
+  }) {
+    final isDark = widget.isDarkMode;
+
+    final containerBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.05);
+    final headerColor = isDark ? Colors.white54 : Colors.black45;
+    final dividerColor = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.grey.shade200;
 
     return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(
-        horizontal: SizeConfig.w(4),
-        vertical: SizeConfig.h(6),
-      ),
-      padding: EdgeInsets.all(SizeConfig.w(14)),
+      padding: EdgeInsets.all(SizeConfig.w(16)),
       decoration: BoxDecoration(
-        color: containerBgColor,
+        color: containerBg,
         borderRadius: BorderRadius.circular(SizeConfig.w(22)),
-        border: Border.all(color: borderColor, width: 1.1),
+        border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: shadowColor,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Today's Activity",
-            style: TextStyle(
-              fontSize: SizeConfig.sp(14),
-              fontWeight: FontWeight.w600,
-              color: headerColor,
-            ),
+          Row(
+            children: [
+              Text(
+                "Today's Activity",
+                style: TextStyle(
+                  fontSize: SizeConfig.sp(14),
+                  fontWeight: FontWeight.w600,
+                  color: headerColor,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: SizeConfig.h(10)),
+
+          Divider(color: dividerColor, height: SizeConfig.h(22)),
+
           IntrinsicHeight(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  flex: 2,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _navigateToWorkout,
-                      borderRadius: BorderRadius.circular(SizeConfig.w(16)),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: workoutBg,
-                          borderRadius: BorderRadius.circular(SizeConfig.w(16)),
-                          border: Border.all(
-                            color: widget.isDarkMode
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.transparent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: -SizeConfig.w(10),
-                              bottom: -SizeConfig.h(10),
-                              child: Icon(
-                                Icons.fitness_center_rounded,
-                                size: SizeConfig.w(80),
-                                color: widget.isDarkMode
-                                    ? Colors.white.withOpacity(0.05)
-                                    : Colors.white.withOpacity(0.15),
-                              ),
-                            ),
-
-                            Padding(
-                              padding: EdgeInsets.all(SizeConfig.w(14)),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Workout",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(15),
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      SizedBox(
-                                        width: SizeConfig.w(40),
-                                        height: SizeConfig.w(40),
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            CircularProgressIndicator(
-                                              value:
-                                                  workoutProgress, // The progress value
-                                              strokeWidth: 3,
-                                              backgroundColor: Colors.white
-                                                  .withOpacity(0.2),
-                                              valueColor:
-                                                  const AlwaysStoppedAnimation<
-                                                    Color
-                                                  >(Color(0xFFCEF24B)),
-                                            ),
-                                            Icon(
-                                              Icons.arrow_forward_ios_rounded,
-                                              size: SizeConfig.w(12),
-                                              color: Colors.white,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.baseline,
-                                    textBaseline: TextBaseline.alphabetic,
-                                    children: [
-                                      Text(
-                                        "$workoutsCompleted",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(34),
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      SizedBox(width: SizeConfig.w(4)),
-                                      Text(
-                                        "/$totalWorkouts",
-                                        style: TextStyle(
-                                          fontSize: SizeConfig.sp(14),
-                                          color: Colors.white70,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  flex: 5,
+                  child: _MetricCard(
+                    label: "Workouts",
+                    value: workouts,
+                    goal: totalWorkouts,
+                    suffix: "done",
+                    icon: Icons.fitness_center_rounded,
+                    iconColor: const Color(0xFFFF9500),
+                    onTap: _navigateToWorkout,
+                    isDarkMode: isDark,
+                    isFeatured: true,
                   ),
                 ),
+
                 SizedBox(width: SizeConfig.w(10)),
+
                 Expanded(
-                  flex: 2,
+                  flex: 5,
                   child: Column(
                     children: [
-                      _ActivityMiniCard(
-                        title: "Calories",
-                        value: _formatNumber(calories),
-                        unit: "kcal",
-                        onTap: _navigateToDiet,
-                        isDarkMode: widget.isDarkMode,
-                        progress: (calories / 2500).clamp(
-                          0.0,
-                          1.0,
-                        ), // Example goal
+                      Expanded(
+                        child: _MetricCard(
+                          label: "Calories",
+                          value: calories,
+                          goal: calorieGoal,
+                          suffix: "kcal",
+                          icon: Icons.local_fire_department_rounded,
+                          iconColor: const Color(0xFF34C759),
+                          onTap: _navigateToDiet,
+                          isDarkMode: isDark,
+                        ),
                       ),
-                      SizedBox(height: SizeConfig.h(8)),
-                      _ActivityMiniCard(
-                        title: "Steps",
-                        value: _formatNumber(steps),
-                        unit: "steps",
-                        onTap: _navigateToWorkout,
-                        isDarkMode: widget.isDarkMode,
-                        progress: (steps / 10000).clamp(0.0, 1.0),
+                      SizedBox(height: SizeConfig.h(10)),
+                      Expanded(
+                        child: _MetricCard(
+                          label: "Steps",
+                          value: steps,
+                          goal: stepGoal,
+                          suffix: "steps",
+                          icon: Icons.directions_walk_rounded,
+                          iconColor: const Color(0xFF007AFF),
+                          onTap: _navigateToSteps,
+                          isDarkMode: isDark,
+                        ),
                       ),
                     ],
                   ),
@@ -301,198 +277,359 @@ class _TodayActivitySectionState extends State<TodayActivitySection> {
     );
   }
 
-  String _formatNumber(int number) {
-    if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(1)}k'.replaceAll('.0k', 'k');
-    }
-    return number.toString();
+  Widget _buildLoadingState() {
+    final isDark = widget.isDarkMode;
+    return Container(
+      height: SizeConfig.h(180),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+        borderRadius: BorderRadius.circular(SizeConfig.w(22)),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
+        ),
+      ),
+      child: Center(
+        child: BouncingDotsIndicator(
+          color: isDark ? Colors.white54 : Colors.black38,
+        ),
+      ),
+    );
   }
 }
 
-class _ActivityMiniCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
+class _MetricCard extends StatefulWidget {
+  final String label;
+  final int value;
+  final int goal;
+  final String suffix;
+  final IconData icon;
+  final Color iconColor;
   final VoidCallback onTap;
   final bool isDarkMode;
-  final double progress;
+  final bool isFeatured;
 
-  const _ActivityMiniCard({
-    required this.title,
+  const _MetricCard({
+    required this.label,
     required this.value,
-    required this.unit,
+    required this.goal,
+    required this.suffix,
+    required this.icon,
+    required this.iconColor,
     required this.onTap,
-    this.isDarkMode = false,
-    this.progress = 0.0,
+    required this.isDarkMode,
+    this.isFeatured = false,
   });
 
   @override
+  State<_MetricCard> createState() => _MetricCardState();
+}
+
+class _MetricCardState extends State<_MetricCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _progressAnim;
+  late Animation<int> _countAnim;
+
+  double _scale = 1.0;
+  int _prevValue = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _setupAnimations();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animController.forward();
+    });
+  }
+
+  void _setupAnimations() {
+    final pct = (widget.value / widget.goal).clamp(0.0, 1.0);
+
+    _progressAnim = Tween<double>(begin: 0, end: pct).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+
+    _countAnim = IntTween(begin: _prevValue, end: widget.value).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_MetricCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value || oldWidget.goal != widget.goal) {
+      _prevValue = oldWidget.value;
+      _setupAnimations();
+      _animController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  String _formatValue(int val) {
+    if (widget.label == "Steps" && val >= 1000) {
+      return "${(val / 1000).toStringAsFixed(1)}k";
+    }
+    return "$val";
+  }
+
+  String _formatGoal(int goal) {
+    if (widget.label == "Steps" && goal >= 1000) {
+      return "${(goal / 1000).toStringAsFixed(0)}k";
+    }
+    return "$goal";
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cardBgColor = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
-    final borderColor = isDarkMode
+    final isDark = widget.isDarkMode;
+
+    final cardBg = isDark
+        ? Colors.white.withOpacity(0.05)
+        : Colors.grey.shade100;
+    final primaryText = isDark ? Colors.white : Colors.black;
+    final secondaryText = isDark ? Colors.white60 : Colors.black54;
+    final tertiaryText = isDark ? Colors.white38 : Colors.black38;
+    final progressBg = isDark
         ? Colors.white.withOpacity(0.1)
-        : Colors.black.withOpacity(0.08); // Increased from 0.05
-    final titleColor = isDarkMode ? Colors.white70 : Colors.black54;
-    final valueColor = isDarkMode ? Colors.white : Colors.black87;
-    final unitColor = isDarkMode ? Colors.white54 : Colors.black45;
+        : Colors.black.withOpacity(0.08);
+    final progressFill = isDark ? Colors.white : Colors.black;
 
-    final numericString = value.replaceAll(RegExp(r'[^0-9.]'), '');
-    final double endValue = double.tryParse(numericString) ?? 0;
-
-    final isSteps = title == "Steps";
-    final isCalories = title == "Calories";
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(SizeConfig.w(20)),
-        child: Ink(
-          height: SizeConfig.h(85), // Slightly taller for premium feel
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.97),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: EdgeInsets.all(SizeConfig.w(widget.isFeatured ? 14 : 12)),
           decoration: BoxDecoration(
-            color: cardBgColor,
-            borderRadius: BorderRadius.circular(SizeConfig.w(20)),
-            border: Border.all(color: borderColor, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: isDarkMode
-                    ? Colors.black.withOpacity(0.2)
-                    : Colors.black.withOpacity(
-                        0.05,
-                      ), // Increased shadow in light mode
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: cardBg,
+            borderRadius: BorderRadius.circular(SizeConfig.w(16)),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -SizeConfig.w(10),
-                bottom: -SizeConfig.h(10),
-                child: Icon(
-                  isSteps
-                      ? Icons.directions_walk_rounded
-                      : Icons.local_fire_department_rounded,
-                  size: SizeConfig.w(60),
-                  color: isDarkMode
-                      ? Colors.white.withOpacity(0.03)
-                      : Colors.black.withOpacity(
-                          0.05,
-                        ), // Increased opacity for light mode
+          child: widget.isFeatured
+              ? _buildFeaturedLayout(
+                  primaryText,
+                  secondaryText,
+                  tertiaryText,
+                  progressBg,
+                  progressFill,
+                )
+              : _buildCompactLayout(
+                  primaryText,
+                  secondaryText,
+                  tertiaryText,
+                  progressBg,
+                  progressFill,
                 ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedLayout(
+    Color primaryText,
+    Color secondaryText,
+    Color tertiaryText,
+    Color progressBg,
+    Color progressFill,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(widget.icon, size: SizeConfig.w(16), color: widget.iconColor),
+            SizedBox(width: SizeConfig.w(8)),
+            Text(
+              widget.label.toUpperCase(),
+              style: TextStyle(
+                fontSize: SizeConfig.sp(10),
+                fontWeight: FontWeight.w700,
+                color: tertiaryText,
+                letterSpacing: 1.2,
               ),
+            ),
+          ],
+        ),
 
-              Padding(
-                padding: EdgeInsets.all(SizeConfig.w(14)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: SizeConfig.sp(13),
-                            fontWeight: FontWeight.w600,
-                            color: titleColor,
-                          ),
-                        ),
-                        SizedBox(height: SizeConfig.h(4)),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: 0, end: endValue),
-                              duration: const Duration(milliseconds: 1500),
-                              curve: Curves.easeOutExpo,
-                              builder: (context, val, child) {
-                                String text = "";
-                                if (endValue >= 1000) {
-                                  if (value.contains('k')) {
-                                    text =
-                                        '${(val / 1000).toStringAsFixed(1)}k';
-                                  } else {
-                                    text = val.toInt().toString();
-                                  }
-                                } else {
-                                  text = val.toInt().toString();
-                                }
-                                return Text(
-                                  text,
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.sp(22),
-                                    fontWeight: FontWeight.w800,
-                                    color: valueColor,
-                                    height: 1.0,
-                                  ),
-                                );
-                              },
-                            ),
-                            SizedBox(width: SizeConfig.w(4)),
-                            Text(
-                              unit,
-                              style: TextStyle(
-                                fontSize: SizeConfig.sp(11),
-                                fontWeight: FontWeight.w500,
-                                color: unitColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+        const Spacer(),
+
+        AnimatedBuilder(
+          animation: _countAnim,
+          builder: (context, _) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  _formatValue(_countAnim.value),
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(42),
+                    fontWeight: FontWeight.w700,
+                    color: primaryText,
+                    height: 1,
+                    letterSpacing: -1.5,
+                  ),
+                ),
+                Text(
+                  " /${widget.goal}",
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(14),
+                    fontWeight: FontWeight.w500,
+                    color: tertiaryText,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(width: SizeConfig.w(6)),
+                Padding(
+                  padding: EdgeInsets.only(bottom: SizeConfig.h(2)),
+                  child: Text(
+                    widget.suffix,
+                    style: TextStyle(
+                      fontSize: SizeConfig.sp(12),
+                      fontWeight: FontWeight.w500,
+                      color: secondaryText,
+                      letterSpacing: 0.1,
                     ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
 
-                    SizedBox(
-                      width: SizeConfig.w(40),
-                      height: SizeConfig.w(40),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: 1.0,
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDarkMode
-                                  ? Colors.grey.shade800
-                                  : Colors.grey.shade200,
-                            ),
-                          ),
-                          TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0, end: progress),
-                            duration: const Duration(milliseconds: 1500),
-                            curve: Curves.easeOutQuart,
-                            builder: (context, val, _) {
-                              return CircularProgressIndicator(
-                                value: val,
-                                strokeWidth: 3,
-                                strokeCap: StrokeCap.round,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  isCalories
-                                      ? Colors.deepOrangeAccent
-                                      : Colors.blueAccent,
-                                ),
-                              );
-                            },
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: SizeConfig.w(10),
-                            color: titleColor,
-                          ),
-                        ],
+        SizedBox(height: SizeConfig.h(10)),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: SizedBox(
+            height: 4,
+            child: AnimatedBuilder(
+              animation: _progressAnim,
+              builder: (context, _) {
+                return LinearProgressIndicator(
+                  value: _progressAnim.value,
+                  backgroundColor: progressBg,
+                  valueColor: AlwaysStoppedAnimation(progressFill),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(
+    Color primaryText,
+    Color secondaryText,
+    Color tertiaryText,
+    Color progressBg,
+    Color progressFill,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(widget.icon, size: SizeConfig.w(14), color: widget.iconColor),
+            SizedBox(width: SizeConfig.w(6)),
+            Text(
+              widget.label.toUpperCase(),
+              style: TextStyle(
+                fontSize: SizeConfig.sp(9),
+                fontWeight: FontWeight.w700,
+                color: tertiaryText,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: SizeConfig.h(10)),
+
+        AnimatedBuilder(
+          animation: _countAnim,
+          builder: (context, _) {
+            String displayVal = _formatValue(_countAnim.value);
+            String goalVal = _formatGoal(widget.goal);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      displayVal,
+                      style: TextStyle(
+                        fontSize: SizeConfig.sp(20),
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
+                        height: 1,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      "/$goalVal",
+                      style: TextStyle(
+                        fontSize: SizeConfig.sp(10),
+                        fontWeight: FontWeight.w500,
+                        color: tertiaryText,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                SizedBox(height: SizeConfig.h(2)),
+                Text(
+                  widget.suffix,
+                  style: TextStyle(
+                    fontSize: SizeConfig.sp(9),
+                    fontWeight: FontWeight.w500,
+                    color: secondaryText,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+
+        SizedBox(height: SizeConfig.h(8)),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: SizedBox(
+            height: 3,
+            child: AnimatedBuilder(
+              animation: _progressAnim,
+              builder: (context, _) {
+                return LinearProgressIndicator(
+                  value: _progressAnim.value,
+                  backgroundColor: progressBg,
+                  valueColor: AlwaysStoppedAnimation(progressFill),
+                );
+              },
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

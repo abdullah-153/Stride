@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../utils/size_config.dart';
 import 'exercise_edit_sheet.dart';
 
 class DayPlannerCard extends StatelessWidget {
-  final Map<String, dynamic>? dayData; // Null means Rest Day
+  final Map<String, dynamic>? dayData;
 
   final int dayIndex;
   final ValueChanged<Map<String, dynamic>> onUpdateDay;
@@ -16,10 +16,10 @@ class DayPlannerCard extends StatelessWidget {
   const DayPlannerCard({
     super.key,
     required this.dayData,
-    required this.dayIndex, // Removed dayLabel
+    required this.dayIndex,
     required this.onUpdateDay,
     required this.onClearDay,
-    required this.onAddExercise, // New Callback
+    required this.onAddExercise,
     required this.isDark,
     required this.accentColor,
   });
@@ -122,9 +122,7 @@ class DayPlannerCard extends StatelessWidget {
                       SizeConfig.w(16),
                     ),
                     physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount:
-                        (dayData!['exercises'] as List).length +
-                        1, // +1 for Add Button
+                    itemCount: (dayData!['exercises'] as List).length + 1,
                     itemBuilder: (context, index) {
                       final exercises = dayData!['exercises'] as List;
                       if (index == exercises.length) {
@@ -141,7 +139,6 @@ class DayPlannerCard extends StatelessWidget {
                     },
                   ),
           ),
-
         ],
       ),
     );
@@ -187,7 +184,7 @@ class DayPlannerCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
-          Icons.hotel_rounded, // Rest icon
+          Icons.hotel_rounded,
           size: SizeConfig.sp(32),
           color: secondaryText.withOpacity(0.5),
         ),

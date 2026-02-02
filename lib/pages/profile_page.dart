@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/profile/profile_tile_card.dart';
@@ -508,8 +508,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                     ProfileBottomSheets.showInfoSheet(
                                       context,
                                       title: 'Help & Support',
-                                      content:
-                                          '', // Content is now internal to the method
+                                      content: '',
                                     );
                                   },
                                 ),
@@ -564,9 +563,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () async {
-                            await ref
-                                .read(authServiceProvider)
-                                .signOut(); // Updated: Actual Firebase Sign Out
+                            await ref.read(authServiceProvider).signOut();
                             await ref
                                 .read(userProfileProvider.notifier)
                                 .clearProfile();

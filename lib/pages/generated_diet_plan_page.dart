@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/diet_plan_model.dart';
 import '../services/nutrition_service.dart';
 import '../components/shared/bouncing_dots_indicator.dart';
@@ -54,14 +54,12 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
 
       await ref
           .read(userProfileProvider.notifier)
-          .updateGoals(
-            dailyCalorieGoal: widget.dietPlan.dailyCalories,
-          );
+          .updateGoals(dailyCalorieGoal: widget.dietPlan.dailyCalories);
 
       await ref.read(userProfileProvider.notifier).loadProfile();
 
       if (!mounted) return;
-      Navigator.pop(context); // Pop dialog
+      Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -74,7 +72,7 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Pop dialog
+      Navigator.pop(context);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error saving plan: $e')));
@@ -131,7 +129,7 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
             _buildAnimatedItem(3, _buildDaySelector(isDarkMode)),
             const SizedBox(height: 24),
             _buildDayContent(isDarkMode),
-            const SizedBox(height: 100), // Space for bottom bar
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -533,10 +531,11 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
   }
 
   Widget _buildDayContent(bool isDarkMode) {
-    if (_tabController.index >= widget.dietPlan.weeklyPlan.length)
+    if (_tabController.index >= widget.dietPlan.weeklyPlan.length) {
       return const SizedBox();
-
-    final dailyPlan = widget.dietPlan.weeklyPlan[_tabController.index];
+    } {
+      inal dailyPlan = widget.
+    }dietPlan.weeklyPlan[_tabController.index];
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -709,7 +708,7 @@ class _GeneratedDietPlanPageState extends ConsumerState<GeneratedDietPlanPage>
         color = Colors.indigo;
         break;
       default:
-        icon = Icons.cookie_rounded; // Snack
+        icon = Icons.cookie_rounded;
         color = Colors.pink;
     }
 

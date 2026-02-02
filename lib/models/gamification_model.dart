@@ -1,13 +1,13 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum StreakType { diet, workout }
 
 class UserStats {
   final int currentXp;
   final int currentLevel;
-  final int currentStreak; // Global streak
+  final int currentStreak;
   final int longestStreak;
-  final DateTime? lastLogDate; // Global last log
+  final DateTime? lastLogDate;
 
   final int dietStreak;
   final int workoutStreak;
@@ -120,7 +120,7 @@ class Achievement {
   final String id;
   final String title;
   final String description;
-  final String iconAsset; // Or use IconData code point if preferred
+  final String iconAsset;
   final bool isUnlocked;
   final DateTime? unlockedAt;
 

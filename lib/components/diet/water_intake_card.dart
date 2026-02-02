@@ -1,12 +1,21 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 import '../../pages/gamification/water_goal_success_page.dart';
 
 class WaterIntakeSliderCard extends StatefulWidget {
   final bool isDarkMode;
+  final int currentIntake;
+  final int dailyGoal;
+  final Function(int) onAddWater;
 
-  const WaterIntakeSliderCard({super.key, this.isDarkMode = false});
+  const WaterIntakeSliderCard({
+    super.key,
+    this.isDarkMode = false,
+    required this.currentIntake,
+    required this.dailyGoal,
+    required this.onAddWater,
+  });
 
   @override
   State<WaterIntakeSliderCard> createState() => _WaterIntakeSliderCardState();
@@ -14,9 +23,7 @@ class WaterIntakeSliderCard extends StatefulWidget {
 
 class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
     with TickerProviderStateMixin {
-  double currentIntake = 2000;
-  double dailyGoal = 3500;
-  double displayedIntake = 2000;
+  late double displayedIntake;
   late AnimationController _waveController;
   late AnimationController _intakeController;
   late Animation<double> _intakeAnimation;
@@ -26,6 +33,8 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   @override
   void initState() {
     super.initState();
+    displayedIntake = widget.currentIntake.toDouble();
+
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -33,17 +42,16 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
 
     _intakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 800),
     );
 
     _intakeAnimation =
         Tween<double>(begin: displayedIntake, end: displayedIntake).animate(
-          CurvedAnimation(parent: _intakeController, curve: Curves.easeOut),
-        )..addListener(() {
-          setState(() {
-            displayedIntake = _intakeAnimation.value;
-          });
-        });
+          CurvedAnimation(
+            parent: _intakeController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _bubbles = List.generate(
       4,
@@ -57,6 +65,52 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   }
 
   @override
+  void didUpdateWidget(WaterIntakeSliderCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIntake != oldWidget.currentIntake) {
+      _animateToNewValue();
+
+      if (oldWidget.currentIntake < widget.dailyGoal &&
+          widget.currentIntake >= widget.dailyGoal) {
+        _showGoalReached();
+      }
+    }
+  }
+
+  void _animateToNewValue() {
+    _intakeController.stop();
+
+    final newValue = widget.currentIntake.toDouble();
+
+    _intakeAnimation = Tween<double>(begin: displayedIntake, end: newValue)
+        .animate(
+          CurvedAnimation(
+            parent: _intakeController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
+    void animationListener() {
+      if (mounted) {
+        setState(() {
+          displayedIntake = _intakeAnimation.value;
+        });
+      }
+    }
+
+    _intakeController.removeStatusListener((_) {});
+    _intakeAnimation.addListener(animationListener);
+
+    _intakeController.forward(from: 0).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          displayedIntake = newValue;
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _waveController.dispose();
     _intakeController.dispose();
@@ -64,22 +118,7 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
   }
 
   void changeIntake(double delta) {
-    final newValue = (currentIntake + delta).clamp(0, dailyGoal);
-
-    if (newValue >= dailyGoal && currentIntake < dailyGoal) {
-      _showGoalReached();
-    }
-
-    _intakeAnimation =
-        Tween<double>(begin: displayedIntake, end: newValue as double).animate(
-          CurvedAnimation(parent: _intakeController, curve: Curves.easeOut),
-        )..addListener(() {
-          setState(() {
-            displayedIntake = _intakeAnimation.value;
-          });
-        });
-    _intakeController.forward(from: 0);
-    currentIntake = newValue;
+    widget.onAddWater(delta.toInt());
   }
 
   void _showGoalReached() {
@@ -162,7 +201,7 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
     SizeConfig.init(context);
     final bool dark = widget.isDarkMode;
 
-    double percentage = (displayedIntake / dailyGoal).clamp(0.0, 1.0);
+    double percentage = (displayedIntake / widget.dailyGoal).clamp(0.0, 1.0);
 
     final Color cardBg = Colors.blue;
     final Color mainTextColor = Colors.white;
@@ -209,7 +248,7 @@ class _WaterIntakeSliderCardState extends State<WaterIntakeSliderCard>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Goal ${dailyGoal.toInt()} ml (${(percentage * 100).toInt()}%)', // Added percentage
+                      'Goal ${widget.dailyGoal.toInt()} ml (${(percentage * 100).toInt()}%)',
                       style: TextStyle(fontSize: 16, color: subTextColor),
                     ),
                     Padding(

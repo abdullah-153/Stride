@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/weight_entry_model.dart';
 import 'base_firestore_service.dart';
 
@@ -35,15 +35,12 @@ class WeightHistoryService extends BaseFirestoreService {
 
       await getUserDocument(userId).collection('weight_history').add({
         ...entry.toJson(),
-        'date':
-            FieldValue.serverTimestamp(), // Use server timestamp for precise sorting
+        'date': FieldValue.serverTimestamp(),
       });
 
-      await getUserDocument(userId).update({
-        'weight': weight,
-        'bmi': entry.calculateBMI(80), // We need height here...
-      });
+      await getUserDocument(
+        userId,
+      ).update({'weight': weight, 'bmi': entry.calculateBMI(80)});
     }, errorMessage: 'Failed to log weight');
   }
-
 }

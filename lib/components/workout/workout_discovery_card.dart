@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/workout_model.dart';
 import '../../utils/size_config.dart';
 
@@ -29,12 +29,10 @@ class WorkoutDiscoveryCard extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.only(right: SizeConfig.w(12)),
         width: SizeConfig.w(320),
-        padding: EdgeInsets.all(SizeConfig.w(20)), // Increased padding
+        padding: EdgeInsets.all(SizeConfig.w(20)),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(
-            SizeConfig.w(22),
-          ), // Match rounded corners
+          borderRadius: BorderRadius.circular(SizeConfig.w(22)),
           border: Border.all(color: borderColor, width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -70,7 +68,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     workout.category.displayName.toUpperCase(),
                     style: TextStyle(
                       color: accentColor,
-                      fontSize: SizeConfig.sp(11), // Increased font
+                      fontSize: SizeConfig.sp(11),
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
                     ),
@@ -89,7 +87,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     workout.difficulty.displayName,
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: SizeConfig.sp(11), // Increased font
+                      fontSize: SizeConfig.sp(11),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -103,8 +101,8 @@ class WorkoutDiscoveryCard extends StatelessWidget {
               workout.title,
               style: TextStyle(
                 color: textColor,
-                fontSize: SizeConfig.sp(22), // Increased from 18 to 22
-                fontWeight: FontWeight.w800, // Bolder
+                fontSize: SizeConfig.sp(22),
+                fontWeight: FontWeight.w800,
                 letterSpacing: 0.3,
               ),
               maxLines: 1,
@@ -120,7 +118,7 @@ class WorkoutDiscoveryCard extends StatelessWidget {
                     icon: Icons.timer_outlined,
                     text: '${workout.durationMinutes}m',
                     isDarkMode: isDarkMode,
-                    fontSize: 14, // Explicit font size pass
+                    fontSize: 14,
                   ),
                 ),
                 SizedBox(width: SizeConfig.w(10)),

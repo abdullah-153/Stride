@@ -1,4 +1,4 @@
-﻿class Macros {
+class Macros {
   final int protein;
   final int carbs;
   final int fats;
@@ -19,7 +19,7 @@
 }
 
 class MealItem {
-  final String type; // Breakfast, Lunch, Dinner, Snack
+  final String type;
   final String name;
   final String description;
   final int calories;
@@ -83,7 +83,7 @@ class DietPlan {
   final int dailyCalories;
   final Macros macros;
   final double waterIntakeLiters;
-  final String dietType; // e.g., "High Protein", "Keto"
+  final String dietType;
   final String region;
   final List<DailyMealPlan> weeklyPlan;
 

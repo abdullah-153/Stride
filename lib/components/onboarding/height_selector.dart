@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class HeightSelector extends StatefulWidget {
   final double initialHeight;
   final Function(double) onHeightChanged;
-  final bool isCm; // Now purely input
+  final bool isCm;
 
   const HeightSelector({
     super.key,
@@ -65,7 +65,7 @@ class _HeightSelectorState extends State<HeightSelector> {
                     style: TextStyle(
                       fontSize: SizeConfig.sp(48),
                       fontWeight: FontWeight.bold,
-                      color: Colors.green, // Height theme color from onboarding
+                      color: Colors.green,
                     ),
                   ),
                   SizedBox(width: SizeConfig.w(8)),
@@ -158,7 +158,7 @@ class _HeightSelectorState extends State<HeightSelector> {
                 double heightCm = _minCm + index;
                 widget.onHeightChanged(
                   widget.isCm ? heightCm : heightCm / 2.54,
-                ); // Should return in requested unit?
+                );
                 widget.onHeightChanged(_minCm + index);
               },
               itemBuilder: (context, index) {

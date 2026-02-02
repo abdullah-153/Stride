@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/nutrition_model.dart';
 import '../local_image_storage_service.dart';
@@ -139,7 +139,7 @@ class NutritionFirestoreService extends BaseFirestoreService {
       await nutritionRef
           .collection(FirestoreCollections.meals)
           .doc(meal.id)
-          .set(dataWithTimestamps); // Use set to overwrite/update
+          .set(dataWithTimestamps);
 
       await nutritionRef.update({
         FirestoreFields.updatedAt: FieldValue.serverTimestamp(),

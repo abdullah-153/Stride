@@ -1,12 +1,10 @@
-﻿import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../components/auth/auth_scaffold.dart';
 import '../../components/auth/animated_input_field.dart';
 import '../../components/auth/auth_navigation_buttons.dart';
 import '../../components/auth/auth_glass_card.dart';
 import '../../utils/size_config.dart';
-import '../../utils/app_constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/auth_service.dart';
@@ -129,7 +127,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       final sent = await EmailOTP.sendOTP(email: emailController.text.trim());
       if (!mounted) return;
       if (sent) {
-        _nextStep(); // Move to OTP screen
+        _nextStep();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Verification code sent to your email")),
         );
@@ -426,9 +424,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   isPassword: true,
                   delayMs: 200,
                 ),
-                SizedBox(
-                  height: SizeConfig.h(10),
-                ), // Reduced spacing inside card
+                SizedBox(height: SizeConfig.h(10)),
                 AnimatedInputField(
                   controller: confirmPasswordController,
                   label: "Confirm Password",

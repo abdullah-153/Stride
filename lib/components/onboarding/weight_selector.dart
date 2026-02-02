@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class WeightSelector extends StatefulWidget {
   final double initialWeight;
   final Function(double) onWeightChanged;
-  final bool isKg; // Now purely an input prop
+  final bool isKg;
 
   const WeightSelector({
     super.key,
@@ -39,8 +39,7 @@ class _WeightSelectorState extends State<WeightSelector> {
 
     _pageController = PageController(
       initialPage: _selectedIndex,
-      viewportFraction:
-          0.15, // Slightly larger fraction for better visibility in modal
+      viewportFraction: 0.15,
     );
   }
 

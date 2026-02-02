@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../utils/size_config.dart';
 
 class LevelProgressCard extends StatelessWidget {
@@ -28,16 +28,11 @@ class LevelProgressCard extends StatelessWidget {
     final progress = (currentXp / nextLevelXp).clamp(0.0, 1.0);
 
     return Container(
-      padding: EdgeInsets.all(SizeConfig.w(20)), // Increased padding
+      padding: EdgeInsets.all(SizeConfig.w(20)),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(
-          SizeConfig.w(24),
-        ), // Match ProfilePage radius
-        border: Border.all(
-          color: borderColor,
-          width: 1,
-        ), // Match ProfilePage border
+        borderRadius: BorderRadius.circular(SizeConfig.w(24)),
+        border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -79,9 +74,7 @@ class LevelProgressCard extends StatelessWidget {
               backgroundColor: isDarkMode
                   ? Colors.grey.shade800
                   : Colors.grey.shade200,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Colors.orange,
-              ), // Changed to Orange
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
             ),
           ),
         ],

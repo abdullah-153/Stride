@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/app_settings_model.dart';
 import '../services/settings_service.dart';
@@ -22,8 +22,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> _saveSettings() async {
     try {
       await _service.saveSettings(state);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> toggleNotifications(bool enabled) async {

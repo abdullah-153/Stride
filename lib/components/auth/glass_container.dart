@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class GlassContainer extends StatelessWidget {
@@ -11,8 +11,8 @@ class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
-    this.blur = 15, // Standard strong blur
-    this.opacity = 0.2, // "Frosted" opacity
+    this.blur = 15,
+    this.opacity = 0.2,
     this.padding,
     this.borderRadius,
   });
@@ -29,15 +29,15 @@ class GlassContainer extends StatelessWidget {
             color: Colors.white.withOpacity(opacity),
             borderRadius: borderRadius ?? BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2), // Subtle border
+              color: Colors.white.withOpacity(0.2),
               width: 1.5,
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.3), // Highlight top-left
-                Colors.white.withOpacity(0.05), // Shadow bottom-right
+                Colors.white.withOpacity(0.3),
+                Colors.white.withOpacity(0.05),
               ],
             ),
           ),

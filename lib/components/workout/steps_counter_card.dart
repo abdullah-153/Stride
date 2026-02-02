@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fitness_tracker_frontend/utils/size_config.dart';
 
@@ -29,7 +29,7 @@ class _StepCounterCardState extends State<StepCounterCard>
     super.initState();
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 12), // Slow, continuous rotation
+      duration: const Duration(seconds: 12),
     )..repeat();
   }
 
@@ -43,7 +43,7 @@ class _StepCounterCardState extends State<StepCounterCard>
   Widget build(BuildContext context) {
     final isDark = widget.isDarkMode;
     final bgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
-    final accentColor = const Color(0xFFCEF24B); // Lime accent
+    final accentColor = const Color(0xFFCEF24B);
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white54 : Colors.black54;
 
@@ -114,7 +114,7 @@ class _StepCounterCardState extends State<StepCounterCard>
                 '${widget.steps}',
                 style: TextStyle(
                   fontSize: SizeConfig.sp(48),
-                  fontWeight: FontWeight.w300, // Thinner, more modern
+                  fontWeight: FontWeight.w300,
                   color: textColor,
                   letterSpacing: -1.0,
                   height: 1.0,
@@ -159,9 +159,7 @@ class _StepCounterCardState extends State<StepCounterCard>
                         thickness: 1,
                       ),
                       _buildStatItem(
-                        value: (widget.steps * 0.04)
-                            .toInt()
-                            .toString(), // Improved Calorie Estimate
+                        value: (widget.steps * 0.04).toInt().toString(),
                         unit: 'kcal',
                         color: textColor,
                         subColor: subTextColor,
@@ -282,7 +280,7 @@ class _DashedRingPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2; // Thin lines for the ring
+      ..strokeWidth = 2;
 
     double startAngle = 0;
     final circumference = 2 * pi * radius;

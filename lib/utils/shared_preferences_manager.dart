@@ -1,4 +1,4 @@
-﻿import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesManager {
   static SharedPreferencesManager? _instance;
@@ -31,7 +31,6 @@ class SharedPreferencesManager {
     }
   }
 
-
   static const String keyIsDarkMode = 'isDarkMode';
 
   static const String keyUserProfile = 'user_profile';
@@ -40,7 +39,6 @@ class SharedPreferencesManager {
   static const String keyAppSettings = 'app_settings';
 
   static const String keyHasCompletedOnboarding = 'has_completed_onboarding';
-
 
   String? getString(String key) {
     _ensureInitialized();
@@ -66,7 +64,6 @@ class SharedPreferencesManager {
     _ensureInitialized();
     return _prefs!.getStringList(key);
   }
-
 
   Future<bool> setString(String key, String value) async {
     try {
@@ -117,7 +114,6 @@ class SharedPreferencesManager {
       return false;
     }
   }
-
 
   Future<bool> remove(String key) async {
     _ensureInitialized();

@@ -1,5 +1,5 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
-import 'firestore/exercise_database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'firestore/workout_plan_service.dart';
 import 'ai_workout_service.dart';
 
@@ -10,7 +10,7 @@ class WorkoutPlanBuilderService {
   WorkoutPlanBuilderService._internal();
 
   final AIWorkoutService _aiService = AIWorkoutService();
-  final ExerciseDatabaseService _exerciseDb = ExerciseDatabaseService();
+
   final WorkoutPlanService _planService = WorkoutPlanService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -37,7 +37,6 @@ class WorkoutPlanBuilderService {
       planData['difficulty'] = fitnessLevel;
       planData['daysPerWeek'] = daysPerWeek;
       planData['durationWeeks'] = durationWeeks;
-
 
       return planData;
     } catch (e) {

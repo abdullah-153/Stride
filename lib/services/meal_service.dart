@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'api/usda_api_service.dart';
 import 'firestore/meal_database_service.dart';
@@ -57,7 +57,6 @@ class MealService {
       return null;
     }
   }
-
 
   Future<Map<String, dynamic>?> getRandomMeal() async {
     return null;
@@ -198,7 +197,6 @@ class MealService {
       }
 
       print('Quick adding meal: ${meal['name']}');
-
     } catch (e) {
       print('Error quick adding meal: $e');
       rethrow;

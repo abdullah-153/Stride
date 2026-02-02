@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../utils/size_config.dart';
 
@@ -148,7 +148,7 @@ class _EditGoalsContentState extends State<_EditGoalsContent> {
                   value: _dailyCalorieGoal,
                   min: 500,
                   max: 5000,
-                  divisions: 90, // increments of 50
+                  divisions: 90,
                   color: Colors.orange,
                   label: '${_dailyCalorieGoal.toInt()} kcal',
                   onChanged: (val) => setState(() => _dailyCalorieGoal = val),

@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/size_config.dart';
@@ -447,7 +447,7 @@ class _ConfettiParticle {
   });
 
   void update(double screenHeight) {
-    y += speed * 2; // Slightly slower for more graceful fall
+    y += speed * 2;
     x += sin(y * 0.01) * wobble;
     rotation += 0.05;
 
@@ -466,7 +466,6 @@ class _ConfettiPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var p in particles) {
-
       canvas.save();
       canvas.translate(p.x, p.y);
       canvas.rotate(p.rotation);
