@@ -1,6 +1,6 @@
 # Fitness Tracker Frontend
 
-A modern, glassmorphic fitness tracking application built with Flutter.
+An intelligent fitness platform that leverages AI to generate highly personalized workout routines and nutrition plans, delivered through a polished Glassmorphic interface.
 
 ## Features
 -   **User Authentication**: Login, Register, and Forgot Password flows.
