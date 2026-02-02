@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../utils/secrets.dart';
 
 class USDAApiService {
   static final USDAApiService _instance = USDAApiService._internal();
@@ -7,7 +6,7 @@ class USDAApiService {
   USDAApiService._internal();
 
   static const String _baseUrl = 'https://api.nal.usda.gov/fdc/v1';
-  static const String _apiKey = 'g3uMZHhZ3o9TnJuB0fnPahNroIWoiv6YzrGkdSxo';
+  static const String _apiKey = ApiSecrets.usdaApiKey;
 
   Future<List<Map<String, dynamic>>> searchFoods(String query) async {
     try {

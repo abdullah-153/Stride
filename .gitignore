@@ -1,3 +1,6 @@
+# Agent
+.agent/
+
 # Miscellaneous
 *.class
 *.log

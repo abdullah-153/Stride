@@ -1,6 +1,7 @@
 ﻿import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'utils/secrets.dart';
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
@@ -29,56 +30,52 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC3Lqjjg6K1u4LEycMw138r77AtyuVs0es',
-    appId: '1:164441790077:web:f4028a87920d3c4c14c314',
-    messagingSenderId: '164441790077',
-    projectId: 'gainz-49837',
-    authDomain: 'gainz-49837.firebaseapp.com',
-    storageBucket: 'gainz-49837.firebasestorage.app',
-    measurementId: 'G-CMMRT6ZE1T',
+    apiKey: ApiSecrets.firebaseWebApiKey,
+    appId: ApiSecrets.firebaseWebAppId,
+    messagingSenderId: ApiSecrets.firebaseWebMessagingSenderId,
+    projectId: ApiSecrets.firebaseWebProjectId,
+    authDomain: ApiSecrets.firebaseWebAuthDomain,
+    storageBucket: ApiSecrets.firebaseWebStorageBucket,
+    measurementId: ApiSecrets.firebaseWebMeasurementId,
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBEGKYYIIqdoz-Z3Wl5SiXLvir-QrtBYls',
-    appId: '1:164441790077:android:df5bab999e86197c14c314',
-    messagingSenderId: '164441790077',
-    projectId: 'gainz-49837',
-    storageBucket: 'gainz-49837.firebasestorage.app',
+    apiKey: ApiSecrets.firebaseAndroidApiKey,
+    appId: ApiSecrets.firebaseAndroidAppId,
+    messagingSenderId: ApiSecrets.firebaseWebMessagingSenderId,
+    projectId: ApiSecrets.firebaseWebProjectId,
+    storageBucket: ApiSecrets.firebaseWebStorageBucket,
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAgcvc6rUJsteUt90ngLHHEfMuMWVk2djA',
-    appId: '1:164441790077:ios:83b0c6de78c9859414c314',
-    messagingSenderId: '164441790077',
-    projectId: 'gainz-49837',
-    storageBucket: 'gainz-49837.firebasestorage.app',
-    androidClientId:
-        '164441790077-bveibjh33nh8eqi7qblkvkikpe04sn6r.apps.googleusercontent.com',
-    iosClientId:
-        '164441790077-kpo683ikt52f42inetps2edcuu2k08f5.apps.googleusercontent.com',
-    iosBundleId: 'com.example.fitnessTrackerFrontend',
+    apiKey: ApiSecrets.firebaseIosApiKey,
+    appId: ApiSecrets.firebaseIosAppId,
+    messagingSenderId: ApiSecrets.firebaseWebMessagingSenderId,
+    projectId: ApiSecrets.firebaseWebProjectId,
+    storageBucket: ApiSecrets.firebaseWebStorageBucket,
+    androidClientId: ApiSecrets.firebaseIosAndroidClientId,
+    iosClientId: ApiSecrets.firebaseIosClientId,
+    iosBundleId: ApiSecrets.firebaseIosBundleId,
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAgcvc6rUJsteUt90ngLHHEfMuMWVk2djA',
-    appId: '1:164441790077:ios:83b0c6de78c9859414c314',
-    messagingSenderId: '164441790077',
-    projectId: 'gainz-49837',
-    storageBucket: 'gainz-49837.firebasestorage.app',
-    androidClientId:
-        '164441790077-bveibjh33nh8eqi7qblkvkikpe04sn6r.apps.googleusercontent.com',
-    iosClientId:
-        '164441790077-kpo683ikt52f42inetps2edcuu2k08f5.apps.googleusercontent.com',
-    iosBundleId: 'com.example.fitnessTrackerFrontend',
+    apiKey: ApiSecrets.firebaseIosApiKey,
+    appId: ApiSecrets.firebaseIosAppId,
+    messagingSenderId: ApiSecrets.firebaseWebMessagingSenderId,
+    projectId: ApiSecrets.firebaseWebProjectId,
+    storageBucket: ApiSecrets.firebaseWebStorageBucket,
+    androidClientId: ApiSecrets.firebaseIosAndroidClientId,
+    iosClientId: ApiSecrets.firebaseIosClientId,
+    iosBundleId: ApiSecrets.firebaseIosBundleId,
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC3Lqjjg6K1u4LEycMw138r77AtyuVs0es',
-    appId: '1:164441790077:web:d9823905e42a50f814c314',
-    messagingSenderId: '164441790077',
-    projectId: 'gainz-49837',
-    authDomain: 'gainz-49837.firebaseapp.com',
-    storageBucket: 'gainz-49837.firebasestorage.app',
-    measurementId: 'G-J3J9BK1JTF',
+    apiKey: ApiSecrets.firebaseWindowsApiKey,
+    appId: ApiSecrets.firebaseWindowsAppId,
+    messagingSenderId: ApiSecrets.firebaseWebMessagingSenderId,
+    projectId: ApiSecrets.firebaseWebProjectId,
+    authDomain: ApiSecrets.firebaseWebAuthDomain,
+    storageBucket: ApiSecrets.firebaseWebStorageBucket,
+    measurementId: ApiSecrets.firebaseWindowsMeasurementId,
   );
 }
